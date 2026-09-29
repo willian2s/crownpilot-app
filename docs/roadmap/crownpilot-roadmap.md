@@ -129,7 +129,25 @@ Toda estatística competitiva deve carregar:
 - contexto;
 - confiança.
 
-## 2.7 Compliance é boundary arquitetural
+## 2.7 Infraestrutura-base e portabilidade
+
+Decisões iniciais do projeto:
+
+- Firebase Authentication com Google para a conta CrownPilot;
+- Cloud Firestore como banco principal;
+- Vercel como plataforma inicial de deploy.
+
+Vercel não deve se tornar um boundary do domínio.
+
+O core da aplicação e integrações devem permanecer portáveis para outro runtime
+sem reescrita do domínio. Serviços exclusivos da Vercel podem ser usados apenas
+quando isolados atrás de adapters ou quando existir estratégia clara de
+substituição.
+
+A integração com a Clash Royale API deve permanecer separada do runtime,
+especialmente por possíveis requisitos de egress/IP allowlist.
+
+## 2.8 Compliance é boundary arquitetural
 
 CrownPilot é um companion de análise e coaching.
 
