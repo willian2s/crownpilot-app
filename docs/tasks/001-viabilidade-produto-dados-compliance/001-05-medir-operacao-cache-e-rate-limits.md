@@ -17,6 +17,9 @@ escolher infraestrutura.
   com probes seguros;
 - honrar `Retry-After`;
 - verificar restrições de token/IP;
+- validar compatibilidade do modelo de egress com Vercel;
+- registrar se Static IPs da Vercel são necessários/adequados ou se um egress
+  gateway substituível será necessário;
 - estimar requests de:
   - player sync;
   - battle history;
@@ -31,7 +34,8 @@ escolher infraestrutura.
 - tentativa de descobrir limite por saturação;
 - bypass de quota;
 - rotação de IP/token para aumentar throughput;
-- decisão de cloud/provider.
+- troca da decisão de Vercel como deploy inicial;
+- implementação definitiva de gateway/worker.
 
 ## Passos de execução
 
@@ -41,7 +45,12 @@ escolher infraestrutura.
 4. Definir fórmula simples de requests por sync.
 5. Projetar três cenários de escala.
 6. Identificar quais resultados podem ser compartilhados/cacheados globalmente.
-7. Registrar requisitos que futura infraestrutura precisa satisfazer.
+7. Verificar o impacto de IP allowlist no deploy inicial em Vercel.
+8. Se egress estático for necessário, comparar:
+   - Vercel Static IPs;
+   - egress gateway externo/substituível.
+9. Registrar requisitos que futura infraestrutura precisa satisfazer sem
+   acoplar o domínio ao provider.
 
 ## Princípio de segurança operacional
 
@@ -69,7 +78,8 @@ específico.
 
 ## Riscos e cuidados
 
-- IP-bound token pode excluir alguns modelos serverless;
+- IP-bound token pode exigir Vercel Static IPs ou egress gateway dedicado;
+- dependência direta de networking proprietário da Vercel criaria lock-in;
 - cache do provedor pode mudar;
 - custo de meta ingestion pode dominar custo de user sync;
 - números projetados devem ser marcados como estimativas, não SLOs.
