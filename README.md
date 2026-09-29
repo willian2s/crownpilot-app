@@ -139,7 +139,7 @@ The first milestone is to validate the available data, establish the account mod
 
 See the complete roadmap:
 
-- [Project Roadmap](docs/roadmap.md)
+- [Project Roadmap](docs/roadmap/crownpilot-roadmap.md)
 
 ## Documentation model
 
