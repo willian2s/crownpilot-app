@@ -44,8 +44,12 @@ A fase termina com um veredito explícito: **GO**, **GO WITH CONSTRAINTS** ou
 
 ## Observações
 
-- O repo ainda não possui stack de aplicação; esta fase não deve escolhê-la por
-  acidente.
+- Infra-base já está definida: Firebase Authentication + Cloud Firestore e
+  Vercel como deploy inicial.
+- Framework e modelagem física continuam abertos; esta fase não deve escolhê-los
+  por acidente.
+- Dependências Vercel-specific devem ficar fora do domínio para preservar
+  portabilidade.
 - Probes podem usar curl ou script descartável.
 - Token da API e IPs nunca entram no Git.
 - Evidências versionadas devem ser sanitizadas.
