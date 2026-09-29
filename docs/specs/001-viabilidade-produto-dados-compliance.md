@@ -11,10 +11,18 @@ central: **qual é o melhor deck que este jogador consegue jogar agora, na Arena
 e no estado real da conta que possui?**
 
 O roadmap definiu como primeira fase uma etapa de discovery obrigatória antes de
-escolher stack, persistência ou implementar o recommendation engine. Hoje o
-repositório contém somente documentação inicial — `README.md` e o roadmap — e
-não existe aplicação, integração com a API, modelo persistente, dataset de meta,
-pipeline de ingestão ou autenticação.
+implementar o recommendation engine. A infraestrutura-base do projeto já foi
+definida pelo responsável:
+
+- **Google Sign-In via Firebase Authentication** para identidade CrownPilot;
+- **Cloud Firestore** como banco principal;
+- **Vercel** como runtime/deploy inicial;
+- **portabilidade de runtime** como requisito: domínio e integrações não podem
+  depender de APIs exclusivas da Vercel sem uma camada substituível.
+
+Hoje o repositório contém somente documentação inicial — `README.md` e o
+roadmap — e não existe aplicação, integração com a API, modelo persistente,
+dataset de meta, pipeline de ingestão ou autenticação implementada.
 
 A viabilidade do produto depende de quatro provas independentes:
 
@@ -91,7 +99,9 @@ Ao final, a equipe deve saber com evidência:
 
 ## Fora de escopo
 
-- Escolher framework web, banco, ORM, cloud ou provedor de autenticação.
+- Reabrir as decisões já tomadas de Firebase Authentication, Cloud Firestore e
+  Vercel como deploy inicial sem evidência concreta de incompatibilidade.
+- Escolher framework web, ORM ou detalhes de modelagem física do Firestore.
 - Construir login CrownPilot.
 - Criar dashboard.
 - Implementar pipeline de produção.
@@ -113,12 +123,15 @@ No início desta fase:
 - `README.md` descreve proposta e princípios;
 - `docs/roadmap/crownpilot-roadmap.md` define as fases;
 - não há `package.json`, runtime, aplicação ou dependências;
-- não há `AGENTS.md`, CI, testes ou convenção de stack;
+- Firebase Authentication + Cloud Firestore são decisões de infraestrutura;
+- Vercel é o deploy inicial, com portabilidade obrigatória;
+- não há `AGENTS.md`, CI, testes ou framework web definido;
 - não há credencial de API versionada;
 - não há specs/tasks anteriores.
 
-Por isso esta spec não deve transformar preferência de implementação em
-arquitetura definitiva.
+Por isso esta spec não deve transformar detalhes ainda abertos em arquitetura
+definitiva, mas deve respeitar as decisões registradas em
+`docs/decisions/001-firebase-firestore-vercel-portable.md`.
 
 ## Fontes e hierarquia de confiança
 
@@ -207,6 +220,60 @@ contrato do produto.
 - Se isso não estiver claro, precisamos de aprovação expressa antes de billing?
 - Que dados de usuário passam a ser nossos quando vinculamos login CrownPilot a
   Player Tag e qual política de privacidade será necessária depois?
+
+## Baseline de infraestrutura
+
+### Firebase Authentication
+
+- Google é o provider inicial da conta CrownPilot.
+- Auth do CrownPilot é independente da conta Supercell.
+- Player Tag é um vínculo de domínio, não identidade de autenticação.
+- Nenhuma credencial Supercell será armazenada.
+
+### Cloud Firestore
+
+Firestore será o banco principal para dados da aplicação, incluindo
+progressivamente:
+
+- identidade/vínculo do jogador;
+- snapshots normalizados;
+- histórico coletado quando permitido;
+- dados derivados de recomendação;
+- metadados de sync.
+
+A Fase 001 **não** define ainda collections, índices, TTLs ou granularidade final.
+Essas decisões dependem do volume e dos contratos v0 produzidos pelo discovery.
+
+### Vercel com portabilidade
+
+Vercel é a plataforma inicial de deploy, mas o core não pode depender de:
+
+- Vercel KV;
+- Vercel Postgres;
+- Vercel Blob;
+- Edge Config;
+- Queues/Workflow;
+- Cron;
+- APIs de runtime proprietárias;
+
+como requisito obrigatório do domínio.
+
+Recursos Vercel podem ser usados no futuro como adapters operacionais quando
+houver fallback ou boundary explícito.
+
+Integrações externas devem ficar atrás de contratos próprios. Em particular, a
+API da Supercell deve ser acessada por um `ClashRoyaleClient`/adapter equivalente
+para que egress, hosting ou provider possam mudar sem reescrever domínio.
+
+### Egress da Clash Royale API
+
+Se a criação/uso de token oficial confirmar allowlist por IP, a Fase 001 deve
+validar a consequência para Vercel. Em 29/09/2026, Vercel documenta Static IPs
+para planos Pro+; isso é opção operacional, não contrato arquitetural.
+
+Se custo ou restrição tornar Static IP inadequado, o acesso à API deve poder ser
+movido para um egress service/gateway com IP estável sem alterar o restante da
+aplicação.
 
 ## Abordagem escolhida
 
