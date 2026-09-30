@@ -20,6 +20,7 @@ autoritativas suficiente para executar as próximas tasks.
 - confirmar encoding de Player Tag;
 - mapear endpoints de:
   - players;
+  - mecanismo oficial de player/ownership verification, se disponível;
   - battle log;
   - cards;
   - locations/rankings;
@@ -52,9 +53,12 @@ autoritativas suficiente para executar as próximas tasks.
 5. Testar uma Player Tag válida com `#` corretamente encoded.
 6. Registrar status/shape de endpoints candidatos sem coletar massa de dados.
 7. Confirmar paginação apenas onde aplicável.
-8. Registrar códigos de erro seguros: tag inexistente, token ausente e parâmetro
+8. Confirmar se existe endpoint/scope oficial para verificação de ownership e
+   quais pré-requisitos ele possui; não solicitar token de jogador nesta task se
+   não for necessário para mapear o contrato.
+9. Registrar códigos de erro seguros: tag inexistente, token ausente e parâmetro
    inválido quando isso não gerar carga indevida.
-9. Sanitizar qualquer evidência antes de commit.
+10. Sanitizar qualquer evidência antes de commit.
 
 ## Evidências obrigatórias
 
