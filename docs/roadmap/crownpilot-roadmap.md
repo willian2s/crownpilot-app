@@ -2,7 +2,7 @@
 
 > **Play the right deck. Upgrade the right cards.**
 
-**Atualizado em:** 29 de setembro de 2026
+**Atualizado em:** 30 de setembro de 2026
 
 Este documento define **o que construir**, **em qual ordem**, as principais dependências, os boundaries do produto e os grandes marcos do CrownPilot.
 
@@ -147,7 +147,24 @@ substituição.
 A integração com a Clash Royale API deve permanecer separada do runtime,
 especialmente por possíveis requisitos de egress/IP allowlist.
 
-## 2.8 Compliance é boundary arquitetural
+## 2.8 Segurança e ambientes fazem parte da fundação
+
+A fundação deve nascer segura por padrão:
+
+- segredos de integração permanecem somente no servidor;
+- acesso client-side ao Firestore exige Security Rules versionadas e testadas;
+- acesso server-side ao Firestore usa IAM/Admin SDK com privilégio mínimo;
+- local, preview e produção não devem compartilhar dados/segredos de forma
+  acidental;
+- Firebase Emulator Suite deve ser usado quando trouxer isolamento e testes
+  reproduzíveis;
+- decisões difíceis de reverter, como localização do Firestore, precisam ser
+  tomadas e registradas antes de provisionar produção.
+
+A estratégia exata de client vs. server access será definida na Fase 002, mas
+não é permitido tratar autenticação como autorização.
+
+## 2.9 Compliance é boundary arquitetural
 
 CrownPilot é um companion de análise e coaching.
 
@@ -213,7 +230,8 @@ Investigar e documentar:
 - limites de histórico;
 - estratégia de cache;
 - restrições de uso dos dados;
-- políticas aplicáveis.
+- políticas aplicáveis;
+- semântica de vínculo da Player Tag e possibilidade de prova de ownership.
 
 ### Perguntas críticas
 
@@ -224,6 +242,9 @@ Investigar e documentar:
 5. Precisaremos de fonte externa complementar para meta?
 6. Quais dados econômicos não estão disponíveis e exigiriam entrada manual?
 7. Quais limites de uso impactam sync e ingestão em escala?
+8. Vincular uma Player Tag significa selecionar um perfil público ou precisamos
+   provar ownership? Existe mecanismo oficial aplicável e ele é necessário para
+   o MVP?
 
 ### Compliance comercial
 
@@ -251,6 +272,7 @@ A política pública atual da Supercell descreve fan content em geral como não 
 - [ ] estratégia de meta possui uma fonte inicial viável;
 - [ ] limites de rate e histórico estão documentados;
 - [ ] boundary de compliance está documentado;
+- [ ] semântica de vínculo/ownership da Player Tag está decidida;
 - [ ] nenhuma dependência crítica do MVP continua baseada apenas em suposição.
 
 ### Handoff
@@ -263,37 +285,87 @@ A Fase 002 só fixa contratos persistentes depois que a Fase 001 confirmar quais
 
 ### Objetivo
 
-Criar a identidade CrownPilot e eliminar o atrito de informar a Player Tag em cada dispositivo.
+Criar a fundação executável do CrownPilot, estabelecer seus boundaries de
+segurança e entregar a identidade persistente que elimina o atrito de informar a
+Player Tag em cada dispositivo.
 
 ### Escopo
 
-- aplicação base;
-- autenticação;
+#### Bootstrap da aplicação
+
+- inicializar a aplicação e escolher o framework web;
+- definir package manager e lockfile autoritativo;
+- TypeScript strict e configuração de build;
+- lint/format e convenções de código;
+- estrutura inicial de diretórios e boundaries;
+- `AGENTS.md` e comandos operacionais do repositório;
+- test runner mínimo;
+- CI com gates de lint, type-check, testes e build;
+- `.env.example` sem secrets;
+- estratégia local / preview / production;
+- deploy inicial na Vercel sem dependência obrigatória de serviços proprietários.
+
+#### Firebase
+
+- Firebase Authentication com Google;
+- Cloud Firestore como banco principal;
+- decidir e registrar localização do Firestore antes de provisionar produção;
+- Firebase CLI e Emulator Suite para desenvolvimento/testes quando aplicável;
+- definir boundary de acesso ao Firestore:
+  - client SDK + Security Rules; ou
+  - server SDK/Admin + IAM;
+  - ou combinação explicitamente documentada;
+- versionar e testar Security Rules para qualquer acesso client-side;
+- garantir que preview/local não usem produção por acidente.
+
+#### Identidade CrownPilot
+
 - usuário CrownPilot;
+- uma Player Tag primária no MVP;
 - vínculo persistente com Player Tag;
-- validação da tag;
+- validação de existência da tag;
+- aplicar a decisão da Fase 001 sobre perfil público vs. ownership verificado;
 - tag inválida / jogador inexistente;
-- troca controlada da conta vinculada;
-- persistência;
-- configuração segura;
-- privacidade mínima;
+- troca e desvinculação controladas;
+- recuperação do vínculo em outro dispositivo;
+- estratégia inicial para exclusão dos dados da conta;
 - observabilidade inicial.
+
+### Boundary da fase
+
+A Fase 002 pode consultar a Clash Royale API para validar o vínculo, mas **não**
+sincroniza nem persiste coleção, níveis, Arena, battle history ou Player
+Snapshot completo. Isso começa na Fase 003.
+
+O token da Clash Royale API nunca é exposto ao browser.
 
 ### Requisitos
 
 - nenhuma credencial da Supercell é solicitada;
-- a Player Tag é o identificador do vínculo público;
+- Firebase Authentication identifica o usuário CrownPilot;
+- Player Tag é vínculo de domínio, com semântica definida pela Fase 001;
 - nova sessão recupera a tag vinculada;
-- mudança de tag é explícita;
-- falhas da API externa não invalidam a identidade local.
+- mudança/desvinculação da tag é explícita;
+- autenticação não é tratada como autorização;
+- falhas da API externa não invalidam a identidade local;
+- runtime/domain não dependem de API proprietária da Vercel.
 
 ### Critérios de aceite
 
-- [ ] usuário consegue criar sessão;
+- [ ] bootstrap pode ser reproduzido a partir do repositório limpo;
+- [ ] lint, type-check, testes e build possuem comandos definidos e passam;
+- [ ] CI executa os gates mínimos;
+- [ ] ambientes local/preview/production estão separados e documentados;
+- [ ] localização do Firestore está decidida antes do banco de produção;
+- [ ] Firestore não possui acesso público irrestrito;
+- [ ] Security Rules/IAM refletem o boundary escolhido e possuem validação;
+- [ ] usuário consegue criar sessão com Google;
 - [ ] usuário vincula uma Player Tag uma vez;
 - [ ] outro dispositivo recupera o vínculo após login;
+- [ ] usuário consegue trocar/desvincular a tag;
 - [ ] erros de integração não causam perda do vínculo;
-- [ ] nenhuma credencial de jogo é armazenada.
+- [ ] nenhum token da Supercell ou credencial de serviço chega ao client;
+- [ ] deploy inicial na Vercel funciona sem tornar Vercel parte do domínio.
 
 ### Dependências
 
@@ -301,7 +373,8 @@ Criar a identidade CrownPilot e eliminar o atrito de informar a Player Tag em ca
 
 ### Handoff
 
-Entregar identidade estável para o sync da conta.
+Entregar aplicação reproduzível, identidade estável, Firestore seguro e
+boundaries suficientes para a Fase 003 implementar o sync da conta.
 
 ---
 
@@ -313,7 +386,15 @@ Transformar a Player Tag em um estado de conta útil dentro do CrownPilot.
 
 ### Escopo
 
-Sincronizar e normalizar, conforme disponibilidade confirmada na Fase 001:
+Sincronizar e normalizar, conforme disponibilidade confirmada na Fase 001,
+sempre através de integração server-side com a Clash Royale API:
+
+- definir política de freshness e gatilhos de refresh;
+- separar payload bruto, normalização e snapshot de domínio;
+- tratar concorrência/retry para impedir snapshots inconsistentes;
+- definir retenção mínima necessária antes de acumular histórico;
+
+Sincronizar:
 
 - perfil;
 - Arena;
@@ -355,7 +436,10 @@ Snapshot antigo não deve parecer estado atual.
 - [ ] Arena / troféus são persistidos com timestamp;
 - [ ] dados ausentes não quebram o perfil;
 - [ ] freshness fica visível;
-- [ ] sync repetido é idempotente.
+- [ ] sync repetido é idempotente;
+- [ ] token da Clash Royale API permanece server-side;
+- [ ] payload bruto e Player Snapshot normalizado possuem boundary explícito;
+- [ ] política de freshness/retry está documentada.
 
 ### Dependências
 
@@ -386,7 +470,12 @@ Construir uma base confiável de decks reais e contexto competitivo.
 - faixa de Arena / troféus;
 - janela temporal;
 - confidence;
-- decaimento após mudanças relevantes.
+- decaimento após mudanças relevantes;
+- versionamento de catálogo/temporada/balance context;
+- estratégia de retenção e agregação;
+- validação do custo e do modelo de armazenamento no Firestore;
+- possibilidade de componente analítico especializado se Firestore deixar de
+  ser adequado para dados brutos em escala.
 
 ### Regra central
 
@@ -408,7 +497,11 @@ Nenhuma taxa deve ser apresentada sem:
 - [ ] métricas carregam janela temporal;
 - [ ] amostras pequenas são penalizadas ou descartadas;
 - [ ] balance changes podem reduzir a relevância dos dados antigos;
-- [ ] recommendation engine consulta candidatos eficientemente.
+- [ ] recommendation engine consulta candidatos eficientemente;
+- [ ] mudanças de temporada/balance podem separar ou invalidar amostras;
+- [ ] retenção e agregação possuem estratégia explícita;
+- [ ] custo/query pattern foi validado para Firestore ou existe boundary para
+  store analítico especializado.
 
 ### Dependências
 
@@ -572,6 +665,9 @@ Priorizar:
 - analytics de produto;
 - logs e observabilidade;
 - privacidade;
+- fluxo de exclusão de conta/dados;
+- revisão de autorização e Security Rules/IAM;
+- avaliar App Check se houver acesso client-side direto ao Firebase;
 - disclaimer de conteúdo não oficial.
 
 ### Métricas iniciais
@@ -596,6 +692,8 @@ Metas numéricas entram na spec de beta depois de existir baseline.
 - [ ] observabilidade mínima existe;
 - [ ] eventos críticos são medidos;
 - [ ] compliance e disclaimer estão visíveis;
+- [ ] usuário possui caminho funcional para excluir sua conta e dados próprios;
+- [ ] revisão de segurança do acesso ao Firestore foi concluída;
 - [ ] MVP funciona sem IA.
 
 ### Dependências
@@ -958,6 +1056,10 @@ Modelo operacional e comercial está validado técnica e legalmente.
 
 O MVP inclui:
 
+- bootstrap reproduzível e quality gates;
+- Firebase Authentication com Google;
+- Firestore seguro e ambientes separados;
+- deploy inicial portável na Vercel;
 - identidade CrownPilot;
 - Player Tag persistente;
 - sync da conta;
@@ -973,6 +1075,7 @@ O MVP inclui:
 
 O MVP não inclui:
 
+- múltiplas Player Tags por usuário;
 - AI Coach;
 - geração livre de deck;
 - overlay;
