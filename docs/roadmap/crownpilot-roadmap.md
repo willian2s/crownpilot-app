@@ -164,7 +164,115 @@ A fundação deve nascer segura por padrão:
 A estratégia exata de client vs. server access será definida na Fase 002, mas
 não é permitido tratar autenticação como autorização.
 
-## 2.9 Compliance é boundary arquitetural
+## 2.9 Estratégia de ambientes e release
+
+O CrownPilot usa ambientes com responsabilidades diferentes.
+
+### Local
+
+Desenvolvimento local usa:
+
+- Firebase Emulator Suite quando houver integração com Auth/Firestore;
+- dados locais/descartáveis;
+- nenhum secret de produção.
+
+### Pull Request / Preview
+
+Branches de feature e Pull Requests podem gerar Preview Deployments efêmeros na
+Vercel.
+
+Preview serve para:
+
+- validar build;
+- revisar UI/UX;
+- executar smoke checks que não dependem de autenticação real;
+- compartilhar uma versão da mudança antes do merge.
+
+Preview **não é ambiente Firebase completo**.
+
+Mesmo que a Vercel mantenha alias estável por branch, cada PR possui seu próprio
+hostname. Como Firebase Authentication exige domínio autorizado, não vamos
+automatizar autorização de hosts efêmeros nem compartilhar Firebase de produção
+com previews.
+
+Portanto, Preview não precisa oferecer Google Sign-In real.
+
+Features que exigem Firebase/Auth completo são validadas em staging.
+
+### Staging
+
+A branch `staging` é o ambiente estável de pré-produção.
+
+Deve possuir:
+
+- hostname fixo;
+- ambiente Vercel próprio, preferencialmente Custom Environment;
+- environment variables próprias;
+- Firebase project separado de produção;
+- domínio autorizado no Firebase Authentication;
+- Google Sign-In real;
+- Firestore de staging;
+- dados de teste;
+- execução de testes E2E e smoke.
+
+Fluxo de release esperado:
+
+```text
+feature/*
+    |
+    v
+Pull Request
+    |
+    +--> Preview efêmero
+    |      build / UI / smoke sem auth real
+    |
+    v
+staging
+    |
+    +--> Firebase staging
+    +--> E2E
+    +--> smoke
+    |
+    v
+main
+    |
+    v
+production
+```
+
+### Production
+
+A branch `main` é a única fonte de deploy de produção.
+
+Production usa Firebase project, secrets e domínio próprios.
+
+## 2.10 Estratégia de testes
+
+Testes fazem parte da fundação e evoluem junto com o produto.
+
+Camadas previstas:
+
+- **unit** — funções puras, domínio, normalização, scoring e canonicalização;
+- **integration** — adapters, Firebase Auth/Firestore e boundaries;
+- **Security Rules** — regras Firestore testadas contra Emulator Suite;
+- **contract** — contratos de integrações como `ClashRoyaleClient` usando
+  fixtures sanitizadas;
+- **E2E** — fluxos críticos completos executados em staging;
+- **smoke** — checks rápidos após deploy em staging e production.
+
+Chamadas live para a Clash Royale API não devem fazer parte da CI normal.
+Probes live devem ser explícitos, limitados e executados somente quando houver
+motivo técnico.
+
+Gates mínimos esperados:
+
+- **PR:** lint + type-check + unit + integration + contract + build;
+- **staging:** gates de PR + E2E + smoke;
+- **production:** gates aprovados + deploy + smoke.
+
+A ferramenta específica de testes é escolhida no bootstrap da Fase 002.
+
+## 2.11 Compliance é boundary arquitetural
 
 CrownPilot é um companion de análise e coaching.
 
@@ -299,10 +407,13 @@ Player Tag em cada dispositivo.
 - lint/format e convenções de código;
 - estrutura inicial de diretórios e boundaries;
 - `AGENTS.md` e comandos operacionais do repositório;
-- test runner mínimo;
+- toolchain de testes unitários, integração, contract e E2E;
 - CI com gates de lint, type-check, testes e build;
 - `.env.example` sem secrets;
-- estratégia local / preview / production;
+- estratégia local / preview / staging / production;
+- Preview Deployments efêmeros para PRs sem dependência de Firebase Auth real;
+- branch `staging` com hostname fixo para validação completa;
+- deploy de produção somente a partir da `main`;
 - deploy inicial na Vercel sem dependência obrigatória de serviços proprietários.
 
 #### Firebase
@@ -310,13 +421,15 @@ Player Tag em cada dispositivo.
 - Firebase Authentication com Google;
 - Cloud Firestore como banco principal;
 - decidir e registrar localização do Firestore antes de provisionar produção;
-- Firebase CLI e Emulator Suite para desenvolvimento/testes quando aplicável;
+- Firebase CLI e Emulator Suite para desenvolvimento/testes;
+- Firebase project separado para staging e production;
+- domínio fixo de staging autorizado no Firebase Authentication;
 - definir boundary de acesso ao Firestore:
   - client SDK + Security Rules; ou
   - server SDK/Admin + IAM;
   - ou combinação explicitamente documentada;
 - versionar e testar Security Rules para qualquer acesso client-side;
-- garantir que preview/local não usem produção por acidente.
+- garantir que local/preview/staging não usem produção por acidente.
 
 #### Identidade CrownPilot
 
@@ -353,9 +466,15 @@ O token da Clash Royale API nunca é exposto ao browser.
 ### Critérios de aceite
 
 - [ ] bootstrap pode ser reproduzido a partir do repositório limpo;
-- [ ] lint, type-check, testes e build possuem comandos definidos e passam;
-- [ ] CI executa os gates mínimos;
-- [ ] ambientes local/preview/production estão separados e documentados;
+- [ ] lint, type-check, unit, integration, contract, E2E e build possuem comandos definidos;
+- [ ] CI executa lint, type-check, unit, integration, contract e build nos PRs;
+- [ ] testes de Security Rules executam contra Firebase Emulator Suite;
+- [ ] PRs geram Preview Deployments sem depender de Google Sign-In real;
+- [ ] branch `staging` possui hostname fixo e ambiente de pré-produção;
+- [ ] staging possui Firebase project separado e Google Sign-In funcional;
+- [ ] E2E do fluxo crítico roda em staging;
+- [ ] `main` é a única fonte de deploy de produção;
+- [ ] ambientes local/preview/staging/production estão separados e documentados;
 - [ ] localização do Firestore está decidida antes do banco de produção;
 - [ ] Firestore não possui acesso público irrestrito;
 - [ ] Security Rules/IAM refletem o boundary escolhido e possuem validação;
@@ -365,7 +484,8 @@ O token da Clash Royale API nunca é exposto ao browser.
 - [ ] usuário consegue trocar/desvincular a tag;
 - [ ] erros de integração não causam perda do vínculo;
 - [ ] nenhum token da Supercell ou credencial de serviço chega ao client;
-- [ ] deploy inicial na Vercel funciona sem tornar Vercel parte do domínio.
+- [ ] deploy inicial na Vercel funciona sem tornar Vercel parte do domínio;
+- [ ] smoke tests passam em staging e production.
 
 ### Dependências
 
@@ -658,6 +778,8 @@ Priorizar:
 ### Produto
 
 - mobile-first / responsive;
+- testes unitários e de integração para novas regras de domínio;
+- E2E dos fluxos críticos mantidos em staging;
 - loading e erro consistentes;
 - estados vazios;
 - cache;
