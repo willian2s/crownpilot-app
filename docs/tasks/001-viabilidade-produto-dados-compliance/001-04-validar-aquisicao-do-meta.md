@@ -2,7 +2,13 @@
 
 - **Ticker:** `001`
 - **Número:** `04`
-- **Status:** `planned`
+- **Status:** `pending`
+
+## Requisitos cobertos
+
+- fonte de candidatos de decks reais e contexto competitivo;
+- cobertura de faixas intermediárias, viés, freshness, custo e compliance;
+- fallback de produto quando “meta da Arena” não puder ser sustentado.
 
 ## Objetivo e resultado esperado
 
@@ -47,6 +53,13 @@ Para cada estratégia medir:
 - 001-02;
 - 001-03.
 
+## Arquivos e símbolos prováveis
+
+- `evidences/meta-strategy-comparison.md`;
+- superfícies de rankings, Path of Legend/ranked, clans/members e opponents;
+- conceitos `DeckCandidate`, `CompetitiveContextV0` e estratégia de ingestão;
+  nenhum pipeline ou dataset existe na `main`.
+
 ## Passos de execução
 
 1. Definir quais contextos precisam existir para o MVP:
@@ -87,6 +100,14 @@ Nesse caso o veredito deve recomendar uma destas saídas:
 
 Existe pelo menos uma estratégia defendível ou uma limitação de produto
 explicitamente aceita para a Fase 005.
+
+## Testes e comandos de validação
+
+- executar somente amostras pequenas e documentadas por estratégia;
+- preencher a matriz comparativa com cobertura observada, não cobertura inferida
+  de ranking global;
+- calcular requests projetados por estratégia sem coleta massiva;
+- revisar termos/licença de qualquer fonte externa e executar `git diff --check`.
 
 ## Riscos e cuidados
 

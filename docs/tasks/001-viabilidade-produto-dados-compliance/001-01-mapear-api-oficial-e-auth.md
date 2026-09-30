@@ -2,7 +2,13 @@
 
 - **Ticker:** `001`
 - **Número:** `01`
-- **Status:** `planned`
+- **Status:** `pending`
+
+## Requisitos cobertos
+
+- superfície oficial, autenticação, encoding de Player Tag e erros;
+- requisito de IP/egress e existência de verificação oficial de ownership;
+- fontes necessárias para perfil, battle log, catálogo e descoberta de meta.
 
 ## Objetivo e resultado esperado
 
@@ -44,6 +50,13 @@ autoritativas suficiente para executar as próximas tasks.
 - conta de developer/API key criada pelo responsável;
 - acesso de rede a `api.clashroyale.com`.
 
+## Arquivos e símbolos prováveis
+
+- `evidences/api-surface.md`;
+- documentação oficial, endpoints `/v1/players`, `/v1/players/{tag}/battlelog`,
+  `/v1/cards`, `/v1/locations` e superfícies de clans/rankings quando aplicável;
+- variável local `CLASH_ROYALE_API_TOKEN`; nenhum símbolo de produção existe.
+
 ## Passos de execução
 
 1. Consultar documentação oficial e registrar data.
@@ -81,6 +94,14 @@ autoritativas suficiente para executar as próximas tasks.
 - ao menos um caso de tag encoding confirmado;
 - nenhum token em arquivos ou output versionado;
 - todos os endpoints críticos classificados.
+
+## Testes e comandos de validação
+
+- `test -n "$CLASH_ROYALE_API_TOKEN"` sem imprimir o valor;
+- executar probes `curl` autenticados usando a variável de ambiente, com headers
+  salvos apenas em arquivo temporário sanitizado;
+- `git diff --check` e busca por segredo antes de versionar evidências;
+- revisar manualmente cada endpoint contra fonte oficial e data de consulta.
 
 ## Definição de pronto
 

@@ -20,9 +20,10 @@ definida pelo responsável:
 - **portabilidade de runtime** como requisito: domínio e integrações não podem
   depender de APIs exclusivas da Vercel sem uma camada substituível.
 
-Hoje o repositório contém somente documentação inicial — `README.md` e o
-roadmap — e não existe aplicação, integração com a API, modelo persistente,
-dataset de meta, pipeline de ingestão ou autenticação implementada.
+Na `main`, o repositório contém somente documentação de produto e planejamento:
+`README.md`, roadmap, contexto histórico, ADR, esta spec e as oito subtarefas da
+fase. Não existe aplicação, integração com a API, evidência de probe, modelo
+persistente, dataset de meta, pipeline de ingestão ou autenticação implementada.
 
 A viabilidade do produto depende de quatro provas independentes:
 
@@ -119,21 +120,24 @@ Ao final, a equipe deve saber com evidência:
 - Scraping de sites de terceiros sem API/licença explícita.
 - Consultoria jurídica conclusiva.
 
-## Baseline do repositório
+## Comportamento atual encontrado e baseline da main
 
-No início desta fase:
+Inspeção da `main` no commit `242f749ded8287629ad4635fdf1958664f1840d7` encontrou:
 
-- `README.md` descreve proposta e princípios;
-- `docs/roadmap/crownpilot-roadmap.md` define as fases;
-- não há `package.json`, runtime, aplicação ou dependências;
+- `README.md`, `docs/roadmap/crownpilot-roadmap.md` e o contexto histórico;
+- ADR aceito em `docs/decisions/001-firebase-firestore-vercel-portable.md`;
+- esta spec, overview e oito subtarefas da Fase 001;
+- nenhum `package.json`, lockfile, runtime, aplicação ou dependência;
+- nenhum diretório `evidences/`, probe, fixture, CI, teste ou configuração de
+  Firebase/Vercel versionado;
 - Firebase Authentication + Cloud Firestore são decisões de infraestrutura;
 - Vercel é o deploy inicial, com portabilidade obrigatória;
-- não há `AGENTS.md`, CI, testes ou framework web definido;
+- não há `AGENTS.md`, regras locais, CI, testes ou framework web definido;
 - não há credencial de API versionada;
-- não há specs/tasks anteriores.
+- nenhuma capacidade da Fase 001 foi validada e o veredito ainda não existe.
 
-Por isso esta spec não deve transformar detalhes ainda abertos em arquitetura
-definitiva, mas deve respeitar as decisões registradas em
+Logo, esta spec deve corrigir o baseline documental sem transformar detalhes
+abertos em arquitetura definitiva. Deve respeitar as decisões registradas em
 `docs/decisions/001-firebase-firestore-vercel-portable.md`.
 
 ## Fontes e hierarquia de confiança
@@ -341,6 +345,35 @@ da minha Arena".
 A Fase 001 só aprova a hipótese `Best Decks for You` se existir uma estratégia
 reproduzível para gerar candidatos com contexto competitivo e confiança
 suficiente.
+
+## Alternativas descartadas
+
+- Implementar aplicação, autenticação ou recommendation engine antes de provar
+  os dados: criaria contratos e custo de infraestrutura baseados em suposições.
+- Tratar SDKs, wrappers ou sites de terceiros como autoridade: só documentação
+  oficial, acordos aplicáveis e probes controlados podem fechar contratos.
+- Usar ranking global como sinônimo de meta da Arena: pode introduzir viés de
+  topo e não prova cobertura de faixas intermediárias.
+- Escolher framework, schema físico do Firestore ou scheduler nesta fase:
+  decisões dependem dos contratos e volumes observados.
+- Fazer stress test para descobrir rate limit: risco desnecessário; limites não
+  publicados permanecem desconhecidos e recebem margem conservadora.
+
+## Arquivos, módulos e contratos afetados
+
+- `docs/roadmap/crownpilot-roadmap.md`: fonte dos gates e do handoff; atualizar
+  somente se o veredito mudar a sequência ou promessa do produto.
+- `docs/specs/001-viabilidade-produto-dados-compliance.md`: contrato de execução
+  desta fase e critérios de aceite.
+- `docs/tasks/001-viabilidade-produto-dados-compliance/`: oito unidades de
+  discovery e seus registros de execução.
+- `docs/tasks/001-viabilidade-produto-dados-compliance/evidences/`: artefatos
+  sanitizados produzidos durante execução; ainda inexistente no baseline.
+- Contratos conceituais `PlayerSnapshotV0`, `CardCollectionEntryV0`,
+  `CompetitiveContextV0` e `CurrentDeckV0`; não há módulos de produção nem
+  símbolos implementados para alterar.
+- ADR `docs/decisions/001-firebase-firestore-vercel-portable.md`: decisão aceita
+  que limita mudanças de infraestrutura nesta fase.
 
 ## Artefatos esperados
 

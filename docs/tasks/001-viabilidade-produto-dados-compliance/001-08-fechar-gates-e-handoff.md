@@ -2,7 +2,13 @@
 
 - **Ticker:** `001`
 - **Número:** `08`
-- **Status:** `planned`
+- **Status:** `pending`
+
+## Requisitos cobertos
+
+- revisão dos critérios da Fase 001 e classificação dos riscos;
+- veredito `GO`, `GO WITH CONSTRAINTS` ou `NO-GO / REDESIGN`;
+- handoff explícito para a Fase 002 e atualização consistente do overview.
 
 ## Objetivo e resultado esperado
 
@@ -12,6 +18,15 @@ que libera — ou bloqueia — a Fase 002.
 ## Dependências
 
 - 001-01 a 001-07 concluídas ou explicitamente bloqueadas com motivo.
+
+## Arquivos e símbolos prováveis
+
+- `evidences/phase-001-verdict.md`;
+- `docs/tasks/001-viabilidade-produto-dados-compliance/001-00-overview.md`;
+- `docs/roadmap/crownpilot-roadmap.md` somente se escopo, sequência ou promessa
+  do produto mudar;
+- estados de fase `GO`, `GO WITH CONSTRAINTS`, `NO-GO / REDESIGN` e release da
+  Fase 002; não há código de produção a alterar.
 
 ## Escopo incluído
 
@@ -24,6 +39,15 @@ que libera — ou bloqueia — a Fase 002.
 - atualizar roadmap se a hipótese do produto mudar;
 - criar `evidences/phase-001-verdict.md`;
 - registrar ADRs somente se alguma decisão arquitetural já estiver madura.
+
+## Passos de execução
+
+1. Conferir conclusão ou bloqueio explícito de 001-01 a 001-07.
+2. Reconciliar documentação, evidências e critérios da spec.
+3. Classificar gates, riscos, constraints e débitos remanescentes.
+4. Escolher um único veredito permitido e registrar sua justificativa.
+5. Criar o handoff sanitizado e atualizar overview/roadmap somente quando
+   necessário.
 
 ## Vereditos permitidos
 
@@ -128,6 +152,24 @@ Fazer uma leitura crítica final procurando especificamente por:
 ## Definição de pronto
 
 Não há gate crítico escondido em "descobriremos durante a implementação".
+
+## Riscos e cuidados
+
+- não liberar Fase 002 com evidência ausente ou contrato inferido;
+- não transformar bloqueio comercial em aprovação;
+- não marcar subtarefa concluída apenas porque seu arquivo de evidência existe;
+- preservar a distinção entre estado planejado e resultado observado.
+
+## Testes e comandos de validação
+
+- conferir cada critério de aceite contra evidência rastreável ou marcar como
+  bloqueado;
+- executar revisão crítica para amostra única, fonte secundária, campo
+  deprecated, meta sem cobertura, custo ignorado, monetização presumida e
+  segredo/PII;
+- confirmar que checklist do overview continua com exatamente oito itens e que
+  progresso corresponde aos itens marcados;
+- executar `git diff --check` e verificar links relativos antes do handoff.
 
 ## Registro de execução
 

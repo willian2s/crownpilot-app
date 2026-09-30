@@ -2,7 +2,14 @@
 
 - **Ticker:** `001`
 - **Número:** `07`
-- **Status:** `planned`
+- **Status:** `pending`
+
+## Requisitos cobertos
+
+- `PlayerSnapshotV0`, `CardCollectionEntryV0`, `CompetitiveContextV0` e
+  `CurrentDeckV0` quando suportado;
+- provenance, freshness, optionality e separação raw/normalized/derived;
+- semântica confirmada de capability, ownership e deployment de Evolution/Hero.
 
 ## Objetivo e resultado esperado
 
@@ -30,6 +37,20 @@ pode usar sem acoplar o CrownPilot ao payload bruto da Supercell.
 - API CrownPilot;
 - persistence strategy;
 - Fit Score.
+
+## Dependências
+
+- 001-01 a 001-06 concluídas ou com limitações explicitamente registradas;
+- evidências sanitizadas disponíveis para cada campo incluído;
+- decisão de infraestrutura da ADR 001 permanece fora do escopo desta task.
+
+## Arquivos e símbolos prováveis
+
+- `evidences/data-contract-v0.md`;
+- `PlayerSnapshotV0`, `CardCollectionEntryV0`, `CompetitiveContextV0` e
+  `CurrentDeckV0` como contratos conceituais;
+- matriz consolidada de campos e lista de indisponíveis; não criar interfaces
+  TypeScript nem persistência porque a `main` não possui runtime.
 
 ## Princípios
 
@@ -98,6 +119,15 @@ O contrato consegue responder:
 
 A Fase 002 pode modelar identidade persistente e a Fase 003 pode implementar
 sync sem descobrir novamente a semântica fundamental dos dados.
+
+## Testes e comandos de validação
+
+- conferir cada campo contra as evidências de API, perfil, battle log e meta;
+- exigir origem, semântica, unidade, optionalidade, freshness e data para cada
+  campo incluído;
+- revisar estados `missing`, `null`, `zero`, `unsupported`, `not observed` e
+  `not applicable` sem colapsá-los;
+- validar exemplos sanitizados e executar `git diff --check`.
 
 ## Riscos e cuidados
 

@@ -1,6 +1,6 @@
 # 001 — Viabilidade de produto, dados e compliance
 
-- **Status geral:** planned
+- **Status geral:** pending
 - **Spec:** [001-viabilidade-produto-dados-compliance.md](../../specs/001-viabilidade-produto-dados-compliance.md)
 - **Progresso:** 0/8 subtarefas concluídas
 
@@ -23,27 +23,14 @@ A fase termina com um veredito explícito: **GO**, **GO WITH CONSTRAINTS** ou
 - [ ] [001-07-definir-contratos-de-dados-v0.md](001-07-definir-contratos-de-dados-v0.md)
 - [ ] [001-08-fechar-gates-e-handoff.md](001-08-fechar-gates-e-handoff.md)
 
-## Sequência e paralelismo
-
-- 001-01 libera os probes autenticados.
-- 001-02 e 001-03 podem avançar em sequência curta após 001-01.
-- 001-04 depende do entendimento de player/battle data.
-- 001-05 consolida custo operacional das estratégias observadas.
-- 001-06 pode avançar em paralelo com 001-02 a 001-05.
-- 001-07 só congela contratos v0 depois das evidências técnicas.
-- 001-08 fecha a fase e atualiza o handoff.
-
-## Gates que bloqueiam a Fase 002
-
-- coleção insuficiente para Deck Readiness;
-- Evolution/Hero ownership não observável e sem fallback aceitável;
-- ausência de estratégia sustentável para candidatos de meta;
-- custos/rate limits incompatíveis com a coleta mínima;
-- uso pretendido incompatível com políticas aplicáveis sem alternativa;
-- contrato de dados ainda baseado em suposição.
-
 ## Observações
 
+- Ordem: `001-01` libera probes; `001-02` e `001-03` seguem; `001-04` depende
+  deles; `001-05` consolida custo operacional; `001-06` pode ocorrer em paralelo;
+  `001-07` congela contratos v0; `001-08` fecha gates e handoff.
+- Gates da Fase 002: coleção insuficiente, Evolution/Hero sem fallback,
+  ausência de meta sustentável, custo/rate incompatível, uso não permitido ou
+  contrato baseado em suposição.
 - Infra-base já está definida: Firebase Authentication + Cloud Firestore e
   Vercel como deploy inicial.
 - Framework e modelagem física continuam abertos; esta fase não deve escolhê-los

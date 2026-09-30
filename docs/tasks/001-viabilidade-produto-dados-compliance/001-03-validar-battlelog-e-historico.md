@@ -2,7 +2,13 @@
 
 - **Ticker:** `001`
 - **Número:** `03`
-- **Status:** `planned`
+- **Status:** `pending`
+
+## Requisitos cobertos
+
+- janela, paginação/cursor, ordenação e modos do battle log;
+- campos de batalha, decks, resultado, contexto competitivo e Evo/Hero;
+- viabilidade de snapshots, polling, deduplicação e limites para histórico.
 
 ## Objetivo e resultado esperado
 
@@ -34,6 +40,13 @@ seria necessária para histórico pós-partida confiável.
 
 - 001-01;
 - semântica de cards iniciada em 001-02.
+
+## Arquivos e símbolos prováveis
+
+- `evidences/battlelog-findings.md`;
+- endpoint `/v1/players/{tag}/battlelog` e campos de batalha observados;
+- chave candidata de deduplicação e contrato conceitual de histórico; não há
+  pipeline ou persistência implementados na `main`.
 
 ## Passos de execução
 
@@ -67,6 +80,16 @@ A evidência precisa distinguir:
 
 Existe um contrato operacional honesto para battle history e não prometemos
 telemetria que a API não fornece.
+
+## Testes e comandos de validação
+
+- repetir o endpoint em mais de um perfil e em horários distintos, respeitando
+  rate limit;
+- comparar tamanho, ordenação e shape das respostas sem usar payload pessoal
+  bruto como fixture versionada;
+- simular por cálculo os cadences 1m/5m/15m/1h, identificando estimativas como
+  tal;
+- revisar `git diff --check` e a classificação documentado/observado/inferido.
 
 ## Riscos e cuidados
 

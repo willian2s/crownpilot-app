@@ -2,7 +2,13 @@
 
 - **Ticker:** `001`
 - **Número:** `05`
-- **Status:** `planned`
+- **Status:** `pending`
+
+## Requisitos cobertos
+
+- cache, latência, erros, `Retry-After`, rate behavior e requisitos de token/IP;
+- custo de requests para sync de jogador, histórico, catálogo e meta;
+- impacto operacional em 1k, 10k e 100k usuários sem executar carga real.
 
 ## Objetivo e resultado esperado
 
@@ -36,6 +42,20 @@ escolher infraestrutura.
 - rotação de IP/token para aumentar throughput;
 - troca da decisão de Vercel como deploy inicial;
 - implementação definitiva de gateway/worker.
+
+## Dependências
+
+- 001-01 para auth, endpoints e headers básicos;
+- 001-02 e 001-03 para custo de perfil e histórico;
+- 001-04 para projetar custo de aquisição do meta.
+
+## Arquivos e símbolos prováveis
+
+- `evidences/operational-findings.md`;
+- headers `Cache-Control` e `Retry-After`, códigos HTTP e variável
+  `CLASH_ROYALE_API_TOKEN`;
+- operações conceituais `syncPlayer`, `ingestMetaBatch` e `refreshCatalog`;
+  nenhum job ou adapter existe na `main`.
 
 ## Passos de execução
 
@@ -75,6 +95,14 @@ com observação conservadora.
 
 A Fase 002 conhece as restrições de integração sem estar presa a um deploy
 específico.
+
+## Testes e comandos de validação
+
+- reutilizar respostas das tasks anteriores, sem provocar `429` deliberadamente;
+- registrar headers e status de probes seguros em evidência sanitizada;
+- calcular requests por operação e projetar os três cenários de escala,
+  marcando-os como estimativas;
+- revisar `Retry-After`, separação user-driven/background e `git diff --check`.
 
 ## Riscos e cuidados
 
