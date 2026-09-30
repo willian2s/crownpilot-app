@@ -12,6 +12,7 @@ Provar quais dados de conta realmente existem hoje e se eles sustentam
 ## Requisitos cobertos
 
 - identidade pública do player;
+- diferença entre perfil público vinculado e ownership verificado;
 - Arena/trophies;
 - coleção;
 - níveis;
@@ -100,6 +101,8 @@ A task só passa se conseguirmos responder objetivamente:
 - sabemos se Evo/Hero necessário está disponível?
 - sabemos o contexto competitivo básico?
 - quais informações de progressão ficam indisponíveis?
+- precisamos provar ownership para alguma feature do MVP ou o vínculo público é
+  suficiente?
 
 ## Definição de pronto
 
