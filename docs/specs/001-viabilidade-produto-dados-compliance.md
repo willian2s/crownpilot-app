@@ -73,6 +73,9 @@ Ao final, a equipe deve saber com evidência:
 
 - Mapear endpoints relevantes do portal oficial e seus contratos observados.
 - Validar Player Tag real e encoding.
+- Investigar a semântica de vínculo da Player Tag: seleção de perfil público vs.
+  ownership verificado, incluindo mecanismo oficial de verificação se existir e
+  for aplicável.
 - Validar payload de perfil e coleção em amostra controlada.
 - Confirmar representação atual de níveis, Arena, troféus, current deck,
   Evolutions e Heroes.
@@ -163,6 +166,17 @@ Nível 3 pode gerar hipótese, nunca substituir validação quando a decisão af
 contrato do produto.
 
 ## Perguntas críticas
+
+### Vínculo e ownership
+
+- A Player Tag pública é suficiente para o produto ou "minha conta" exige prova
+  de ownership?
+- Existe mecanismo oficial atual para verificar ownership/player token?
+- Esse mecanismo possui scope/restrição que inviabiliza uso comum?
+- Se não houver verificação, quais features precisam ser descritas como
+  acompanhamento de perfil público em vez de propriedade confirmada?
+- O MVP suporta uma Player Tag primária por usuário; múltiplas tags ficam fora
+  do escopo inicial.
 
 ### Perfil e coleção
 
@@ -421,6 +435,8 @@ Não realizar stress/load test contra a API oficial.
 - [ ] superfície relevante da API está mapeada com fonte e data;
 - [ ] autenticação/token/IP requirements foram confirmados;
 - [ ] Player Tag válida foi resolvida em probe real;
+- [ ] vínculo de perfil público vs. ownership verificado possui decisão
+  documentada e baseada em capacidade oficial observada;
 - [ ] coleção e níveis foram observados em múltiplos perfis;
 - [ ] Evolution/Hero ownership e deployment foram diferenciados ou marcados
   explicitamente como ainda desconhecidos;
@@ -460,4 +476,6 @@ Não realizar stress/load test contra a API oficial.
 - Não assumimos que ranking global represente Arena intermediária.
 - Não assumimos que a exceção de "coaching" da Fan Content Policy autorize
   automaticamente AI Coach pago.
-- Não assumimos stack web, banco ou deploy nesta fase.
+- Firebase Authentication, Cloud Firestore e Vercel como deploy inicial já são
+  decisões; framework web, modelagem física e detalhes do runtime continuam
+  abertos nesta fase.
