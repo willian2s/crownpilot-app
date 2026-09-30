@@ -207,7 +207,7 @@ Uma fase só é concluída quando:
 
 # 4. Fases
 
-## 001 — Viabilidade de produto, dados e compliance 🚧
+## 001 — Viabilidade de produto, dados e compliance ⬜
 
 ### Objetivo
 
@@ -994,7 +994,8 @@ O maior risco técnico não é UI.
 3. contextualizar por Arena / faixa;
 4. explicar a recomendação.
 
-Por isso a Fase 001 vem antes de decisões profundas de stack.
+Por isso a Fase 001 vem antes de congelar framework, modelagem física,
+pipelines e demais detalhes de implementação.
 
 ---
 
