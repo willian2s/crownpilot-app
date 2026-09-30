@@ -505,7 +505,8 @@ Nenhuma taxa deve ser apresentada sem:
 
 ### Dependências
 
-- Fase 001.
+- Fase 001;
+- Fase 002 para fundação executável, configuração e boundaries de integração.
 
 ### Handoff
 
@@ -954,7 +955,11 @@ Fluxo principal:
 
 A partir dela:
 
-- **002 Identidade → 003 Player Sync**
+**002 Fundação + Identidade**
+
+Depois da fundação, 003 e 004 podem avançar em paralelo:
+
+- **003 Player Sync**
 - **004 Meta Dataset**
 
 As Fases 003 e 004 convergem em:
@@ -974,12 +979,11 @@ Comercialização depende de:
 # 7. Sequência crítica do MVP
 
 1. **001** — provar dados e boundaries;
-2. **002** — identidade persistente;
-3. **003** — Player Snapshot confiável;
-4. **004** — dataset competitivo confiável;
-5. **005** — Best Decks for You;
-6. **006** — Upgrade Planner;
-7. **007** — MVP / Beta.
+2. **002** — bootstrap, segurança e identidade persistente;
+3. **003 + 004 em paralelo** — Player Snapshot e dataset competitivo;
+4. **005** — Best Decks for You;
+5. **006** — Upgrade Planner;
+6. **007** — MVP / Beta.
 
 O maior risco técnico não é UI.
 
@@ -1006,7 +1010,8 @@ Sabemos quais dados temos, o que não temos e como construir o dataset necessár
 
 **Fases 002–003**
 
-Usuário entra em qualquer dispositivo e o CrownPilot conhece sua conta.
+Aplicação possui fundação reproduzível; usuário entra em qualquer dispositivo e
+o CrownPilot conhece e sincroniza sua conta.
 
 ## Marco C — Competitive Dataset
 
