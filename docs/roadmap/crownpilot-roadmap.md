@@ -2,7 +2,7 @@
 
 > **Play the right deck. Upgrade the right cards.**
 
-**Atualizado em:** 30 de setembro de 2026
+**Atualizado em:** 1 de outubro de 2026
 
 Este documento define **o que construir**, **em qual ordem**, as principais dependências, os boundaries do produto e os grandes marcos do CrownPilot.
 
@@ -315,7 +315,7 @@ Uma fase só é concluída quando:
 
 # 4. Fases
 
-## 001 — Viabilidade de produto, dados e compliance ⬜
+## 001 — Viabilidade de produto, dados e compliance 🧪
 
 ### Objetivo
 
@@ -358,9 +358,13 @@ Investigar e documentar:
 
 Antes de qualquer assinatura, paywall ou cobrança por feature, validar explicitamente o modelo comercial contra a política vigente e demais acordos aplicáveis.
 
-A política pública atual da Supercell descreve fan content em geral como não comercial e lista exceções específicas como anúncios, doações e coaching.
+A Fan Content Policy vigente descreve Fan Content como não comercial por padrão: não é permitido cobrar taxa de qualquer tipo, incluindo por funcionalidades in-app, sem aprovação expressa da Supercell. A política lista anúncios, donations e coaching como exceções específicas, mas cada exceção possui condições próprias e não equivale a uma autorização geral para SaaS, premium features ou AI/software coaching.
 
 **Não interpretar isso automaticamente como autorização para qualquer plano Pro.**
+
+O gate da Fase 001 deve determinar, com fonte oficial e classificação explícita, quais modelos de monetização são permitidos para o CrownPilot e quais exigem aprovação expressa da Supercell. Assinatura/paywall por funcionalidades não pode ser assumida como permitida. Ads, donations e coaching devem ser analisados individualmente; a exceção de coaching não autoriza automaticamente coaching por software ou AI. Qualquer modelo dependente de aprovação expressa permanece bloqueado até a aprovação correspondente.
+
+A arquitetura deve continuar funcional sem depender de monetização ainda não aprovada. O produto pode avançar tecnicamente, operar gratuitamente ou usar apenas modelo classificado como permitido sob condições, sem converter a ausência de assinatura em NO-GO automático.
 
 ### Entregas
 
@@ -380,6 +384,8 @@ A política pública atual da Supercell descreve fan content em geral como não 
 - [ ] estratégia de meta possui uma fonte inicial viável;
 - [ ] limites de rate e histórico estão documentados;
 - [ ] boundary de compliance está documentado;
+- [ ] modelos de monetização estão classificados sob a Fan Content Policy como `ALLOWED`, `ALLOWED WITH CONDITIONS`, `REQUIRES EXPLICIT APPROVAL`, `NOT ALLOWED` ou `UNRESOLVED`;
+- [ ] nenhuma dependência crítica do MVP exige assinatura, paywall ou feature paga ainda não aprovada;
 - [ ] semântica de vínculo/ownership da Player Tag está decidida;
 - [ ] nenhuma dependência crítica do MVP continua baseada apenas em suposição.
 
@@ -969,7 +975,7 @@ A feature deve possuir:
 
 ### Monetização
 
-Qualquer plano pago, crédito ou franquia de IA depende do gate comercial das Fases 001 e 012.
+Qualquer plano pago, crédito, franquia de IA ou feature premium depende do gate comercial da Fase 001 e da decisão posterior da Fase 012. O resultado da Fase 001 deve ser consumido como constraint; a Fase 012 não substitui aprovação exigida pela Supercell nem autoriza cobrança por inferência.
 
 Não construir billing primeiro e procurar justificativa depois.
 
@@ -1005,6 +1011,8 @@ Antes de cobrar:
 - registrar a decisão;
 - buscar autorização adicional quando necessária.
 
+Este gate consome a decisão de compliance produzida na Fase 001. A Fase 012 não é autorização implícita para cobrar: qualquer modelo classificado como `REQUIRES EXPLICIT APPROVAL` permanece bloqueado até existir aprovação expressa e rastreável da Supercell. Se a decisão da Fase 001 exigir aprovação ou mantiver o enquadramento ambíguo, a Fase 012 deve planejar operação gratuita ou modelo já permitido sob condições, sem criar billing como premissa.
+
 ### Princípio
 
 Arquitetura de custos deve existir mesmo se o produto continuar gratuito.
@@ -1019,7 +1027,7 @@ Especialmente para IA, observar:
 
 ### Regra
 
-Não assumir no roadmap que assinatura SaaS tradicional é permitida.
+Não assumir no roadmap que assinatura SaaS tradicional, paywall por funcionalidades, AI Coach pago ou venda de analytics são permitidos. Ads, donations, coaching humano, software coaching e AI/software coaching devem respeitar a classificação e as condições registradas na Fase 001.
 
 ### Dependências
 
@@ -1094,7 +1102,9 @@ Depois:
 
 Comercialização depende de:
 
-**001 + evidência do Beta + policy validation → 012 Commercialization & Scale**
+**001 (decisão de compliance) + evidência do Beta + policy validation → 012 Commercialization & Scale**
+
+Fase 012 consome esse resultado; não transforma dependência de aprovação em autorização.
 
 ---
 

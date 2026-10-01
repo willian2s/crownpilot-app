@@ -7,7 +7,8 @@
 ## Requisitos cobertos
 
 - revisão dos critérios da Fase 001 e classificação dos riscos;
-- veredito `GO`, `GO WITH CONSTRAINTS` ou `NO-GO / REDESIGN`;
+- veredito `GO`, `GO WITH CONSTRAINTS`, `GO WITH CONSTRAINTS / APPROVAL DEPENDENCY`
+  ou `NO-GO / REDESIGN`;
 - handoff explícito para a Fase 002 e atualização consistente do overview.
 
 ## Objetivo e resultado esperado
@@ -63,8 +64,20 @@ Exemplos:
 
 - meta segmentado por trophy band em vez de Arena;
 - histórico limitado;
-- monetização bloqueada;
+- monetização bloqueada ou dependente de aprovação;
 - determinado dado de progressão manual.
+
+Quando viabilidade técnica, dados e operação forem suficientes, mas a
+sustentabilidade depender de assinatura, paywall, AI/software coaching ou outro
+modelo classificado como `REQUIRES EXPLICIT APPROVAL`, o veredito deve ser
+`GO WITH CONSTRAINTS / APPROVAL DEPENDENCY`. Isso não é autorização presumida e
+não libera billing. A Fase 001 pode continuar tecnicamente viável com MVP gratuito
+ou modelo permitido sob condições.
+
+`GO WITH CONSTRAINTS / APPROVAL DEPENDENCY` é qualificador formal de
+`GO WITH CONSTRAINTS`: dados, operação e core técnico podem avançar, mas a
+sustentabilidade depende de aprovação expressa para um modelo comercial. Não
+libera billing nem converte a dependência em autorização.
 
 ### NO-GO / REDESIGN
 
@@ -76,7 +89,7 @@ Exemplos:
 - não há estratégia aceitável de candidatos de meta;
 - termos proíbem o modelo fundamental.
 
-## Checklist final
+## Critérios finais
 
 - [ ] api surface documentada;
 - [ ] player/collection provados;
@@ -84,6 +97,12 @@ Exemplos:
 - [ ] meta acquisition avaliada;
 - [ ] operação/rate/caching estimados;
 - [ ] compliance avaliado;
+- [ ] cada modelo de monetização possui status, fonte, condições e ação;
+- [ ] API access foi separado de autorização comercial;
+- [ ] assinatura/paywall, premium features, AI Coach/software coaching, ads,
+  donations, coaching humano, sponsorship e SaaS foram analisados;
+- [ ] sustentabilidade foi avaliada também para operação sem monetização ainda
+  não aprovada;
 - [ ] data contracts v0 definidos;
 - [ ] riscos classificados;
 - [ ] veredito registrado;
@@ -95,7 +114,14 @@ Exemplos:
 
 ### Status
 
-GO / GO WITH CONSTRAINTS / NO-GO.
+GO / GO WITH CONSTRAINTS / NO-GO, com qualificador comercial opcional
+`APPROVAL DEPENDENCY`.
+
+### Qualificação comercial
+
+Registrar separadamente se existe `APPROVAL DEPENDENCY`, qual modelo depende dela,
+qual receita fica bloqueada e qual caminho gratuito ou permitido sob condições
+permanece disponível.
 
 ### Resultado principal
 
@@ -147,6 +173,9 @@ Fazer uma leitura crítica final procurando especificamente por:
 - "meta da Arena" sem cobertura demonstrada;
 - custo de request ignorado;
 - monetização assumida;
+- AI/software coaching tratado como automaticamente coberto por coaching;
+- Fase 012 tratada como autorização implícita para cobrança;
+- API access tratado como autorização comercial;
 - segredo/PII em evidência.
 
 ## Definição de pronto

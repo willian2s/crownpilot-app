@@ -1,8 +1,8 @@
 # 001 — Viabilidade de produto, dados e compliance
 
-- **Status geral:** pending
+- **Status geral:** in_progress
 - **Spec:** [001-viabilidade-produto-dados-compliance.md](../../specs/001-viabilidade-produto-dados-compliance.md)
-- **Progresso:** 0/8 subtarefas concluídas
+- **Progresso:** 1/8 subtarefas concluídas
 
 ## Objetivo
 
@@ -14,7 +14,7 @@ A fase termina com um veredito explícito: **GO**, **GO WITH CONSTRAINTS** ou
 
 ## Checklist
 
-- [ ] [001-01-mapear-api-oficial-e-auth.md](001-01-mapear-api-oficial-e-auth.md)
+- [x] [001-01-mapear-api-oficial-e-auth.md](001-01-mapear-api-oficial-e-auth.md)
 - [ ] [001-02-validar-player-profile-e-collection.md](001-02-validar-player-profile-e-collection.md)
 - [ ] [001-03-validar-battlelog-e-historico.md](001-03-validar-battlelog-e-historico.md)
 - [ ] [001-04-validar-aquisicao-do-meta.md](001-04-validar-aquisicao-do-meta.md)
@@ -40,6 +40,13 @@ A fase termina com um veredito explícito: **GO**, **GO WITH CONSTRAINTS** ou
 - Probes podem usar curl ou script descartável.
 - Token da API e IPs nunca entram no Git.
 - Evidências versionadas devem ser sanitizadas.
+- `001-01` foi concluída com constraints: a rota direta continua bloqueada por allowlist, mas a nova chave produziu 2xx via RoyaleAPI Proxy para cards, profile, battlelog e locations; ownership, limites e termos third-party continuam pendentes.
+- RoyaleAPI Proxy é o transporte operacional atual até decisão de troca ou egress próprio com IP fixo; probes com chave rotacionada funcionaram. Retenção/tratamento de chave, limites, segurança e compatibilidade com Supercell permanecem `UNRESOLVED`; uso continua server-side, sem browser exposure da chave, billing ou autorização comercial implícita.
 - Ranking de topo não será aceito como prova de "meta da Arena" sem análise de
   cobertura e viés.
 - Monetização continua bloqueada até 001-06 produzir boundary explícito.
+- Fan Content Policy trata cobrança por funcionalidades como dependente de
+  aprovação expressa; ads, donations e coaching permanecem exceções condicionais,
+  e software/AI coaching não é automaticamente coberto.
+- Player Tag pode salvar perfil público read-only com `ownershipStatus: unverified`;
+  não representa conta própria, ownership, exclusividade ou autorização de ação.
