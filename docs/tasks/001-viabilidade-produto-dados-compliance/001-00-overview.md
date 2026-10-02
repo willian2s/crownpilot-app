@@ -2,7 +2,7 @@
 
 - **Status geral:** in_progress
 - **Spec:** [001-viabilidade-produto-dados-compliance.md](../../specs/001-viabilidade-produto-dados-compliance.md)
-- **Progresso:** 1/8 subtarefas concluídas
+- **Progresso:** 2/8 subtarefas concluídas
 
 ## Objetivo
 
@@ -15,7 +15,7 @@ A fase termina com um veredito explícito: **GO**, **GO WITH CONSTRAINTS** ou
 ## Checklist
 
 - [x] [001-01-mapear-api-oficial-e-auth.md](001-01-mapear-api-oficial-e-auth.md)
-- [ ] [001-02-validar-player-profile-e-collection.md](001-02-validar-player-profile-e-collection.md)
+- [x] [001-02-validar-player-profile-e-collection.md](001-02-validar-player-profile-e-collection.md)
 - [ ] [001-03-validar-battlelog-e-historico.md](001-03-validar-battlelog-e-historico.md)
 - [ ] [001-04-validar-aquisicao-do-meta.md](001-04-validar-aquisicao-do-meta.md)
 - [ ] [001-05-medir-operacao-cache-e-rate-limits.md](001-05-medir-operacao-cache-e-rate-limits.md)
@@ -50,3 +50,11 @@ A fase termina com um veredito explícito: **GO**, **GO WITH CONSTRAINTS** ou
   e software/AI coaching não é automaticamente coberto.
 - Player Tag pode salvar perfil público read-only com `ownershipStatus: unverified`;
   não representa conta própria, ownership, exclusividade ou autorização de ação.
+- `001-02` concluída com constraints: três perfis foram comparados via proxy;
+  `cards[]` variou entre 73 e 123 itens contra 123 no catálogo, Evolution
+  capability foi observada de forma opcional, mas ownership/deployment de
+  Evolution e Hero permaneceu `unresolved`; campo explícito de Hero ficou
+  `unavailable` no shape observado. Matriz em
+  `evidences/player-field-matrix.md`.
+- `001-02` não confirmou semântica de ownership para `count` nem completude
+  universal de `cards[]`; `currentDeck[]` e coleção devem permanecer separados.

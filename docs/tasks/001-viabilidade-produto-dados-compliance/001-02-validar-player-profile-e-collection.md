@@ -2,7 +2,7 @@
 
 - **Ticker:** `001`
 - **Número:** `02`
-- **Status:** `pending`
+- **Status:** `completed with constraints`
 
 ## Requisitos cobertos
 
@@ -130,9 +130,47 @@ imaginados.
 
 ## Registro de execução
 
-- **Status final:**
-- **Perfis/amostra:** registrar apenas descrição sanitizada.
-- **Campos confirmados:**
-- **Campos deprecated/instáveis:**
-- **Campos indisponíveis:**
-- **Riscos residuais:**
+### Execução em `2026-10-02`
+
+- **Status final:** `completed with constraints`.
+- **Perfis/amostra:** três perfis públicos sanitizados: A intermediário sem
+  clan; B/C avançados com clan. Tags, nomes, clan values e payloads brutos não
+  foram registrados.
+- **Arquivos alterados:**
+  `evidences/player-field-matrix.md`; este registro; overview para marcar somente
+  `001-02` e recalcular progresso.
+- **Campos confirmados:** `cards[]`, `currentDeck[]`, catalog `items[]`,
+  `id`, `name`, `level`, `maxLevel`, `count`, `maxEvolutionLevel`,
+  `evolutionLevel`, `arena`, `trophies`, `bestTrophies`, `collectionLevel`,
+  `kingTowerLevel`, `supportCards[]` e `currentDeckSupportCards[]`.
+- **Campos deprecated/instáveis:** nenhum confirmado como deprecated;
+  `legacyTrophyRoadHighScore`, `progress`, Path of Legend e league structures foram
+  marcados como instáveis ou dependentes de contrato adicional.
+- **Campos indisponíveis:** campo explícito de Hero não apareceu no shape
+  observado; ownership/deployment de Hero permanece `unresolved`; sem prova de
+  semântica de ownership para `count` ou presença em `cards[]`; sem garantia de
+  que `cards[]` sempre cubra catálogo completo.
+- **Decisões:** separar capacidade do catálogo, estado de coleção e deployment
+  do deck; preservar campos raw antes de normalizar raridades; manter Hero como
+  `unresolved`; continuar usando associação `public_profile` com
+  `ownershipStatus: unverified`.
+- **Desvios:** probes foram executados via RoyaleAPI Proxy porque rota direta
+  segue limitada por allowlist de IP. Observações do proxy não foram tratadas
+  como contrato oficial.
+- **Comandos executados:** probes autenticados server-side com `curl` para
+  `/v1/cards` e três `/v1/players/{tag}` usando segredo carregado somente de
+  `.env.local`; resumo estrutural Python em diretório temporário; revisão de
+  headers selecionados; `git diff --check`.
+- **Resultados/evidências:** quatro requests retornaram `200`; catálogo tinha
+  123 items e 4 supportItems; perfis tinham 73, 123 e 123 cards, oito cards no
+  current deck e suporte separado. `Cache-Control` observado: 7s no catálogo e
+  36s nos perfis. Matriz criada em
+  `evidences/player-field-matrix.md`.
+- **Riscos residuais:** semântica oficial de `count`, completude de `cards[]`,
+  Hero ownership/deployment, progressões dinâmicas, contrato direto da API e
+  riscos de retenção/key handling/SLA do proxy continuam pendentes.
+- **Revisão independente:** solicitada após implementação; confirmou correções
+  de separação entre capability, ownership e deployment de Evolution, taxonomia
+  controlada da matriz e sanitização. Ressalva estrutural sobre checklists
+  preexistentes na spec/001-08 ficou fora do escopo desta subtarefa; nenhuma
+  subtarefa seguinte foi iniciada.
