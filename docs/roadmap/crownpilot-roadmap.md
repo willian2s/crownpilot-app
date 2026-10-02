@@ -2,7 +2,7 @@
 
 > **Play the right deck. Upgrade the right cards.**
 
-**Atualizado em:** 1 de outubro de 2026
+**Atualizado em:** 2 de outubro de 2026
 
 Este documento define **o que construir**, **em qual ordem**, as principais dependências, os boundaries do produto e os grandes marcos do CrownPilot.
 
@@ -315,11 +315,21 @@ Uma fase só é concluída quando:
 
 # 4. Fases
 
-## 001 — Viabilidade de produto, dados e compliance 🧪
+## 001 — Viabilidade de produto, dados e compliance ✅
 
 ### Objetivo
 
 Validar se os dados e permissões disponíveis sustentam o produto antes de comprometer a arquitetura.
+
+### Status e veredito
+
+✅ **Fase encerrada com constraints.** O veredito é `GO WITH CONSTRAINTS /
+APPROVAL DEPENDENCY`. O núcleo técnico de bootstrap, identidade CrownPilot e
+vínculo privado read-only de perfil público pode avançar; rota oficial direta,
+ownership, coleção completa, histórico completo, meta representativa da Arena,
+retenção/redistribuição de API data e billing não estão liberados.
+
+Evidência consolidada em [phase-001-verdict.md](../tasks/001-viabilidade-produto-dados-compliance/evidences/phase-001-verdict.md).
 
 ### Escopo
 
@@ -381,7 +391,8 @@ A arquitetura deve continuar funcional sem depender de monetização ainda não 
 
 - [ ] Player Tag válida pode ser resolvida de forma reproduzível;
 - [ ] campos do MVP estão classificados como disponíveis, derivados, opcionais ou indisponíveis;
-- [ ] estratégia de meta possui uma fonte inicial viável;
+- [ ] estratégia de meta possui uma fonte inicial viável para candidatos
+  personalizados, sem alegar meta representativa da Arena;
 - [ ] limites de rate e histórico estão documentados;
 - [ ] boundary de compliance está documentado;
 - [ ] modelos de monetização estão classificados sob a Fan Content Policy como `ALLOWED`, `ALLOWED WITH CONDITIONS`, `REQUIRES EXPLICIT APPROVAL`, `NOT ALLOWED` ou `UNRESOLVED`;
@@ -391,11 +402,19 @@ A arquitetura deve continuar funcional sem depender de monetização ainda não 
 
 ### Handoff
 
-A Fase 002 só fixa contratos persistentes depois que a Fase 001 confirmar quais dados realmente existem.
+A Fase 002 está **released with constraints** para bootstrap reproduzível,
+Firebase Authentication, identidade CrownPilot e vínculo privado read-only de
+perfil público. Pode validar a tag server-side, mas não sincroniza nem persiste
+coleção, níveis, Arena, battle history ou Player Snapshot completo; isso começa
+somente após os gates posteriores. Não há liberação de billing, ownership ou meta
+Arena por este handoff.
 
 ---
 
 ## 002 — Fundação da aplicação e identidade persistente ⬜
+
+**Handoff status:** `released with constraints` — implementação ainda não
+iniciada; limites acima são obrigatórios para seu bootstrap.
 
 ### Objetivo
 
@@ -1087,7 +1106,9 @@ A partir dela:
 
 **002 Fundação + Identidade**
 
-Depois da fundação, 003 e 004 podem avançar em paralelo:
+Depois da fundação, 003 e 004 permanecem bloqueadas até reabertura explícita dos
+gates de API data, retenção, operação e aquisição de meta. Quando liberadas,
+podem avançar em paralelo:
 
 - **003 Player Sync**
 - **004 Meta Dataset**
@@ -1137,7 +1158,9 @@ pipelines e demais detalhes de implementação.
 
 **Fase 001**
 
-Sabemos quais dados temos, o que não temos e como construir o dataset necessário.
+Sabemos quais dados temos, o que não temos, e que o caminho inicial honesto é
+`Best Decks for Your Collection`; meta representativa da Arena continua dependente
+de nova evidência ou fonte licenciada.
 
 ## Marco B — Connected Account
 
@@ -1358,14 +1381,18 @@ Qual fase está liberada e por quê.
 
 A próxima fase ativa é:
 
-> **001 — Viabilidade de produto, dados e compliance**
+> **002 — Fundação da aplicação e identidade persistente**
 
-Antes de escolher stack definitiva ou implementar o recommendation engine, o CrownPilot precisa provar seus contratos fundamentais de dados.
+A Fase 001 foi encerrada com constraints. A Fase 002 pode começar pelo bootstrap,
+pelos quality gates e pela identidade persistente, aplicando o vínculo de perfil
+público sem alegar ownership.
 
-O primeiro deliverable técnico deve responder com evidência:
+O próximo deliverable técnico deve respeitar os gates ainda abertos e preparar a
+validação futura de:
 
-1. O que conseguimos saber de forma confiável a partir de uma Player Tag?
-2. O que conseguimos saber de forma confiável sobre o meta relevante?
-3. Esses dois conjuntos de dados sustentam Best Decks for You?
+1. isolamento de identidade, vínculo e autorização;
+2. boundary server-side e adapter substituível para a API;
+3. condições para liberar sync/persistência somente após revisão dos débitos.
 
-Se a resposta for sim, a arquitetura deixa de ser hipótese e começa a ser produto.
+O fallback de produto permanece **Best Decks for Your Collection** até existir
+evidência suficiente para qualquer alegação de meta da Arena.
