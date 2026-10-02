@@ -2,7 +2,14 @@
 
 - **Ticker:** `001`
 - **Número:** `08`
-- **Status:** `planned`
+- **Status:** `completed with constraints`
+
+## Requisitos cobertos
+
+- revisão dos critérios da Fase 001 e classificação dos riscos;
+- veredito `GO`, `GO WITH CONSTRAINTS`, `GO WITH CONSTRAINTS / APPROVAL DEPENDENCY`
+  ou `NO-GO / REDESIGN`;
+- handoff explícito para a Fase 002 e atualização consistente do overview.
 
 ## Objetivo e resultado esperado
 
@@ -12,6 +19,15 @@ que libera — ou bloqueia — a Fase 002.
 ## Dependências
 
 - 001-01 a 001-07 concluídas ou explicitamente bloqueadas com motivo.
+
+## Arquivos e símbolos prováveis
+
+- `evidences/phase-001-verdict.md`;
+- `docs/tasks/001-viabilidade-produto-dados-compliance/001-00-overview.md`;
+- `docs/roadmap/crownpilot-roadmap.md` somente se escopo, sequência ou promessa
+  do produto mudar;
+- estados de fase `GO`, `GO WITH CONSTRAINTS`, `NO-GO / REDESIGN` e release da
+  Fase 002; não há código de produção a alterar.
 
 ## Escopo incluído
 
@@ -24,6 +40,15 @@ que libera — ou bloqueia — a Fase 002.
 - atualizar roadmap se a hipótese do produto mudar;
 - criar `evidences/phase-001-verdict.md`;
 - registrar ADRs somente se alguma decisão arquitetural já estiver madura.
+
+## Passos de execução
+
+1. Conferir conclusão ou bloqueio explícito de 001-01 a 001-07.
+2. Reconciliar documentação, evidências e critérios da spec.
+3. Classificar gates, riscos, constraints e débitos remanescentes.
+4. Escolher um único veredito permitido e registrar sua justificativa.
+5. Criar o handoff sanitizado e atualizar overview/roadmap somente quando
+   necessário.
 
 ## Vereditos permitidos
 
@@ -39,8 +64,20 @@ Exemplos:
 
 - meta segmentado por trophy band em vez de Arena;
 - histórico limitado;
-- monetização bloqueada;
+- monetização bloqueada ou dependente de aprovação;
 - determinado dado de progressão manual.
+
+Quando viabilidade técnica, dados e operação forem suficientes, mas a
+sustentabilidade depender de assinatura, paywall, AI/software coaching ou outro
+modelo classificado como `REQUIRES EXPLICIT APPROVAL`, o veredito deve ser
+`GO WITH CONSTRAINTS / APPROVAL DEPENDENCY`. Isso não é autorização presumida e
+não libera billing. A Fase 001 pode continuar tecnicamente viável com MVP gratuito
+ou modelo permitido sob condições.
+
+`GO WITH CONSTRAINTS / APPROVAL DEPENDENCY` é qualificador formal de
+`GO WITH CONSTRAINTS`: dados, operação e core técnico podem avançar, mas a
+sustentabilidade depende de aprovação expressa para um modelo comercial. Não
+libera billing nem converte a dependência em autorização.
 
 ### NO-GO / REDESIGN
 
@@ -52,18 +89,28 @@ Exemplos:
 - não há estratégia aceitável de candidatos de meta;
 - termos proíbem o modelo fundamental.
 
-## Checklist final
+## Critérios finais
 
-- [ ] api surface documentada;
-- [ ] player/collection provados;
-- [ ] battle log provado;
-- [ ] meta acquisition avaliada;
-- [ ] operação/rate/caching estimados;
-- [ ] compliance avaliado;
-- [ ] data contracts v0 definidos;
-- [ ] riscos classificados;
-- [ ] veredito registrado;
-- [ ] Fase 002 sabe o que pode assumir.
+- [x] api surface documentada;
+- [x] player/collection provados;
+- [x] battle log provado;
+- [x] meta acquisition avaliada;
+- [x] operação/rate/caching estimados;
+- [x] compliance avaliado;
+- [x] cada modelo de monetização possui status, fonte, condições e ação;
+- [x] API access foi separado de autorização comercial;
+- [x] assinatura/paywall, premium features, AI Coach/software coaching, ads,
+  donations, coaching humano, sponsorship e SaaS foram analisados;
+- [x] sustentabilidade foi avaliada também para operação sem monetização ainda
+  não aprovada;
+- [x] data contracts v0 definidos;
+- [x] riscos classificados;
+- [x] veredito registrado;
+- [x] Fase 002 sabe o que pode assumir.
+
+`[x]` indica que o critério foi revisado contra evidência e recebeu limite
+explícito quando necessário; não significa que cada dependência `UNRESOLVED` foi
+resolvida.
 
 ## Estrutura do handoff
 
@@ -71,7 +118,14 @@ Exemplos:
 
 ### Status
 
-GO / GO WITH CONSTRAINTS / NO-GO.
+GO / GO WITH CONSTRAINTS / NO-GO, com qualificador comercial opcional
+`APPROVAL DEPENDENCY`.
+
+### Qualificação comercial
+
+Registrar separadamente se existe `APPROVAL DEPENDENCY`, qual modelo depende dela,
+qual receita fica bloqueada e qual caminho gratuito ou permitido sob condições
+permanece disponível.
 
 ### Resultado principal
 
@@ -123,17 +177,73 @@ Fazer uma leitura crítica final procurando especificamente por:
 - "meta da Arena" sem cobertura demonstrada;
 - custo de request ignorado;
 - monetização assumida;
+- AI/software coaching tratado como automaticamente coberto por coaching;
+- Fase 012 tratada como autorização implícita para cobrança;
+- API access tratado como autorização comercial;
 - segredo/PII em evidência.
 
 ## Definição de pronto
 
 Não há gate crítico escondido em "descobriremos durante a implementação".
 
+## Riscos e cuidados
+
+- não liberar Fase 002 com evidência ausente ou contrato inferido;
+- não transformar bloqueio comercial em aprovação;
+- não marcar subtarefa concluída apenas porque seu arquivo de evidência existe;
+- preservar a distinção entre estado planejado e resultado observado.
+
+## Testes e comandos de validação
+
+- conferir cada critério de aceite contra evidência rastreável ou marcar como
+  bloqueado;
+- executar revisão crítica para amostra única, fonte secundária, campo
+  deprecated, meta sem cobertura, custo ignorado, monetização presumida e
+  segredo/PII;
+- confirmar que checklist do overview continua com exatamente oito itens e que
+  progresso corresponde aos itens marcados;
+- executar `git diff --check` e verificar links relativos antes do handoff.
+
 ## Registro de execução
 
-- **Status final:**
-- **Veredito:**
-- **Constraints:**
-- **Roadmap atualizado:** yes/no + motivo.
-- **ADRs criados:**
-- **Fase 002:** released/blocked/redesign.
+### Execução final em `2026-10-02`
+
+- **Status final:** `completed with constraints`.
+- **Veredito:** `GO WITH CONSTRAINTS / APPROVAL DEPENDENCY`.
+- **Constraints:** rota oficial direta bloqueada por allowlist; proxy somente
+  server-side e condicional; perfil público read-only com ownership
+  `unverified`; coleção, Evolution/Hero, battle history e meta Arena permanecem
+  limitados; rate, retenção/redistribuição e agreements permanecem pendentes;
+  billing e modelos que exigem aprovação ficam bloqueados.
+- **Arquivos alterados:**
+  `evidences/phase-001-verdict.md`; este arquivo;
+  `001-00-overview.md`; `docs/roadmap/crownpilot-roadmap.md`.
+- **Decisões:** liberar Fase 002 somente para bootstrap, identidade CrownPilot e
+  vínculo privado read-only; adotar `Best Decks for Your Collection` como fallback
+  honesto; preservar gates independentes de API access, data use e autorização
+  comercial; não criar ADR.
+- **Desvios:** nenhum escopo técnico foi antecipado. O roadmap foi atualizado
+  porque o veredito reduz a promessa de meta e libera Fase 002 com limites
+  explícitos; spec e subtarefas `001-01` a `001-07` não foram alteradas.
+- **Comandos e validações:** `git diff --check`; validação de links relativos;
+  validação estrutural de ticker/status/checklist/progresso; busca de segredo,
+  Player Tag real, IP e e-mail; confirmação de ausência de toolchain de aplicação;
+  follow-up estrutural após correção do mapa de dependências.
+- **Resultados/evidências:** overview ficou com status `completed`, progresso
+  `8/8` e exatamente uma seção `## Checklist` com oito itens; o novo veredito
+  rastreia os sete artefatos anteriores, gates, critérios finais, riscos e
+  dependências da Fase 002. Checks documentais passaram.
+- **Riscos residuais:** schema oficial autenticado, ownership, semântica de
+  `count`/Evolution/Hero, paginação/ID de battle, rate/SLA/freshness, proxy,
+  storage/redistribuição, privacy e aprovação comercial continuam pendentes.
+- **Revisão independente inicial:** encontrou contradição no mapa de dependências
+  do roadmap, que ainda permitia avanço paralelo de 003/004 apesar do handoff
+  restrito. O mapa foi corrigido para exigir reabertura explícita dos gates de API
+  data, retenção, operação e meta antes de liberar essas fases.
+- **Follow-up independente:** aprovado — `no findings`; confirmou alinhamento do
+  bloqueio de 003/004 com o handoff, overview, veredito e links.
+- **Roadmap atualizado:** `yes` — status da Fase 001, fallback, handoff restrito
+  da Fase 002 e bloqueio explícito de 003/004 foram alinhados.
+- **ADRs criados:** nenhum; a ADR 001 permanece válida.
+- **Fase 002:** `released with constraints`; Fase 003/004, billing e AI Coach não
+  foram liberados por este fechamento.

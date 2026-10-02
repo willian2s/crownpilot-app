@@ -2,7 +2,7 @@
 
 > **Play the right deck. Upgrade the right cards.**
 
-**Atualizado em:** 30 de setembro de 2026
+**Atualizado em:** 2 de outubro de 2026
 
 Este documento define **o que construir**, **em qual ordem**, as principais dependências, os boundaries do produto e os grandes marcos do CrownPilot.
 
@@ -315,11 +315,21 @@ Uma fase só é concluída quando:
 
 # 4. Fases
 
-## 001 — Viabilidade de produto, dados e compliance ⬜
+## 001 — Viabilidade de produto, dados e compliance ✅
 
 ### Objetivo
 
 Validar se os dados e permissões disponíveis sustentam o produto antes de comprometer a arquitetura.
+
+### Status e veredito
+
+✅ **Fase encerrada com constraints.** O veredito é `GO WITH CONSTRAINTS /
+APPROVAL DEPENDENCY`. O núcleo técnico de bootstrap, identidade CrownPilot e
+vínculo privado read-only de perfil público pode avançar; rota oficial direta,
+ownership, coleção completa, histórico completo, meta representativa da Arena,
+retenção/redistribuição de API data e billing não estão liberados.
+
+Evidência consolidada em [phase-001-verdict.md](../tasks/001-viabilidade-produto-dados-compliance/evidences/phase-001-verdict.md).
 
 ### Escopo
 
@@ -358,9 +368,13 @@ Investigar e documentar:
 
 Antes de qualquer assinatura, paywall ou cobrança por feature, validar explicitamente o modelo comercial contra a política vigente e demais acordos aplicáveis.
 
-A política pública atual da Supercell descreve fan content em geral como não comercial e lista exceções específicas como anúncios, doações e coaching.
+A Fan Content Policy vigente descreve Fan Content como não comercial por padrão: não é permitido cobrar taxa de qualquer tipo, incluindo por funcionalidades in-app, sem aprovação expressa da Supercell. A política lista anúncios, donations e coaching como exceções específicas, mas cada exceção possui condições próprias e não equivale a uma autorização geral para SaaS, premium features ou AI/software coaching.
 
 **Não interpretar isso automaticamente como autorização para qualquer plano Pro.**
+
+O gate da Fase 001 deve determinar, com fonte oficial e classificação explícita, quais modelos de monetização são permitidos para o CrownPilot e quais exigem aprovação expressa da Supercell. Assinatura/paywall por funcionalidades não pode ser assumida como permitida. Ads, donations e coaching devem ser analisados individualmente; a exceção de coaching não autoriza automaticamente coaching por software ou AI. Qualquer modelo dependente de aprovação expressa permanece bloqueado até a aprovação correspondente.
+
+A arquitetura deve continuar funcional sem depender de monetização ainda não aprovada. O produto pode avançar tecnicamente, operar gratuitamente ou usar apenas modelo classificado como permitido sob condições, sem converter a ausência de assinatura em NO-GO automático.
 
 ### Entregas
 
@@ -377,19 +391,30 @@ A política pública atual da Supercell descreve fan content em geral como não 
 
 - [ ] Player Tag válida pode ser resolvida de forma reproduzível;
 - [ ] campos do MVP estão classificados como disponíveis, derivados, opcionais ou indisponíveis;
-- [ ] estratégia de meta possui uma fonte inicial viável;
+- [ ] estratégia de meta possui uma fonte inicial viável para candidatos
+  personalizados, sem alegar meta representativa da Arena;
 - [ ] limites de rate e histórico estão documentados;
 - [ ] boundary de compliance está documentado;
+- [ ] modelos de monetização estão classificados sob a Fan Content Policy como `ALLOWED`, `ALLOWED WITH CONDITIONS`, `REQUIRES EXPLICIT APPROVAL`, `NOT ALLOWED` ou `UNRESOLVED`;
+- [ ] nenhuma dependência crítica do MVP exige assinatura, paywall ou feature paga ainda não aprovada;
 - [ ] semântica de vínculo/ownership da Player Tag está decidida;
 - [ ] nenhuma dependência crítica do MVP continua baseada apenas em suposição.
 
 ### Handoff
 
-A Fase 002 só fixa contratos persistentes depois que a Fase 001 confirmar quais dados realmente existem.
+A Fase 002 está **released with constraints** para bootstrap reproduzível,
+Firebase Authentication, identidade CrownPilot e vínculo privado read-only de
+perfil público. Pode validar a tag server-side, mas não sincroniza nem persiste
+coleção, níveis, Arena, battle history ou Player Snapshot completo; isso começa
+somente após os gates posteriores. Não há liberação de billing, ownership ou meta
+Arena por este handoff.
 
 ---
 
 ## 002 — Fundação da aplicação e identidade persistente ⬜
+
+**Handoff status:** `released with constraints` — implementação ainda não
+iniciada; limites acima são obrigatórios para seu bootstrap.
 
 ### Objetivo
 
@@ -969,7 +994,7 @@ A feature deve possuir:
 
 ### Monetização
 
-Qualquer plano pago, crédito ou franquia de IA depende do gate comercial das Fases 001 e 012.
+Qualquer plano pago, crédito, franquia de IA ou feature premium depende do gate comercial da Fase 001 e da decisão posterior da Fase 012. O resultado da Fase 001 deve ser consumido como constraint; a Fase 012 não substitui aprovação exigida pela Supercell nem autoriza cobrança por inferência.
 
 Não construir billing primeiro e procurar justificativa depois.
 
@@ -1005,6 +1030,8 @@ Antes de cobrar:
 - registrar a decisão;
 - buscar autorização adicional quando necessária.
 
+Este gate consome a decisão de compliance produzida na Fase 001. A Fase 012 não é autorização implícita para cobrar: qualquer modelo classificado como `REQUIRES EXPLICIT APPROVAL` permanece bloqueado até existir aprovação expressa e rastreável da Supercell. Se a decisão da Fase 001 exigir aprovação ou mantiver o enquadramento ambíguo, a Fase 012 deve planejar operação gratuita ou modelo já permitido sob condições, sem criar billing como premissa.
+
 ### Princípio
 
 Arquitetura de custos deve existir mesmo se o produto continuar gratuito.
@@ -1019,7 +1046,7 @@ Especialmente para IA, observar:
 
 ### Regra
 
-Não assumir no roadmap que assinatura SaaS tradicional é permitida.
+Não assumir no roadmap que assinatura SaaS tradicional, paywall por funcionalidades, AI Coach pago ou venda de analytics são permitidos. Ads, donations, coaching humano, software coaching e AI/software coaching devem respeitar a classificação e as condições registradas na Fase 001.
 
 ### Dependências
 
@@ -1079,7 +1106,9 @@ A partir dela:
 
 **002 Fundação + Identidade**
 
-Depois da fundação, 003 e 004 podem avançar em paralelo:
+Depois da fundação, 003 e 004 permanecem bloqueadas até reabertura explícita dos
+gates de API data, retenção, operação e aquisição de meta. Quando liberadas,
+podem avançar em paralelo:
 
 - **003 Player Sync**
 - **004 Meta Dataset**
@@ -1094,7 +1123,9 @@ Depois:
 
 Comercialização depende de:
 
-**001 + evidência do Beta + policy validation → 012 Commercialization & Scale**
+**001 (decisão de compliance) + evidência do Beta + policy validation → 012 Commercialization & Scale**
+
+Fase 012 consome esse resultado; não transforma dependência de aprovação em autorização.
 
 ---
 
@@ -1127,7 +1158,9 @@ pipelines e demais detalhes de implementação.
 
 **Fase 001**
 
-Sabemos quais dados temos, o que não temos e como construir o dataset necessário.
+Sabemos quais dados temos, o que não temos, e que o caminho inicial honesto é
+`Best Decks for Your Collection`; meta representativa da Arena continua dependente
+de nova evidência ou fonte licenciada.
 
 ## Marco B — Connected Account
 
@@ -1348,14 +1381,18 @@ Qual fase está liberada e por quê.
 
 A próxima fase ativa é:
 
-> **001 — Viabilidade de produto, dados e compliance**
+> **002 — Fundação da aplicação e identidade persistente**
 
-Antes de escolher stack definitiva ou implementar o recommendation engine, o CrownPilot precisa provar seus contratos fundamentais de dados.
+A Fase 001 foi encerrada com constraints. A Fase 002 pode começar pelo bootstrap,
+pelos quality gates e pela identidade persistente, aplicando o vínculo de perfil
+público sem alegar ownership.
 
-O primeiro deliverable técnico deve responder com evidência:
+O próximo deliverable técnico deve respeitar os gates ainda abertos e preparar a
+validação futura de:
 
-1. O que conseguimos saber de forma confiável a partir de uma Player Tag?
-2. O que conseguimos saber de forma confiável sobre o meta relevante?
-3. Esses dois conjuntos de dados sustentam Best Decks for You?
+1. isolamento de identidade, vínculo e autorização;
+2. boundary server-side e adapter substituível para a API;
+3. condições para liberar sync/persistência somente após revisão dos débitos.
 
-Se a resposta for sim, a arquitetura deixa de ser hipótese e começa a ser produto.
+O fallback de produto permanece **Best Decks for Your Collection** até existir
+evidência suficiente para qualquer alegação de meta da Arena.

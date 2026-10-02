@@ -458,11 +458,11 @@ O projeto não deve presumir que um SaaS tradicional com assinatura/paywall é p
 
 A Fase 001 possui uma task específica para determinar o estado de cada possibilidade:
 
-- allowed by published policy;
-- allowed with constraints;
-- requires explicit approval / clarification;
-- not allowed;
-- unresolved.
+- `ALLOWED`;
+- `ALLOWED WITH CONDITIONS`;
+- `REQUIRES EXPLICIT APPROVAL`;
+- `NOT ALLOWED`;
+- `UNRESOLVED`.
 
 Pontos a validar:
 
@@ -479,6 +479,29 @@ Pontos a validar:
 Até essa análise ser concluída:
 
 > **billing permanece bloqueado.**
+
+### Atualização documental em 1º de outubro de 2026
+
+A leitura da Fan Content Policy oficial confirmou que Fan Content é não comercial
+por padrão e que não é permitido cobrar taxa de qualquer tipo, inclusive por
+funcionalidades in-app, sem aprovação expressa da Supercell. Ads, donations e
+coaching são exceções condicionais, não autorização geral para assinatura,
+premium features, software coaching ou AI Coach.
+
+Para o CrownPilot, a ausência de aprovação de assinatura não gera NO-GO automático.
+O produto pode permanecer tecnicamente viável com operação gratuita ou modelo
+permitido sob condições. Se a sustentabilidade depender de modelo que exige
+aprovação, o resultado deve ser `GO WITH CONSTRAINTS / APPROVAL DEPENDENCY`, com a
+receita bloqueada até aprovação rastreável. Acesso à API, API key ou ownership
+verification não equivalem a autorização comercial.
+
+Fontes oficiais consultadas em `2026-10-01`:
+
+- [Supercell Fan Content Policy](https://supercell.com/en/fan-content-policy/),
+  `Last updated: September 27, 2023`;
+- [Supercell Terms of Service](https://supercell.com/en/terms-of-service/),
+  `Effective Date: November 6, 2024`;
+- [Clash Royale API developer portal](https://developer.clashroyale.com/).
 
 ---
 
