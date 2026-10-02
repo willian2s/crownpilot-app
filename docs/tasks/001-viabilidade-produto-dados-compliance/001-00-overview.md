@@ -2,7 +2,7 @@
 
 - **Status geral:** in_progress
 - **Spec:** [001-viabilidade-produto-dados-compliance.md](../../specs/001-viabilidade-produto-dados-compliance.md)
-- **Progresso:** 6/8 subtarefas concluídas
+- **Progresso:** 7/8 subtarefas concluídas
 
 ## Objetivo
 
@@ -20,7 +20,7 @@ A fase termina com um veredito explícito: **GO**, **GO WITH CONSTRAINTS** ou
 - [x] [001-04-validar-aquisicao-do-meta.md](001-04-validar-aquisicao-do-meta.md)
 - [x] [001-05-medir-operacao-cache-e-rate-limits.md](001-05-medir-operacao-cache-e-rate-limits.md)
 - [x] [001-06-validar-compliance-e-monetizacao.md](001-06-validar-compliance-e-monetizacao.md)
-- [ ] [001-07-definir-contratos-de-dados-v0.md](001-07-definir-contratos-de-dados-v0.md)
+- [x] [001-07-definir-contratos-de-dados-v0.md](001-07-definir-contratos-de-dados-v0.md)
 - [ ] [001-08-fechar-gates-e-handoff.md](001-08-fechar-gates-e-handoff.md)
 
 ## Observações
@@ -89,3 +89,9 @@ A fase termina com um veredito explícito: **GO**, **GO WITH CONSTRAINTS** ou
   redistribuição de API data e aprovação externa para modelos comerciais ainda
   precisam ser revisados antes de qualquer cobrança; não impede discovery gratuito
   sob constraints, mas não é autorização comercial.
+- `001-07` concluída com constraints: contratos conceituais v0 preservam
+  provenance/freshness, estados de ausência, separação raw/normalized/derived,
+  coleção versus deployment e capability/ownership/deployment de Evolution/Hero.
+  Ownership verificado, Hero explícito, completude de coleção e freshness oficial
+  continuam indisponíveis ou unresolved; evidência em
+  `evidences/data-contract-v0.md`. `001-08` permanece pendente.
