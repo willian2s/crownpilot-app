@@ -2,7 +2,7 @@
 
 - **Ticker:** `001`
 - **Número:** `06`
-- **Status:** `pending`
+- **Status:** `completed with constraints`
 
 ## Requisitos cobertos
 
@@ -254,3 +254,55 @@ pode operar gratuitamente e se um eventual veredito é
 - **Riscos residuais:** policy pode mudar; Supercell reserva interpretação de
   coaching; API access não prova autorização comercial; donations não podem
   conceder benefícios; aprovação externa pode ser necessária.
+
+### Execução final em `2026-10-02`
+
+- **Status final:** `completed with constraints`; evidência final criada em
+  `evidences/compliance-findings.md`.
+- **Arquivos alterados:** `evidences/compliance-findings.md`, esta task e
+  `001-00-overview.md`.
+- **Fontes/data de consulta:** Fan Content Policy consultada em `2026-10-02`,
+  com `Last updated: September 27, 2023`; Terms of Service consultados em
+  `2026-10-02`, com `Effective Date: November 6, 2024`; Privacy Policy consultada
+  em `2026-10-02`, com `Effective Date: March 11th, 2026`; portal/API docs oficial
+  consultado em `2026-10-02`. A versão visível da Fan Content Policy permaneceu
+  consistente com o registro de `2026-10-01`.
+- **Decisões:** fan app/MVP gratuito é `ALLOWED WITH CONDITIONS`; ads,
+  donations, coaching humano e sponsorship são `ALLOWED WITH CONDITIONS`; assets
+  não modificados e `crownpilot` são condicionais; cobrança, assinatura,
+  paywall, premium features, analytics pago, SaaS, AI Coach pago, software/AI
+  coaching e assets modificados são `REQUIRES EXPLICIT APPROVAL`; AI Coach
+  gratuito e storage/redistribuição de API data permanecem `UNRESOLVED`; bots,
+  mods, automação, private servers, account trading e software não autorizado
+  são `NOT ALLOWED`.
+- **Boundaries:** MVP pode operar gratuitamente apenas sem billing, sem promessa
+  de ownership e sob minimização/privacidade de Player Tag, disclaimer legível,
+  assets permitidos e revisão dos agreements; API access e autorização comercial
+  permanecem gates separados.
+- **Monetização:** resultado da task é `GO WITH CONSTRAINTS / APPROVAL DEPENDENCY`;
+  não é aprovação jurídica ou Supercell. Billing, plano Pro e feature essencial
+  paga continuam bloqueados.
+- **Comandos/resultados/evidências:** consultas oficiais via `webfetch` e `curl`
+  retornaram HTTP `200` nas cinco URLs registradas; validação documental via
+  `python3` confirmou ticker/número/status, checklist único com oito itens,
+  progresso `6/8`, 25 linhas classificadas somente com estados permitidos e 15/15
+  respostas; busca via `rg` não encontrou credenciais, Player Tags, IPs ou e-mails
+  nos três arquivos alterados; `git diff --check` terminou sem saída/erro.
+- **Revisão final:** corrigida a classificação da autorização comercial derivada
+  de API access para `REQUIRES EXPLICIT APPROVAL`, alinhando a matriz ao gate de
+  cobrança; Privacy Policy incluída como fonte do boundary de Player Tag, sem
+  tratá-la como autorização para o tratamento feito pelo CrownPilot.
+- **Desvios:** developer/API agreements autenticados não estavam disponíveis
+  nesta sessão; por isso storage, cache, retenção e redistribuição de API data
+  permanecem `UNRESOLVED`, e o portal não foi tratado como autorização comercial.
+- **Aprovação externa necessária:** sim, antes de qualquer cobrança, modelo SaaS,
+  premium feature ou software/AI coaching; também antes de assets modificados ou
+  domínio/handle com trademark/nome de jogo.
+- **Riscos residuais:** policy e Terms podem mudar; interpretação de coaching é
+  reservada à Supercell; termos autenticados, proxy, retenção de API data e
+  privacy review do vínculo Player Tag permanecem pendentes. `001-08` deve
+  consumir este gate sem converter dependência em autorização.
+- **Revisão independente:** aprovada com ressalvas; confirmou estrutura SDD,
+  matriz, questões obrigatórias, gates comerciais separados e ausência de
+  bloqueadores adicionais. Riscos de agreements autenticados, privacidade e
+  interpretação de coaching permanecem conforme registrado acima.
