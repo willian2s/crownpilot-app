@@ -2,7 +2,7 @@
 
 - **Status geral:** in_progress
 - **Spec:** [001-viabilidade-produto-dados-compliance.md](../../specs/001-viabilidade-produto-dados-compliance.md)
-- **Progresso:** 3/8 subtarefas concluídas
+- **Progresso:** 4/8 subtarefas concluídas
 
 ## Objetivo
 
@@ -17,7 +17,7 @@ A fase termina com um veredito explícito: **GO**, **GO WITH CONSTRAINTS** ou
 - [x] [001-01-mapear-api-oficial-e-auth.md](001-01-mapear-api-oficial-e-auth.md)
 - [x] [001-02-validar-player-profile-e-collection.md](001-02-validar-player-profile-e-collection.md)
 - [x] [001-03-validar-battlelog-e-historico.md](001-03-validar-battlelog-e-historico.md)
-- [ ] [001-04-validar-aquisicao-do-meta.md](001-04-validar-aquisicao-do-meta.md)
+- [x] [001-04-validar-aquisicao-do-meta.md](001-04-validar-aquisicao-do-meta.md)
 - [ ] [001-05-medir-operacao-cache-e-rate-limits.md](001-05-medir-operacao-cache-e-rate-limits.md)
 - [ ] [001-06-validar-compliance-e-monetizacao.md](001-06-validar-compliance-e-monetizacao.md)
 - [ ] [001-07-definir-contratos-de-dados-v0.md](001-07-definir-contratos-de-dados-v0.md)
@@ -65,3 +65,10 @@ A fase termina com um veredito explícito: **GO**, **GO WITH CONSTRAINTS** ou
   não pode ser prometido. Evidência sanitizada em
   `evidences/battlelog-findings.md`; rota proxy, semântica de modos, Hero e
   retenção permanecem riscos pendentes.
+- `001-04` concluída com constraints: nenhuma estratégia testada demonstrou
+  cobertura intermediária suficiente para sustentar “meta por Arena”. Rankings de
+  players e Path of Legend retornaram `404` via proxy; cohorts de clans ficaram
+  concentrados em 14.000 trophies; battle log fornece candidatos observados, mas
+  com viés de atividade/oponente. Estratégia preferida é híbrida e limitada para
+  **Best Decks for Your Collection**; meta de Arena permanece não resolvido.
+  Evidência sanitizada em `evidences/meta-strategy-comparison.md`.
