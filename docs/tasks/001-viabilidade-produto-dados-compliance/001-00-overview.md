@@ -2,7 +2,7 @@
 
 - **Status geral:** in_progress
 - **Spec:** [001-viabilidade-produto-dados-compliance.md](../../specs/001-viabilidade-produto-dados-compliance.md)
-- **Progresso:** 4/8 subtarefas concluídas
+- **Progresso:** 5/8 subtarefas concluídas
 
 ## Objetivo
 
@@ -18,7 +18,7 @@ A fase termina com um veredito explícito: **GO**, **GO WITH CONSTRAINTS** ou
 - [x] [001-02-validar-player-profile-e-collection.md](001-02-validar-player-profile-e-collection.md)
 - [x] [001-03-validar-battlelog-e-historico.md](001-03-validar-battlelog-e-historico.md)
 - [x] [001-04-validar-aquisicao-do-meta.md](001-04-validar-aquisicao-do-meta.md)
-- [ ] [001-05-medir-operacao-cache-e-rate-limits.md](001-05-medir-operacao-cache-e-rate-limits.md)
+- [x] [001-05-medir-operacao-cache-e-rate-limits.md](001-05-medir-operacao-cache-e-rate-limits.md)
 - [ ] [001-06-validar-compliance-e-monetizacao.md](001-06-validar-compliance-e-monetizacao.md)
 - [ ] [001-07-definir-contratos-de-dados-v0.md](001-07-definir-contratos-de-dados-v0.md)
 - [ ] [001-08-fechar-gates-e-handoff.md](001-08-fechar-gates-e-handoff.md)
@@ -72,3 +72,11 @@ A fase termina com um veredito explícito: **GO**, **GO WITH CONSTRAINTS** ou
   com viés de atividade/oponente. Estratégia preferida é híbrida e limitada para
   **Best Decks for Your Collection**; meta de Arena permanece não resolvido.
   Evidência sanitizada em `evidences/meta-strategy-comparison.md`.
+- `001-05` concluída com constraints: cache, latência, status e ausência de
+  `Retry-After` foram consolidados sem provocar `429`; limite numérico permanece
+  desconhecido. Cenário de impacto com polling de 5m para 1k/10k/100k projeta
+  289.311/2.890.311/28.900.311 requests por dia, antes de retries e sem desconto
+  de cache upstream. Egress direto continua bloqueado por IP; Vercel Static IPs
+  pode atender em Pro/Enterprise com limite de regiões compatível com a allowlist,
+  mas gateway externo continua fallback substituível. Ver
+  `evidences/operational-findings.md`.
