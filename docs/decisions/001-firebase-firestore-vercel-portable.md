@@ -1,8 +1,12 @@
 # 001 — Firebase Authentication, Cloud Firestore e Vercel portátil
 
-- **Status:** accepted
+- **Status:** accepted — Auth/Firestore portions superseded by ADR 003
 - **Data:** 2026-09-29
 - **Escopo:** infraestrutura-base do CrownPilot
+
+ADR 003 substitui Firebase Authentication, Cloud Firestore e região para Fase
+002. Vercel, portabilidade de domínio e adapter da Clash Royale API continuam
+válidos. Esta ADR permanece como histórico da decisão inicial.
 
 ## Contexto
 
@@ -56,6 +60,9 @@ Ainda ficam para specs futuras:
 - custos e limites.
 
 Essas decisões devem partir dos contratos de dados e volume medidos na Fase 001.
+
+Para a Fase 002, framework/runtime, deploy containerizado e região foram
+decididos na [ADR 002](002-laravel-inertia-react-vite-firestore-region.md).
 
 ### Deploy/runtime
 
@@ -143,15 +150,17 @@ Se for necessário IP estável:
 
 Esta decisão não escolhe:
 
-- Next.js ou outro framework;
 - ORM;
 - estrutura de collections;
-- região do Firestore;
 - estratégia de índices;
 - scheduler;
 - fila;
-- runtime Node/Edge;
 - arquitetura do pipeline de meta.
+
+Framework, runtime, deploy containerizado e região deixaram de ser itens abertos
+para a Fase 002. A ADR 002 fixa Laravel/PHP + Inertia/React/Vite, deploy Vercel
+via FrankenPHP e `southamerica-east1`; collections, índices, scheduler, fila e
+pipeline de meta continuam abertos.
 
 ## Regra de revisão
 

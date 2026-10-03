@@ -133,9 +133,11 @@ Toda estatística competitiva deve carregar:
 
 Decisões iniciais do projeto:
 
-- Firebase Authentication com Google para a conta CrownPilot;
-- Cloud Firestore como banco principal;
-- Vercel como plataforma inicial de deploy.
+- Supabase Auth com Google para a conta CrownPilot;
+- Supabase PostgreSQL como banco principal;
+- região Supabase `sa-east-1` (São Paulo), condicionada à disponibilidade no
+  plano/organização;
+- Vercel como plataforma inicial de deploy via Docker/FrankenPHP.
 
 Vercel não deve se tornar um boundary do domínio.
 
@@ -152,14 +154,14 @@ especialmente por possíveis requisitos de egress/IP allowlist.
 A fundação deve nascer segura por padrão:
 
 - segredos de integração permanecem somente no servidor;
-- acesso client-side ao Firestore exige Security Rules versionadas e testadas;
-- acesso server-side ao Firestore usa IAM/Admin SDK com privilégio mínimo;
+- acesso client-side ao Supabase Data API não é usado para dados CrownPilot;
+- PostgreSQL usa migrations e RLS versionadas/testadas;
+- acesso server-side usa Eloquent com secrets Supabase mínimos;
 - local, preview e produção não devem compartilhar dados/segredos de forma
   acidental;
-- Firebase Emulator Suite deve ser usado quando trouxer isolamento e testes
-  reproduzíveis;
-- decisões difíceis de reverter, como localização do Firestore, precisam ser
-  tomadas e registradas antes de provisionar produção.
+- Supabase CLI/Docker deve ser usado para isolamento e testes reproduzíveis;
+- decisões difíceis de reverter, como região Supabase, precisam ser tomadas e
+  registradas antes de provisionar produção.
 
 A estratégia exata de client vs. server access será definida na Fase 002, mas
 não é permitido tratar autenticação como autorização.
@@ -172,7 +174,7 @@ O CrownPilot usa ambientes com responsabilidades diferentes.
 
 Desenvolvimento local usa:
 
-- Firebase Emulator Suite quando houver integração com Auth/Firestore;
+- Supabase CLI/Docker quando houver integração com Auth/PostgreSQL;
 - dados locais/descartáveis;
 - nenhum secret de produção.
 
@@ -188,16 +190,15 @@ Preview serve para:
 - executar smoke checks que não dependem de autenticação real;
 - compartilhar uma versão da mudança antes do merge.
 
-Preview **não é ambiente Firebase completo**.
+Preview **não é ambiente Supabase completo**.
 
 Mesmo que a Vercel mantenha alias estável por branch, cada PR possui seu próprio
-hostname. Como Firebase Authentication exige domínio autorizado, não vamos
-automatizar autorização de hosts efêmeros nem compartilhar Firebase de produção
-com previews.
+hostname. Como Supabase Auth exige redirect allowlist, não vamos automatizar
+autorização de hosts efêmeros nem compartilhar Supabase de produção com previews.
 
 Portanto, Preview não precisa oferecer Google Sign-In real.
 
-Features que exigem Firebase/Auth completo são validadas em staging.
+Features que exigem Supabase Auth/PostgreSQL completo são validadas em staging.
 
 ### Staging
 
@@ -208,10 +209,10 @@ Deve possuir:
 - hostname fixo;
 - ambiente Vercel próprio, preferencialmente Custom Environment;
 - environment variables próprias;
-- Firebase project separado de produção;
-- domínio autorizado no Firebase Authentication;
+- Supabase project separado de produção;
+- redirect allowlist autorizado no Supabase Auth;
 - Google Sign-In real;
-- Firestore de staging;
+- PostgreSQL Supabase de staging em `sa-east-1`, se disponível;
 - dados de teste;
 - execução de testes E2E e smoke.
 
@@ -229,7 +230,7 @@ Pull Request
     v
 staging
     |
-    +--> Firebase staging
+    +--> Supabase staging
     +--> E2E
     +--> smoke
     |
@@ -244,7 +245,7 @@ production
 
 A branch `main` é a única fonte de deploy de produção.
 
-Production usa Firebase project, secrets e domínio próprios.
+Production usa Supabase project, secrets e domínio próprios.
 
 ## 2.10 Estratégia de testes
 
@@ -253,8 +254,8 @@ Testes fazem parte da fundação e evoluem junto com o produto.
 Camadas previstas:
 
 - **unit** — funções puras, domínio, normalização, scoring e canonicalização;
-- **integration** — adapters, Firebase Auth/Firestore e boundaries;
-- **Security Rules** — regras Firestore testadas contra Emulator Suite;
+- **integration** — adapters, Supabase Auth/PostgreSQL e boundaries;
+- **RLS** — policies PostgreSQL testadas contra Supabase CLI/Docker;
 - **contract** — contratos de integrações como `ClashRoyaleClient` usando
   fixtures sanitizadas;
 - **E2E** — fluxos críticos completos executados em staging;
@@ -266,7 +267,8 @@ motivo técnico.
 
 Gates mínimos esperados:
 
-- **PR:** lint + type-check + unit + integration + contract + build;
+- **PR:** lint + type-check + unit + integration + contract + RLS + build;
+- **main push:** mesmos gates + build Docker + smoke do container;
 - **staging:** gates de PR + E2E + smoke;
 - **production:** gates aprovados + deploy + smoke.
 
@@ -403,7 +405,7 @@ A arquitetura deve continuar funcional sem depender de monetização ainda não 
 ### Handoff
 
 A Fase 002 está **released with constraints** para bootstrap reproduzível,
-Firebase Authentication, identidade CrownPilot e vínculo privado read-only de
+Supabase Auth, identidade CrownPilot e vínculo privado read-only de
 perfil público. Pode validar a tag server-side, mas não sincroniza nem persiste
 coleção, níveis, Arena, battle history ou Player Snapshot completo; isso começa
 somente após os gates posteriores. Não há liberação de billing, ownership ou meta
@@ -436,24 +438,23 @@ Player Tag em cada dispositivo.
 - CI com gates de lint, type-check, testes e build;
 - `.env.example` sem secrets;
 - estratégia local / preview / staging / production;
-- Preview Deployments efêmeros para PRs sem dependência de Firebase Auth real;
+- Preview Deployments efêmeros para PRs sem dependência de Supabase Auth real;
 - branch `staging` com hostname fixo para validação completa;
 - deploy de produção somente a partir da `main`;
 - deploy inicial na Vercel sem dependência obrigatória de serviços proprietários.
 
-#### Firebase
+#### Supabase
 
-- Firebase Authentication com Google;
-- Cloud Firestore como banco principal;
-- decidir e registrar localização do Firestore antes de provisionar produção;
-- Firebase CLI e Emulator Suite para desenvolvimento/testes;
-- Firebase project separado para staging e production;
-- domínio fixo de staging autorizado no Firebase Authentication;
-- definir boundary de acesso ao Firestore:
-  - client SDK + Security Rules; ou
-  - server SDK/Admin + IAM;
-  - ou combinação explicitamente documentada;
-- versionar e testar Security Rules para qualquer acesso client-side;
+- Supabase Auth com Google;
+- Supabase PostgreSQL como banco principal;
+- confirmar disponibilidade de `sa-east-1` e registrar decisão antes de produção;
+- Supabase CLI/Docker para desenvolvimento/testes;
+- Supabase project separado para staging e production;
+- redirect allowlist fixo de staging no Supabase Auth;
+- validar JWT/JWKS no Laravel e criar sessão segura;
+- migrations SQL como fonte única de schema;
+- RLS/grants versionados e testados;
+- browser sem acesso à Data API/PostgREST para dados CrownPilot;
 - garantir que local/preview/staging não usem produção por acidente.
 
 #### Identidade CrownPilot
@@ -480,7 +481,7 @@ O token da Clash Royale API nunca é exposto ao browser.
 ### Requisitos
 
 - nenhuma credencial da Supercell é solicitada;
-- Firebase Authentication identifica o usuário CrownPilot;
+- Supabase Auth identifica o usuário CrownPilot;
 - Player Tag é vínculo de domínio, com semântica definida pela Fase 001;
 - nova sessão recupera a tag vinculada;
 - mudança/desvinculação da tag é explícita;
@@ -492,23 +493,25 @@ O token da Clash Royale API nunca é exposto ao browser.
 
 - [ ] bootstrap pode ser reproduzido a partir do repositório limpo;
 - [ ] lint, type-check, unit, integration, contract, E2E e build possuem comandos definidos;
-- [ ] CI executa lint, type-check, unit, integration, contract e build nos PRs;
-- [ ] testes de Security Rules executam contra Firebase Emulator Suite;
+- [ ] CI executa lint, type-check, unit, integration, contract, RLS e build nos PRs;
+- [ ] CI repete gates, build Docker e smoke de container em push para `main`;
+- [ ] migrations e testes RLS executam contra Supabase CLI/Docker;
 - [ ] PRs geram Preview Deployments sem depender de Google Sign-In real;
 - [ ] branch `staging` possui hostname fixo e ambiente de pré-produção;
-- [ ] staging possui Firebase project separado e Google Sign-In funcional;
+- [ ] staging possui Supabase project separado e Google Sign-In funcional;
 - [ ] E2E do fluxo crítico roda em staging;
 - [ ] `main` é a única fonte de deploy de produção;
 - [ ] ambientes local/preview/staging/production estão separados e documentados;
-- [ ] localização do Firestore está decidida antes do banco de produção;
-- [ ] Firestore não possui acesso público irrestrito;
-- [ ] Security Rules/IAM refletem o boundary escolhido e possuem validação;
+- [ ] `sa-east-1` está disponível e decidida antes do banco de produção;
+- [ ] PostgreSQL/Data API não possui acesso público irrestrito;
+- [ ] RLS/grants e autorização Laravel refletem o boundary escolhido e possuem
+      validação;
 - [ ] usuário consegue criar sessão com Google;
 - [ ] usuário vincula uma Player Tag uma vez;
 - [ ] outro dispositivo recupera o vínculo após login;
 - [ ] usuário consegue trocar/desvincular a tag;
 - [ ] erros de integração não causam perda do vínculo;
-- [ ] nenhum token da Supercell ou credencial de serviço chega ao client;
+- [ ] nenhum token da Supercell ou secret Supabase chega ao client;
 - [ ] deploy inicial na Vercel funciona sem tornar Vercel parte do domínio;
 - [ ] smoke tests passam em staging e production.
 
@@ -518,7 +521,7 @@ O token da Clash Royale API nunca é exposto ao browser.
 
 ### Handoff
 
-Entregar aplicação reproduzível, identidade estável, Firestore seguro e
+Entregar aplicação reproduzível, identidade estável, PostgreSQL/RLS seguro e
 boundaries suficientes para a Fase 003 implementar o sync da conta.
 
 ---
@@ -618,8 +621,8 @@ Construir uma base confiável de decks reais e contexto competitivo.
 - decaimento após mudanças relevantes;
 - versionamento de catálogo/temporada/balance context;
 - estratégia de retenção e agregação;
-- validação do custo e do modelo de armazenamento no Firestore;
-- possibilidade de componente analítico especializado se Firestore deixar de
+- validação do custo e do modelo de armazenamento no Supabase PostgreSQL;
+- possibilidade de componente analítico especializado se PostgreSQL deixar de
   ser adequado para dados brutos em escala.
 
 ### Regra central
@@ -645,7 +648,7 @@ Nenhuma taxa deve ser apresentada sem:
 - [ ] recommendation engine consulta candidatos eficientemente;
 - [ ] mudanças de temporada/balance podem separar ou invalidar amostras;
 - [ ] retenção e agregação possuem estratégia explícita;
-- [ ] custo/query pattern foi validado para Firestore ou existe boundary para
+- [ ] custo/query pattern foi validado para Supabase/PostgreSQL ou existe boundary para
   store analítico especializado.
 
 ### Dependências
@@ -814,8 +817,8 @@ Priorizar:
 - logs e observabilidade;
 - privacidade;
 - fluxo de exclusão de conta/dados;
-- revisão de autorização e Security Rules/IAM;
-- avaliar App Check se houver acesso client-side direto ao Firebase;
+- revisão de autorização e RLS/grants;
+- avaliar controles Supabase equivalentes se houver acesso client-side direto à Data API;
 - disclaimer de conteúdo não oficial.
 
 ### Métricas iniciais
@@ -841,7 +844,7 @@ Metas numéricas entram na spec de beta depois de existir baseline.
 - [ ] eventos críticos são medidos;
 - [ ] compliance e disclaimer estão visíveis;
 - [ ] usuário possui caminho funcional para excluir sua conta e dados próprios;
-- [ ] revisão de segurança do acesso ao Firestore foi concluída;
+- [ ] revisão de segurança do acesso ao PostgreSQL/Supabase foi concluída;
 - [ ] MVP funciona sem IA.
 
 ### Dependências
@@ -1218,8 +1221,8 @@ Modelo operacional e comercial está validado técnica e legalmente.
 O MVP inclui:
 
 - bootstrap reproduzível e quality gates;
-- Firebase Authentication com Google;
-- Firestore seguro e ambientes separados;
+- Supabase Auth com Google;
+- PostgreSQL/RLS seguro e ambientes separados;
 - deploy inicial portável na Vercel;
 - identidade CrownPilot;
 - Player Tag persistente;

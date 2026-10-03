@@ -308,3 +308,13 @@ Não iniciar Fase 003/004, billing ou AI Coach como consequência deste fechamen
 Depois de Fase 002, reabrir os gates de API data, retenção, operação, meta e
 compliance antes de transformar o perfil em snapshot persistente ou promessa de
 meta.
+
+## Atualização posterior de infraestrutura
+
+Em `2026-10-02`, a decisão de infraestrutura Firebase/Firestore do handoff foi
+substituída para a implementação da Fase 002 pela [ADR 003](../../../decisions/003-supabase-auth-postgresql-jwks-rls-region.md):
+Supabase Auth com Google, PostgreSQL, JWT/JWKS, RLS e região `sa-east-1`
+condicionada à disponibilidade do plano/organização. As constraints de produto,
+compliance, ownership não verificado, lookup server-side, retenção e ausência de
+sync completo permanecem inalteradas. Este registro é append-only; evidências
+históricas da Fase 001 não foram reescritas.
