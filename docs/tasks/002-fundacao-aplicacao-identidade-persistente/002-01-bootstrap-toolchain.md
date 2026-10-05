@@ -6,103 +6,105 @@
 
 ## Objetivo e resultado esperado
 
-Criar aplicação web reproduzível a partir de clone limpo, com Laravel, Inertia,
-React, TypeScript, Vite, PHP 8.5, Composer/npm e comandos básicos de
-qualidade. O resultado é um baseline executável, ainda sem integração real de
-Supabase Auth, PostgreSQL ou Clash Royale.
+Criar baseline reproduzível a partir de clone limpo com solution .NET, API ASP.NET
+Core, frontend React + TypeScript + Vite, EF Core + Npgsql, testes e container
+Docker. O resultado ainda não configura login real, banco remoto ou lookup.
 
 ## Requisitos cobertos
 
-- bootstrap reproduzível;
-- Laravel/Inertia/React/Vite, Composer e npm com lockfiles;
-- TypeScript strict, build, lint, format e type-check;
-- estrutura inicial de diretórios e boundaries;
-- `AGENTS.md` e comandos operacionais;
-- nenhum uso obrigatório de API proprietária Vercel;
-- deploy Laravel/FrankenPHP via container Vercel conforme guia oficial;
-- gate técnico explícito para build e smoke do container.
+- SDK .NET pinado e solution versionada;
+- camadas `API`, `Application`, `Domain` e `Infrastructure`;
+- React, TypeScript strict e Vite independentes da API;
+- EF Core e Npgsql referenciados somente na Infrastructure;
+- testes .NET/frontend, lint, type-check, build e health;
+- Docker/OCI portátil, sem dependência estrutural de Vercel;
+- comandos de desenvolvimento e CI mínimo documentados.
 
 ## Escopo incluído
 
-- inicializar Laravel e Inertia com React/TypeScript/Vite;
-- adicionar `composer.json`, `composer.lock`, `package.json`, `package-lock.json`,
-  config TypeScript, lint e formatter;
-- definir scripts Composer e npm para `dev`, `build`, `lint`, `analyse`,
-  `typecheck` e testes;
-- criar `Dockerfile.vercel`, `Caddyfile`, `vercel.json` e `.dockerignore` sem
-  secrets na imagem;
-- criar separação inicial `app/Domain`, `app/Application`, `app/Adapters`,
-  `app/Http`, `resources/js` e `tests`;
-- documentar versão/política PHP e bootstrap limpo;
-- criar `AGENTS.md` local com comandos e limites do projeto.
+- criar `global.json`, solution e projetos `.csproj`;
+- fixar Node/npm/package manager por `.nvmrc`, `packageManager` ou equivalente;
+- criar `src/Api`, `src/Application`, `src/Domain` e `src/Infrastructure`;
+- configurar referências para impedir Infrastructure no Domain e API no Domain;
+- criar frontend Vite separado, com `package.json`, lockfile e TypeScript strict;
+- adicionar EF Core, Npgsql e tooling de migrations sem conectar a ambiente real;
+- adicionar runner de testes .NET, testes frontend e endpoint health mínimo;
+- criar `Dockerfile` multi-stage para API e documentação de execução local;
+- criar `.env.example`/settings sem secrets;
+- criar `AGENTS.md` local com comandos, boundaries e limites de escopo;
+- deixar workflow CI mínimo para restore, build, test, type-check e frontend build.
 
 ## Escopo excluído
 
-- Google Sign-In, Supabase/PostgreSQL e API externa;
-- provisionamento de projetos ou secrets;
-- schema persistente, vínculo e UI final;
-- deploy de staging/production.
+- Google Sign-In ou validação real de Firebase ID Token;
+- provisionamento de Firebase/Supabase, schema de negócio ou secrets;
+- Player Tag, lookup, autorização de usuário ou UI final;
+- deploy de Staging/Production;
+- uso de SDK C# do Supabase.
 
 ## Dependências
 
-- Fase 001 e ADR 001;
-- nenhuma dependência de código existente.
+- Fase 001 e [ADR 004](../../decisions/004-aspnet-core-react-vite-firebase-postgresql.md);
+- nenhum runtime existente ou código legado.
 
 ## Arquivos e símbolos prováveis
 
-- `composer.json`, `composer.lock`, `package.json`, `package-lock.json`;
-- `vite.config.ts`, `tsconfig.json`, `phpunit.xml`, `pest.php`, configs de lint;
-- `Dockerfile.vercel`, `Caddyfile`, `vercel.json`, `.dockerignore`;
-- `AGENTS.md`, `app/Domain/`, `app/Application/`, `app/Adapters/`,
-  `app/Http/`, `resources/js/`;
-- `tests/` e `README.md`/documentação operacional.
+- `global.json`, `CrownPilot.sln`, `src/*/*.csproj`;
+- `src/Api/Program.cs`, `HealthEndpoints`, `DependencyInjection`;
+- `src/Domain/`, `src/Application/`, `src/Infrastructure/`;
+- `frontend/package.json`, `vite.config.ts`, `tsconfig.json`;
+- `tests/Unit`, `tests/Application`, `frontend/src/**/*.test.ts`;
+- `Dockerfile`, `.dockerignore`, `.env.example`, `.github/workflows/ci.yml`.
 
 ## Passos de implementação
 
-1. Fixar PHP 8.5 e escolher versões compatíveis de Laravel, Inertia, React,
-   TypeScript e Vite.
-2. Gerar `composer.lock` e `package-lock.json`; confirmar install limpo.
-3. Ativar tipagem estrita, análise estática, lint e scripts normativos.
-4. Criar página Inertia mínima e `/health` que provam execução Laravel/Vite.
-5. Criar imagem FrankenPHP seguindo guia oficial e testar `public/index.php`.
-6. Verificar que domínio não importa Laravel, Inertia, Supabase ou Vercel.
-7. Registrar comandos e limites no `AGENTS.md` local.
+1. Fixar versão suportada do SDK .NET e versão Node/npm compatível.
+2. Criar solution/projetos e validar referências entre camadas.
+3. Configurar frontend React/Vite independente, scripts e build `dist/`.
+4. Adicionar EF Core/Npgsql na Infrastructure e tooling `dotnet ef` sem migration
+   de domínio ainda.
+5. Criar health mínimo e teste unitário por camada sem provider externo.
+6. Criar imagem Docker genérica da API, com configuração em runtime e filesystem
+   efêmero.
+7. Documentar comandos e deixar CI mínimo executável em Pull Request.
 
 ## Testes e comandos de validação
 
 ```text
-composer install
+dotnet --info
+dotnet restore
+dotnet build --configuration Release
+dotnet test --configuration Release
 npm ci
-composer run lint
-composer run analyse
-composer run test:unit
 npm run typecheck
+npm run lint
 npm run build
-docker build -f Dockerfile.vercel -t crownpilot-vercel-ci .
+docker build -t crownpilot-api:bootstrap .
+docker run --rm -d --name crownpilot-api-bootstrap -p 8080:8080 crownpilot-api:bootstrap
+curl --fail http://localhost:8080/health/live
+docker stop crownpilot-api-bootstrap
 ```
 
-Repetir `composer install` e `npm ci` em clone limpo e confirmar ausência de
-dependência em arquivos locais não versionados. Iniciar container e testar
-`/health` sem incluir `.env`, token ou credencial na imagem.
+Confirmar clone limpo, ausência de secrets na imagem/bundle e que Domain não
+importa ASP.NET Core, EF Core, Npgsql, Firebase ou HTTP.
 
 ## Definição de pronto
 
-- clone limpo executa Composer, npm, lint, análise, type-check e build;
-- `composer.lock` e `package-lock.json` são versionados;
-- PHP 8.5/runtime está documentado e compatibilidade Vercel está em gate;
-- imagem FrankenPHP/PHP 8.5 resolve e constrói;
-- `Dockerfile.vercel` constrói imagem e `/health` responde `200`;
-- `Caddyfile` limita document root a `public/`;
-- `vercel.json` declara service container e rewrite catch-all;
-- `.dockerignore` exclui secrets, dependências locais e testes;
-- estrutura e comandos estão documentados;
-- nenhum secret ou token entra no bundle;
-- diff não contém dependência Vercel-specific obrigatória.
+- solution e SDK pinado restauram em clone limpo;
+- Node/npm/package manager são pinados e reproduzidos em CI;
+- API e frontend compilam separadamente;
+- EF Core/Npgsql existem somente na camada prevista;
+- testes .NET/frontend, type-check, lint e build possuem comandos reais;
+- `/health/live` responde no processo e no container;
+- Docker inicia sem secret embutido e sem depender de Vercel;
+- CI mínimo bloqueia falha de restore/build/test/type-check/build;
+- `AGENTS.md` documenta comandos e não permite avançar Auth/persistência nesta task;
+- nenhum Auth, banco remoto, lookup ou fluxo de negócio é implementado nesta task.
 
 ## Riscos e cuidados
 
-- Não adicionar service role, database password ou API token no client durante
-  scaffold.
-- Não transformar Laravel/Inertia layout em contrato de domínio.
-- Não instalar biblioteca de testes sem script/uso planejado.
-- Manter escopo no bootstrap; Auth e vínculo pertencem às subtarefas seguintes.
+- Não criar abstração vazia sem consumidor previsto.
+- Não adicionar pacote de provider ao Domain/Application.
+- Não adicionar Firebase Admin ou configuração real antes da Task 04.
+- Não aplicar migrations automaticamente no startup do container.
+- Não criar arquivos de teste vazios apenas para satisfazer scripts.

@@ -1,4 +1,4 @@
-# 002-04 — Implementar Auth Google e sessão
+# 002-04 — Implementar Firebase Auth Google e bearer
 
 - **Ticker:** `002`
 - **Número:** `04`
@@ -6,89 +6,96 @@
 
 ## Objetivo e resultado esperado
 
-Implementar identidade CrownPilot com Google Sign-In e boundary de sessão que
-permita ao backend reconhecer o usuário sem receber UID arbitrário ou credencial
-Supercell.
+Implementar Google Sign-In no React e validação server-side do Firebase ID Token
+na API ASP.NET Core. O resultado é um `AuthContext` seguro, sem sessão cookie,
+UID arbitrário ou credencial Supercell.
 
 ## Requisitos cobertos
 
-- sessão Supabase Auth/Laravel;
-- recuperação em outro dispositivo;
-- verificação server-side do access JWT via JWKS e sessão Laravel segura;
-- autenticação separada de autorização;
-- falhas de Auth sem exposição de secrets;
-- Web SDK limitado a Auth.
+- Firebase Authentication/Google Sign-In;
+- refresh/logout no SDK frontend;
+- Firebase ID Token em `Authorization: Bearer`;
+- validação de assinatura, issuer, audience, expiração, `sub`, `kid` e rotação;
+- identificação CrownPilot separada de Firebase UID;
+- authentication separada de authorization;
+- `401` consistente e ausência de secrets no bundle.
 
 ## Escopo incluído
 
-- inicialização `@supabase/supabase-js` por ambiente;
-- Google OAuth, refresh/logout e observação de Auth state;
-- envio de access JWT ao endpoint de troca Laravel;
-- verificação por adapter PHP Supabase/JWKS e criação de sessão/`AuthContext` com
-  UUID `sub` derivado;
-- respostas `401` consistentes;
-- proteção para não inicializar Data API/PostgREST para dados CrownPilot;
-- tratamento de popup/redirect e estados loading/error.
+- cliente Firebase Web configurado por ambiente;
+- login, refresh, logout e estados loading/error;
+- middleware/handler de autenticação ASP.NET Core em Infrastructure;
+- integração suportada para validação Firebase, sem JWT manual;
+- `AuthenticatedSubject` e resolução para `CrownPilotUserId` via abstração;
+- caso de uso idempotente `EnsureCrownPilotUser`, com tratamento de corrida no
+  primeiro login e falha de banco sem autenticação parcial;
+- configuração de project ID/issuer por ambiente;
+- CORS exato e envio HTTPS do bearer;
+- testes de token, rotação, project errado e UID adulterado.
 
 ## Escopo excluído
 
-- Player Tag, lookup ou persistência de vínculo;
-- custom claims, roles administrativas ou ownership;
+- Player Tag, lookup ou persistência final;
+- cookies, sessão server-side ou dois esquemas simultâneos;
+- custom claims administrativas, ownership ou billing;
 - autenticação Supercell;
-- billing ou múltiplos providers.
+- envio de refresh token ao backend.
 
 ## Dependências
 
 - `002-01`, `002-02` e `002-03`;
-- projetos, refs e credenciais Supabase por ambiente;
-- Google provider autorizado em staging.
+- Firebase Emulator/fixtures e projetos por ambiente;
+- configuração de Google provider em Staging, fora do Git.
 
 ## Arquivos e símbolos prováveis
 
-- `resources/js/supabase/auth-client.ts`;
-- `app/Adapters/Supabase/AuthJwtVerifier.php`;
-- `app/Application/Auth/ExchangeSupabaseJwt.php`;
-- `AuthContext`, `requireAuth`, `UnauthorizedError`;
-- `app/Http/Controllers/AuthController.php`, `routes/web.php`;
-- `resources/js/Pages/Login.tsx` ou equivalente Inertia;
-- fixtures/mocks de Auth e testes de bundle.
+- `frontend/src/auth/firebase.ts`, `AuthProvider.tsx`;
+- `src/Infrastructure/Authentication/FirebaseAuthentication.cs`;
+- `src/Api/Program.cs`, `AuthenticationOptions`, `AuthContext`;
+- `src/Application/Identity/IUserIdentityResolver.cs`;
+- endpoints/controllers de sessão mínima e testes de API/auth.
 
 ## Passos de implementação
 
-1. Configurar Google provider e redirect allowlist no Supabase de cada ambiente.
-2. Implementar Google OAuth, refresh/logout e estado de carregamento.
-3. Enviar access JWT somente para endpoints CrownPilot via HTTPS.
-4. Verificar JWT no PHP via JWKS, validar claims, derivar UUID `sub` e criar sessão
-   Laravel segura.
-5. Fazer handlers rejeitarem UID/body claims e tokens inválidos.
-6. Testar reload e novo dispositivo como novo cliente com mesma identidade.
+1. Configurar Firebase Web SDK e Google provider por ambiente.
+2. Implementar login/refresh/logout sem persistir token manualmente além do SDK.
+3. Enviar somente ID Token bearer por HTTPS às rotas da API.
+4. Configurar validação suportada na Infrastructure com project ID/issuer allowlist.
+5. Derivar Firebase UID do token verificado e resolver ID interno via abstração;
+   rejeitar UID em body/query/header.
+6. Retornar `401` sem detalhes internos e manter autorização em políticas/casos
+   de uso posteriores.
+7. Provar login em Staging; usar Emulator/fixtures nos testes locais/CI.
 
 ## Testes e comandos de validação
 
 ```text
-composer run test:unit
-composer run test:integration
+dotnet test --filter Category=Authentication
+dotnet test --filter Category=Authorization
 npm run lint
 npm run typecheck
 npm run build
 ```
 
-Cobrir token ausente, inválido, expirado, usuário diferente e sessão válida.
-Verificar bundle para ausência de adapter PHP/Supabase server-side e secrets.
+Cobrir token ausente, inválido, expirado, issuer/audience/project incorretos,
+assinatura/`kid` rotacionado, `sub` vazio, usuário A/B e logout. Verificar bundle
+sem service account, database password, token externo ou código server-only.
 
 ## Definição de pronto
 
-- usuário entra e sai com Google em staging;
-- backend aceita somente Supabase access JWT verificável e cria sessão segura;
-- UUID `sub` é sempre derivado server-side;
+- Google Sign-In funciona no projeto Firebase de Staging;
+- API aceita somente Firebase ID Token verificável em bearer;
+- UID é derivado server-side e não é chave de domínio;
+- authentication não concede autorização sobre usuário B;
 - outro dispositivo recupera a mesma identidade após login;
-- browser não acessa Data API/PostgREST nem recebe secret server-side;
-- `401` não revela detalhes internos;
-- testes unit/integration/build passam.
+- API não usa cookie/sessão paralela nesta fase;
+- `401`, CORS e configuração por ambiente são testados;
+- bundle não contém secrets nem refresh token enviado à API.
 
 ## Riscos e cuidados
 
-- Não persistir e-mail/nome Google sem necessidade de domínio.
-- Não tratar login como autorização para ler outro UID.
-- Não enviar Google ID token ou Supabase JWT ao provider Clash Royale.
-- Não usar `VITE_` para service role, database password, JWT secret ou API token.
+- Não aceitar issuer/audience de projeto diferente.
+- Não implementar validação criptográfica manual.
+- Não enviar Google token, refresh token ou Firebase token ao provider Clash Royale.
+- Não usar variáveis públicas para service account ou senha de banco.
+- Não persistir e-mail/nome sem requisito de domínio.

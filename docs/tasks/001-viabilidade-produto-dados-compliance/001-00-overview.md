@@ -31,8 +31,8 @@ A fase termina com um veredito explícito: **GO**, **GO WITH CONSTRAINTS** ou
 - Gates da Fase 002: coleção insuficiente, Evolution/Hero sem fallback,
   ausência de meta sustentável, custo/rate incompatível, uso não permitido ou
   contrato baseado em suposição.
-- Infra-base já está definida: Firebase Authentication + Cloud Firestore e
-  Vercel como deploy inicial.
+- Infra-base do handoff original era Firebase Authentication + Cloud Firestore e
+  Vercel; essa decisão histórica foi supersedida para a Fase 002 pela ADR 004.
 - Framework e modelagem física continuam abertos; esta fase não deve escolhê-los
   por acidente.
 - Dependências Vercel-specific devem ficar fora do domínio para preservar

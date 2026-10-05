@@ -6,80 +6,79 @@
 
 ## Objetivo e resultado esperado
 
-Criar boundary server-side substituível para validar a existência de perfil
-público por Player Tag, sem acoplar domínio ao proxy, host ou payload da API.
+Criar boundary server-side substituível para validar existência de perfil público
+por Player Tag, sem acoplar Domain/Application ao host, proxy ou payload da API.
 
 ## Requisitos cobertos
 
-- `ClashRoyaleClient` server-side;
+- port `IClashRoyaleClient` na Application;
+- adapter HTTP na Infrastructure usando `HttpClientFactory`;
 - token nunca exposto ao browser;
-- normalização e encoding de tag;
-- estados externos distintos;
-- timeout/retry conservador;
-- fixtures sem chamadas live na CI.
+- normalização e encoding determinísticos;
+- estados externos distintos e ProblemDetails posterior;
+- timeout/retry conservador e fixtures sem rede na CI.
 
 ## Escopo incluído
 
-- port `resolvePublicProfile(playerTag)`;
-- normalização determinística e `%23` somente no path HTTP;
-- implementação HTTP com host configurado no servidor;
-- mapeamento de `200`, `404`, `403`, `429`, `5xx`, timeout e configuração
-  ausente;
-- `Retry-After` quando presente, backoff limitado quando aplicável;
+- operação `ResolvePublicProfileAsync` com cancellation;
+- normalização e `%23` somente no path HTTP;
+- host configurado no servidor, nunca input do usuário;
+- mapeamento de `200`, `404`, `403`, `429`, `5xx`, timeout e misconfiguration;
+- `Retry-After` e backoff limitado quando aplicável;
 - redaction de tag, token, URL e payload em logs;
-- fixtures sanitizadas de contrato.
+- fixtures sanitizadas e testes de contrato.
 
 ## Escopo excluído
 
 - persistência de resposta, cache, snapshot ou catálogo;
 - sync de coleção/Arena/battle log;
 - escolha definitiva de proxy/egress;
-- polling, retry infinito ou expansão de perfis.
+- polling, retry infinito ou expansão de perfis;
+- dependência de authentication para executar o adapter.
 
 ## Dependências
 
-- `002-01`, `002-02` e `002-04` para runtime/config/auth;
-- evidências de API da Fase 001;
-- segredo próprio de staging, se smoke externo for explicitamente autorizado.
+- `002-01` e `002-02`;
+- evidências e constraints da Fase 001;
+- pode executar em paralelo a `002-04` após boundaries definidos.
 
 ## Arquivos e símbolos prováveis
 
-- `app/Contracts/ClashRoyaleClient.php`;
-- `app/Adapters/ClashRoyale/HttpClient.php`;
-- `NormalizedPlayerTag`, `ResolvePublicProfileResult`, `ProviderError`;
-- `tests/Contract/fixtures/`;
-- configuração server-only de `CLASH_ROYALE_API_TOKEN` e provider host.
+- `src/Application/Ports/IClashRoyaleClient.cs`;
+- `src/Application/Players/ResolvePublicProfileResult.cs`;
+- `src/Domain/Players/NormalizedPlayerTag.cs`;
+- `src/Infrastructure/ClashRoyale/ClashRoyaleHttpClient.cs`;
+- `tests/Contract/fixtures/` e opções server-only de provider.
 
 ## Passos de implementação
 
-1. Definir resultado discriminado sem campos de snapshot.
-2. Validar input antes de montar request e rejeitar host fornecido pelo usuário.
-3. Construir path com tag encoded e headers server-side.
+1. Definir resultado discriminado sem snapshot ou dados extras.
+2. Validar input antes de montar request e rejeitar host do usuário.
+3. Construir path encoded e headers server-side.
 4. Mapear status/timeout sem expor detalhes do provider.
-5. Implementar retry somente para casos permitidos, com teto e jitter.
+5. Aplicar retry somente em casos permitidos, com teto e cancellation.
 6. Instrumentar duração/status categorizado sem PII.
-7. Criar fixtures para resposta resolvida e falhas.
+7. Criar fixtures para resposta resolvida, incompleta e falhas.
 
 ## Testes e comandos de validação
 
 ```text
-composer run test:unit
-npm run test:contract
+dotnet test --filter Category=Contract
 npm run typecheck
 npm run lint
 ```
 
 Confirmar que CI não faz request live e que bundle client não contém adapter,
-token, credencial Supabase/PHP, host real ou URL com tag.
+token, host real ou URL com tag.
 
 ## Definição de pronto
 
-- somente server-side chama provider;
-- `resolvePublicProfile` retorna todos os estados previstos;
+- somente Infrastructure chama provider;
+- `ResolvePublicProfileAsync` retorna todos estados previstos;
 - `404` não sofre retry automático;
-- `429` respeita `Retry-After` ou backoff com teto;
-- resposta externa não é retornada como raw ao browser nem persistida;
-- fixtures cobrem status e payload incompleto;
+- `429` respeita `Retry-After` ou teto definido;
+- resposta externa não é raw para o browser nem persistida;
+- fixtures cobrem status, timeout e payload incompleto;
 - logs são redacted e testes passam.
 
 ## Riscos e cuidados

@@ -6,95 +6,95 @@
 
 ## Objetivo e resultado esperado
 
-Registrar decisões arquiteturais duradouras e matriz operacional de local,
-preview, staging e production antes de provisionar dados reais. O resultado é um
-boundary explícito entre browser, Laravel/PHP, Supabase, provider externo e
-Vercel.
+Fixar contratos de camadas, authentication/authorization, API JSON e matriz de
+Local, Preview, Staging e Production antes de provisionar dados reais. O
+resultado é um boundary explícito entre React/Vite, Firebase, API ASP.NET Core,
+Application/Domain/Infrastructure, PostgreSQL/Supabase e provider externo.
 
 ## Requisitos cobertos
 
-- portabilidade fora de Vercel;
-- PHP/Laravel versus runtime serverless Vercel;
-- adapter PHP/JWT/JWKS/Eloquent e Supabase Auth;
-- PostgreSQL regional em `sa-east-1`, condicionado ao plano;
-- projetos e secrets separados;
-- preview sem Supabase Auth real;
-- staging fixo e production pela `main`.
+- stack e boundaries da [ADR 004](../../decisions/004-aspnet-core-react-vite-firebase-postgresql.md);
+- bearer Firebase ID Token, sem sessão cookie nesta fase;
+- authorization obrigatória no backend;
+- PostgreSQL/Supabase sem SDK central do provider;
+- Preview sem login real e Staging com hostname fixo;
+- backend portátil fora de Vercel;
+- configuração fail-closed e secrets separados.
 
 ## Escopo incluído
 
-- confirmar Laravel + Inertia + React + Vite, Web SDK somente Auth e adapter PHP
-  server-side;
-- validar compatibilidade de Laravel/PHP com Vercel antes de tratá-la como host
-  de production;
-- definir RLS/grants deny-by-default e autorização backend;
-- registrar `sa-east-1` para staging e production se disponível;
-- criar ADRs para boundary de acesso, região/topologia e persistência mínima;
-- definir matriz de variáveis por ambiente e startup fail-closed;
-- definir quais features são mockadas/desabilitadas em preview.
+- documentar dependências permitidas por camada;
+- definir DTOs JSON, ProblemDetails, status (`401`, `403`, `404`, `409`) e CORS por ambiente;
+- definir fluxo `React -> Firebase -> Bearer -> ASP.NET Core -> Application`;
+- separar `FirebaseUid` externo de `CrownPilotUserId` interno;
+- definir variáveis públicas, server-only e allowlists por ambiente;
+- definir Local com emuladores/fixtures, Preview sem Auth real, Staging fixo e
+  Production separado;
+- definir frontend estático opcional em Vercel e API Docker/OCI portátil;
+- registrar ownership de EF migrations versus SQL RLS/grants.
 
 ## Escopo excluído
 
-- criar projetos Supabase ou configurar OAuth;
-- implementar handlers, repository ou UI;
-- escolher egress definitivo para produção;
+- implementar middleware Firebase ou casos de uso;
+- provisionar Firebase/Supabase ou criar secrets reais;
+- schema, repository, lookup ou UI final;
+- escolha de egress definitivo;
 - liberar sync, retenção, billing ou polling.
 
 ## Dependências
 
 - `002-01`;
-- ADR 001;
-- ADR 003;
-- veredito da Fase 001;
-- disponibilidade de `sa-east-1` no plano/organização;
-- spike de runtime PHP/Vercel ainda pendente.
+- [ADR 004](../../decisions/004-aspnet-core-react-vite-firebase-postgresql.md);
+- veredito da Fase 001.
 
 ## Arquivos e símbolos prováveis
 
-- `docs/decisions/002-laravel-inertia-react-vite-firestore-region.md`;
-- `docs/decisions/003-supabase-auth-postgresql-jwks-rls-region.md`;
-- `.env.example`, documentação de ambientes e `AGENTS.md`;
-- `config/environment.php` ou equivalente;
-- `EnvironmentName`, `RuntimeConfig`, `SupabaseProjectConfig`.
+- `docs/decisions/004-aspnet-core-react-vite-firebase-postgresql.md`;
+- `src/Api/Program.cs`, `CorsPolicy`, `ProblemDetailsMapping`;
+- `src/Application/Abstractions/`, `AuthContext`;
+- `appsettings*.json`, `.env.example`, `EnvironmentName`, `RuntimeConfig`;
+- documentação de ambientes e release.
 
 ## Passos de implementação
 
-1. Desenhar fluxo Browser → Supabase Auth → JWT/JWKS → Laravel session →
-   Eloquent/PostgreSQL.
-2. Registrar que UUID só vem de JWT verificado e que RLS não substitui
-   autorização Laravel.
-3. Confirmar `sa-east-1`, paridade staging/production e custo de migração futura.
-4. Definir allowlist de project IDs e hosts por ambiente.
-5. Definir nomes de variáveis públicas e server-only, sem valores reais.
-6. Registrar rollback e mudança futura de região como cutover de novo projeto.
+1. Desenhar fluxo bearer e separar authentication de authorization.
+2. Registrar dependências permitidas e proibidas em cada camada.
+3. Definir contrato HTTP JSON, ProblemDetails, CORS e respostas `401`/`403`.
+4. Definir matriz de hosts, Firebase project IDs, Supabase databases e secrets.
+5. Definir Preview sem hostname autorizado para login real e Staging com hostname
+   fixo/Google Sign-In.
+6. Definir API containerizada fora de Vercel e frontend estático relocável.
+7. Definir matriz: token ausente/inválido -> `401`, token válido sem permissão ->
+   `403`, recurso próprio ausente -> `404`, usuário A tentando recurso de B sem
+   revelar dados -> `403` ou `404` conforme contrato anti-enumeração.
+8. Registrar rollout, fail-closed e rollback sem dados compartilhados.
 
 ## Testes e comandos de validação
 
 ```text
-composer run lint
-composer run analyse
-npm run lint
 npm run typecheck
-npm run test:unit
+npm run lint
 ```
 
-Revisão documental deve confirmar que não há secret real, que preview não aponta
-para Supabase e que produção não pode ser provisionada sem região disponível e
-registrada.
+Revisão documental deve confirmar que Domain não conhece providers/frameworks,
+que nenhum UID vindo do request é confiável e que Preview não aponta para
+Firebase/Supabase de Staging/Production.
 
 ## Definição de pronto
 
-- ADRs registram boundary, região/topologia e persistência mínima;
-- matriz local/preview/staging/production tem Supabase Auth/PostgreSQL, dados, hosts e
-  secrets explicitamente separados;
+- boundaries e dependências de camadas estão documentados;
+- API JSON, bearer, ProblemDetails e authorization possuem contrato;
+- Firebase e Supabase têm configuração independente por ambiente;
+- Preview e Staging são explicitamente diferentes;
+- Vercel é opcional para frontend e não é dependência da API;
 - configuração inválida falha fechado;
-- Vercel não aparece como dependência de domínio;
-- `sa-east-1` está disponível e registrada antes de qualquer provisionamento;
-- gate Vercel/PHP e fallback PHP first-class estão documentados.
+- ownership de migrations e ordem EF -> SQL de segurança estão definidos;
+- nenhum secret real ou provisionamento foi criado.
 
 ## Riscos e cuidados
 
-- Não trocar `sa-east-1` sem nova decisão explícita e plano de migração.
-- Não chamar acesso autenticado de autorização.
-- Não registrar IDs, emails ou secrets reais em ADR.
-- Não criar ADR para proxy como contrato permanente; transporte permanece adapter.
+- Não tratar authentication como autorização.
+- Não usar audience/issuer de outro ambiente.
+- Não permitir CORS amplo por conveniência.
+- Não introduzir cookie, sessão ou segundo esquema bearer nesta fase.
+- Não transformar Vercel em boundary de domínio ou API.

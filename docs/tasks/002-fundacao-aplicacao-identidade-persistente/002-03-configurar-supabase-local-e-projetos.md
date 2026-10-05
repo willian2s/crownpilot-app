@@ -1,4 +1,4 @@
-# 002-03 — Configurar Supabase local e projetos
+# 002-03 — Configurar PostgreSQL/Supabase local e projetos
 
 - **Ticker:** `002`
 - **Número:** `03`
@@ -6,88 +6,104 @@
 
 ## Objetivo e resultado esperado
 
-Configurar Supabase CLI/Docker e separação de projetos para que local, staging e
-production sejam reproduzíveis sem compartilhar dados ou credenciais.
+Configurar PostgreSQL local via Supabase CLI/Docker, projetos separados de banco
+por ambiente e o pipeline de migrations EF Core + SQL de segurança. Preparar
+Firebase Emulator/fixtures e configuração de projetos sem implementar o fluxo de
+login.
 
 ## Requisitos cobertos
 
-- Supabase Auth/PostgreSQL local com CLI/Docker;
-- projetos Supabase separados;
-- Google Sign-In via Supabase Auth em staging;
-- migrations SQL e RLS versionadas;
-- PostgreSQL sem acesso público irrestrito;
-- ausência de produção no ambiente local/preview.
+- PostgreSQL/Supabase local descartável;
+- projetos de banco separados para Staging e Production;
+- EF Core como dono do schema da aplicação;
+- Npgsql e migrations reproduzíveis;
+- RLS/grants/policies versionados sem duplicar schema;
+- Firebase project IDs por ambiente e Emulator/fixtures;
+- nenhum acesso de Preview à Production.
 
 ## Escopo incluído
 
-- `supabase/config.toml` e configuração local sem secrets;
-- migrations SQL e policies RLS versionadas;
-- projetos/refs separados para staging e production, sem hardcode de
-  credenciais;
-- configuração inicial de provider Google no Supabase Auth staging;
-- documentação de criação/configuração manual que não puder ser automatizada;
-- criação de Supabase staging/production em `sa-east-1`, após confirmar plano.
+- fixar versão/uso de Supabase CLI e Docker;
+- iniciar PostgreSQL local e documentar connection string sem secrets reais;
+- configurar projeto Firebase Emulator e fixtures de token;
+- definir projetos/refs de banco separados, sem commitar credenciais;
+- criar harness para aplicar migrations EF Core e depois SQL RLS/grants;
+- documentar `sa-east-1` como preferência condicionada para Staging/Production;
+- documentar criação manual/provisionamento controlado sem executar Production;
+- definir seed/fixtures sanitizados e reset local.
 
 ## Escopo excluído
 
-- repository Eloquent de vínculo e handlers de aplicação;
+- login Google real ou middleware de autenticação;
+- repository de vínculo e casos de uso;
 - dados reais de jogadores;
-- acesso client-side ao Data API/PostgREST;
-- snapshots, raw API, cache, índices ou tabelas futuras.
+- schema de snapshot, cache, coleção ou payload externo;
+- SDK C# do Supabase ou Data API no browser;
+- provisionamento irreversível de Production antes dos gates.
 
 ## Dependências
 
 - `002-01` e `002-02`;
-- acesso administrativo aos projetos Supabase, fornecido fora do Git;
-- domínio fixo de staging disponível para Auth.
+- acesso administrativo aos projetos, fornecido fora do Git;
+- Docker disponível localmente/CI;
+- [ADR 004](../../decisions/004-aspnet-core-react-vite-firebase-postgresql.md).
 
 ## Arquivos e símbolos prováveis
 
-- `supabase/config.toml`, `supabase/migrations/`, `supabase/tests/`;
-- `tests/Rls/` e configuração Supabase CLI/Docker;
-- documentação de setup de projetos;
-- `SupabaseEnvironment`, `LocalStackConfig`, `assertProjectIsolation`.
+- `supabase/config.toml` e SQL versionado de RLS/grants;
+- `src/Infrastructure/Persistence/` e `Migrations/`;
+- scripts `database/reset-local.*` e `database/apply-security.*`;
+- `firebase.json`, configuração do Emulator e fixtures;
+- `EnvironmentName`, `DatabaseOptions`, `FirebaseProjectOptions`;
+- `tests/Persistence/` e `tests/Integration/`.
 
 ## Passos de implementação
 
-1. Instalar/pinar Supabase CLI e confirmar Docker conforme política do repositório.
-2. Executar `supabase init` e `supabase start` com dados descartáveis.
-3. Criar migrations iniciais, RLS deny-by-default e harness de testes.
-4. Associar refs locais, staging e production sem commitar secrets.
-5. Configurar Google provider e redirect allowlist somente em staging/production.
-6. Adicionar guardas de project ref/issuer e ambiente para impedir cross-environment.
-7. Provisionar staging/production somente em `sa-east-1`, após validar plano,
-   runtime PHP, PostgreSQL, SSL e pooler.
+1. Fixar Supabase CLI/Docker e iniciar banco local descartável.
+2. Documentar Firebase Emulator/fixtures sem criar credenciais reais.
+3. Configurar pipeline local: banco limpo, migrations EF Core, SQL RLS/grants,
+   fixtures; nenhum SQL de segurança pode criar tabela do schema.
+4. Validar connection strings Npgsql, SSL/configuração e fail-closed.
+5. Configurar role de runtime sem `BYPASSRLS`, contexto transacional
+   `app.crownpilot_user_id`, reset por transação e policies deny-by-default;
+   provar pooler compatível ou registrar RLS como gate não comprovado.
+6. Registrar IDs e allowlists de projetos separados para Local, Staging e
+   Production; não commitar secrets.
+7. Registrar critérios para `sa-east-1`, DPA, backups, subprocessadores e
+   residência antes de dados reais.
+8. Manter provisionamento Production como etapa controlada posterior.
 
 ## Testes e comandos de validação
 
 ```text
 supabase start
-supabase db reset
-composer run test:integration
-npm run test:rls
-npx supabase test db
+dotnet ef database update
+dotnet test --filter Category=Persistence
+dotnet test --filter Category=Rls
+./database/apply-security.sh
+./database/load-fixtures.sh
+supabase stop
 ```
 
-Testar que local usa stack Supabase/Docker, preview não usa Supabase real e cada
-projeto staging/production é distinto.
+O comando de reset deve provar a ordem EF Core -> SQL RLS/grants -> fixtures.
+Testar conexão anônima, contexto ausente, usuário A, usuário B e reset do
+contexto ao fim da transação.
 
 ## Definição de pronto
 
-- Supabase CLI/Docker inicia por comando documentado;
-- migrations e RLS estão versionadas e deny-by-default;
-- testes RLS passam para anônimo e autenticado;
-- refs/projetos de staging e production são distintos;
-- Google Sign-In de staging usa hostname fixo e redirect allowlist;
-- nenhum secret, token ou projeto production é usado por local/preview;
-- Supabase staging/production usa `sa-east-1`, se disponível no plano;
-- adapter PHP conecta ao PostgreSQL local e ao projeto correto;
-- production só existe após gates de região, runtime PHP/Vercel e secrets.
+- PostgreSQL local inicia por comando documentado;
+- migrations EF Core são a única fonte de tabelas/constraints;
+- SQL separado aplica somente RLS/grants/objetos permitidos;
+- reset local é reproduzível e não usa produção;
+- Firebase Emulator/fixtures estão disponíveis para testes posteriores;
+- projetos Staging/Production são distintos e sem secrets versionados;
+- região, backups e residência são gates antes de dados reais;
+- nenhuma tabela futura ou payload de jogador é criada por conveniência.
 
 ## Riscos e cuidados
 
-- Supabase URL/anon key podem ser públicas, mas devem ser específicas por ambiente.
-- service role, database password e JWT secret nunca entram em `.env.example`,
-  bundle ou migrations.
-- Não usar RLS como substituto da autorização Laravel.
-- Não provisionar tabelas de snapshot por conveniência.
+- Não usar `auth.uid()` de um provider diferente no RLS.
+- Não rodar migrations automaticamente em múltiplas réplicas.
+- Não duplicar schema entre EF Core e SQL.
+- Não confundir projeto de banco Supabase com projeto Firebase.
+- Não provisionar Production durante bootstrap local.

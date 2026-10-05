@@ -1,5 +1,11 @@
 # 001 — Viabilidade de produto, dados e compliance
 
+> **Nota de precedência:** esta spec é registro histórico da Fase 001. As
+> referências de infraestrutura nela contidas refletem o baseline daquela fase
+> e foram supersedidas para a Fase 002 pela [ADR 004](../decisions/004-aspnet-core-react-vite-firebase-postgresql.md).
+> Permanecem válidas as conclusões de produto, dados, compliance, ownership,
+> retenção e gates de API.
+
 ## Ticker
 
 `001`
@@ -132,11 +138,11 @@ Ao final, a equipe deve saber com evidência:
 - Toda afirmação de comportamento deve registrar fonte e data.
 - Diferenciar claramente fato observado, documentação oficial e hipótese.
 
-## Fora de escopo
+## Fora de escopo no baseline histórico
 
-- Reabrir as decisões já tomadas de Firebase Authentication, Cloud Firestore e
-  Vercel como deploy inicial sem evidência concreta de incompatibilidade.
-- Escolher framework web, ORM ou detalhes de modelagem física do Firestore.
+- Reabrir as decisões então tomadas de Firebase Authentication, banco documental
+  e Vercel como deploy inicial sem evidência concreta de incompatibilidade.
+- Escolher framework web, ORM ou detalhes de modelagem física do banco documental.
 - Construir login CrownPilot.
 - Criar dashboard.
 - Implementar pipeline de produção.
@@ -161,15 +167,15 @@ Inspeção da `main` no commit `242f749ded8287629ad4635fdf1958664f1840d7` encont
 - nenhum `package.json`, lockfile, runtime, aplicação ou dependência;
 - nenhum diretório `evidences/`, probe, fixture, CI, teste ou configuração de
   Firebase/Vercel versionado;
-- Firebase Authentication + Cloud Firestore são decisões de infraestrutura;
-- Vercel é o deploy inicial, com portabilidade obrigatória;
+- Firebase Authentication + banco documental eram decisões do baseline original;
+- Vercel era o deploy inicial, com portabilidade obrigatória;
 - não há `AGENTS.md`, regras locais, CI, testes ou framework web definido;
 - não há credencial de API versionada;
 - nenhuma capacidade da Fase 001 foi validada e o veredito ainda não existe.
 
-Logo, esta spec deve corrigir o baseline documental sem transformar detalhes
-abertos em arquitetura definitiva. Deve respeitar as decisões registradas em
-`docs/decisions/001-firebase-firestore-vercel-portable.md`.
+Logo, esta spec registra o baseline histórico sem transformá-lo em arquitetura
+vigente. Para a Fase 002, consultar ADR 004; as conclusões de produto, dados e
+compliance desta spec permanecem válidas.
 
 ## Fontes e hierarquia de confiança
 
@@ -396,9 +402,10 @@ Essa decisão permite `GO WITH CONSTRAINTS` para lookup read-only de perfil púb
 mas não fecha contratos de dados, privacidade, rate limits ou uso de proxy. Esses
 itens continuam dependências de `001-02`, `001-05`, `001-06` e `001-07`.
 
-### Cloud Firestore
+### Infraestrutura histórica (não normativa para Fase 002)
 
-Firestore será o banco principal para dados da aplicação, incluindo
+O baseline histórico considerava um banco documental para dados da aplicação,
+incluindo progressivamente:
 progressivamente:
 
 - identidade/vínculo do jogador;
@@ -407,8 +414,9 @@ progressivamente:
 - dados derivados de recomendação;
 - metadados de sync.
 
-A Fase 001 **não** define ainda collections, índices, TTLs ou granularidade final.
-Essas decisões dependem do volume e dos contratos v0 produzidos pelo discovery.
+A Fase 001 **não** definiu collections, índices, TTLs ou granularidade final.
+Essa alternativa foi supersedida para a Fase 002 pela ADR 004; volume e
+contratos v0 continuam orientando fases futuras.
 
 ### Vercel com portabilidade
 
@@ -683,6 +691,6 @@ Não realizar stress/load test contra a API oficial.
 - Não assumimos que ranking global represente Arena intermediária.
 - Não assumimos que a exceção de "coaching" da Fan Content Policy autorize
   automaticamente AI Coach pago.
-- Firebase Authentication, Cloud Firestore e Vercel como deploy inicial já são
-  decisões; framework web, modelagem física e detalhes do runtime continuam
-  abertos nesta fase.
+- Firebase Authentication, banco documental e Vercel eram decisões do baseline
+  histórico. Para a Fase 002, framework, banco, runtime e boundaries estão
+  definidos pela ADR 004.
