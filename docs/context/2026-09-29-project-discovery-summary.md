@@ -309,7 +309,11 @@ A Player Tag é um vínculo público do domínio.
 
 ---
 
-# 9. Infraestrutura definida
+# 9. Infraestrutura definida no planejamento original
+
+> **Nota histórica:** esta seção registra decisões anteriores à ADR 004. Ela não
+> é fonte de verdade para implementação da Fase 002. A stack vigente está em
+> `docs/decisions/004-aspnet-core-react-vite-firebase-postgresql.md`.
 
 Foi escolhida a seguinte infraestrutura-base:
 
@@ -319,7 +323,7 @@ Foi escolhida a seguinte infraestrutura-base:
 - identidade da conta CrownPilot;
 - independente da identidade Supercell.
 
-## Cloud Firestore
+## Cloud Firestore (substituído na Fase 002)
 
 Banco principal da aplicação.
 
@@ -334,13 +338,17 @@ Deverá armazenar progressivamente, conforme as specs:
 - recomendações;
 - metadados de sync.
 
-Firestore é um vendor lock-in **aceito**.
+Firestore foi um vendor lock-in aceito no planejamento original, mas foi
+substituído por PostgreSQL via EF Core + Npgsql, hospedado inicialmente no
+Supabase. Não criar Firestore na Fase 002.
 
 A modelagem de collections ainda não foi definida porque deve nascer dos contratos reais descobertos na Fase 001.
 
-## Vercel
+## Vercel (alternativa estática; hosting original substituído)
 
-Plataforma inicial de deploy/runtime.
+Era plataforma inicial de deploy/runtime. Na Fase 002, Render é o hosting inicial
+da API Docker e do frontend estático preferencial; Vercel permanece alternativa
+de frontend estático, nunca backend obrigatório.
 
 A decisão é operacional, não um boundary arquitetural.
 

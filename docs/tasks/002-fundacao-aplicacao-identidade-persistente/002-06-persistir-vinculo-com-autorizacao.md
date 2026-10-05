@@ -18,7 +18,7 @@ criar snapshot de API.
 - `firebase_uid` externo separado do UUID interno;
 - usuário A isolado de B por authorization server-side;
 - `public_profile` + `unverified`;
-- replace protegido contra concorrência e falhas;
+- replace protegido contra concorrência e falhas por `expectedVersion` JSON;
 - RLS/grants como defesa adicional, sem duplicar schema.
 
 ## Escopo incluído
@@ -26,9 +26,12 @@ criar snapshot de API.
 - entidade `CrownPilotUser` com UUID interno e `firebase_uid` único;
 - entidade `PrimaryPlayerLink` com `user_id` como primary key/FK;
 - repository baseado no `CrownPilotUserId` resolvido no backend;
+- bootstrap RLS transacional: `set_config('app.firebase_uid', <claim>, true)`
+  permite resolver/criar somente a linha correspondente em `crownpilot_users`;
+  depois `set_config('app.crownpilot_user_id', <id>, true)` limita os vínculos;
 - operações read, create/replace, unlink e delete idempotente;
 - transaction/concurrency token/precondition para replace;
-- timestamps, `schema_version` e `last_validated_at`;
+- timestamps e `last_validated_at`;
 - migration EF Core e SQL posterior de RLS/grants;
 - policies sem pressupor claims nativas de provider externo;
 - validação que impede snapshot/raw/cache/coleção.
@@ -44,7 +47,8 @@ criar snapshot de API.
 
 ## Dependências
 
-- `002-02`, `002-03`, `002-04` e `002-05`;
+- `002-02` e `002-03`; lookup/authentication podem ser substituídos por ports e
+  fakes nesta task;
 - contrato `PrimaryPlayerLink` da spec;
 - conexão PostgreSQL local/Staging aprovada;
 - [ADR 004](../../decisions/004-aspnet-core-react-vite-firebase-postgresql.md).
@@ -70,10 +74,16 @@ criar snapshot de API.
    body/query.
 5. Implementar read/insert/replace após lookup `resolved`, preservando vínculo
    antigo quando provider falha.
-6. Proteger replace com `version`/ETag precondition, transação e mapear conflito
-   para `409` sem last-write-wins silencioso.
+6. Proteger replace com `version`/`expectedVersion` JSON, transação e mapear
+    conflito para `409` sem last-write-wins silencioso; não introduzir ETag
+    paralelo.
 7. Implementar unlink/delete idempotentes somente para dados próprios.
 8. Aplicar e testar RLS/grants após migration EF, mantendo authorization obrigatória.
+   Resolver/criar `crownpilot_users` por Firebase UID verificado dentro da mesma
+   transação que define contexto RLS; nunca confiar em UID do request. Policies
+   de `crownpilot_users` usam `app.firebase_uid` somente para a linha própria;
+   policies de `primary_player_links` usam `app.crownpilot_user_id` e negam
+   contexto ausente. `set_config(..., true)` substitui pseudo-SQL interpolado.
 
 ## Testes e comandos de validação
 
@@ -85,17 +95,21 @@ dotnet test --filter Category=Integration
 dotnet test --filter Category=Rls
 ```
 
-Cobrir usuário A/B, anônimo, contexto RLS ausente/adulterado, UID adulterado,
-FK/unique/NOT NULL/check constraints, ETag/version ausente ou incorreto,
+Cobrir usuário novo/existente, A/B, anônimo, contexto RLS ausente/adulterado,
+`app.firebase_uid` divergente, UID adulterado,
+FK/unique/NOT NULL/check constraints, `expectedVersion` ausente ou incorreto,
 replace concorrente, falha antes da escrita, unlink repetido e delete repetido.
 
 ## Definição de pronto
 
 - schema mínimo possui somente usuário CrownPilot e vínculo primário;
+- schema CrownPilot dedicado não é acessado via Supabase Data API;
 - EF Core é fonte das tabelas/constraints e migration aplica em PostgreSQL;
 - SQL de RLS/grants não duplica schema;
 - UUID interno é usado em authorization e relacionamentos;
 - A não lê/altera B;
+- usuário novo resolve/cria identidade sem abrir linhas de outro usuário;
+- contexto externo e interno são transacionais e não vazam em conexão pooled;
 - falha de provider não remove vínculo anterior;
 - replace concorrente não produz estado silenciosamente incorreto;
 - unlink/delete são idempotentes;

@@ -1,4 +1,4 @@
-# 002-03 — Configurar PostgreSQL/Supabase local e projetos
+# 002-03 — Preparar PostgreSQL local e pipeline de migrations
 
 - **Ticker:** `002`
 - **Número:** `03`
@@ -6,18 +6,20 @@
 
 ## Objetivo e resultado esperado
 
-Configurar PostgreSQL local via Supabase CLI/Docker, projetos separados de banco
-por ambiente e o pipeline de migrations EF Core + SQL de segurança. Preparar
-Firebase Emulator/fixtures e configuração de projetos sem implementar o fluxo de
-login.
+Configurar PostgreSQL local via Supabase CLI/Docker e o pipeline de migrations EF
+Core + SQL de segurança. Preparar referências de banco separadas por ambiente e
+Firebase Emulator/fixtures, sem tratar Supabase como backend ou implementar o
+fluxo de login.
 
 ## Requisitos cobertos
 
 - PostgreSQL/Supabase local descartável;
-- projetos de banco separados para Staging e Production;
+- referências de banco separadas para Staging e Production;
 - EF Core como dono do schema da aplicação;
 - Npgsql e migrations reproduzíveis;
-- RLS/grants/policies versionados sem duplicar schema;
+- harness/roles para RLS e grants versionados sem duplicar schema; policies
+  concretas pertencem à Task 002-06;
+- schema CrownPilot dedicado, fora da Data API;
 - Firebase project IDs por ambiente e Emulator/fixtures;
 - nenhum acesso de Preview à Production.
 
@@ -25,9 +27,11 @@ login.
 
 - fixar versão/uso de Supabase CLI e Docker;
 - iniciar PostgreSQL local e documentar connection string sem secrets reais;
-- configurar projeto Firebase Emulator e fixtures de token;
+- configurar Firebase Emulator e fixtures de token;
 - definir projetos/refs de banco separados, sem commitar credenciais;
 - criar harness para aplicar migrations EF Core e depois SQL RLS/grants;
+- gerar artefato de migration revisável/bundle para deploy one-shot; não migrar no
+  startup das réplicas da API;
 - documentar `sa-east-1` como preferência condicionada para Staging/Production;
 - documentar criação manual/provisionamento controlado sem executar Production;
 - definir seed/fixtures sanitizados e reset local.
@@ -62,11 +66,13 @@ login.
 1. Fixar Supabase CLI/Docker e iniciar banco local descartável.
 2. Documentar Firebase Emulator/fixtures sem criar credenciais reais.
 3. Configurar pipeline local: banco limpo, migrations EF Core, SQL RLS/grants,
-   fixtures; nenhum SQL de segurança pode criar tabela do schema.
+   fixtures quando schema existir; nenhum SQL de segurança pode criar tabela do
+   schema.
 4. Validar connection strings Npgsql, SSL/configuração e fail-closed.
-5. Configurar role de runtime sem `BYPASSRLS`, contexto transacional
-   `app.crownpilot_user_id`, reset por transação e policies deny-by-default;
-   provar pooler compatível ou registrar RLS como gate não comprovado.
+5. Preparar role de runtime sem `BYPASSRLS`, schema dedicado, runner de segurança
+   e mecanismo transacional de contexto; não criar policies de tabelas ainda
+   inexistentes. A Task 002-06 prova conexão direta/session pooler com schema
+   concreto e registra transaction pooler como gate separado se for adotado.
 6. Registrar IDs e allowlists de projetos separados para Local, Staging e
    Production; não commitar secrets.
 7. Registrar critérios para `sa-east-1`, DPA, backups, subprocessadores e
@@ -85,18 +91,23 @@ dotnet test --filter Category=Rls
 supabase stop
 ```
 
-O comando de reset deve provar a ordem EF Core -> SQL RLS/grants -> fixtures.
-Testar conexão anônima, contexto ausente, usuário A, usuário B e reset do
-contexto ao fim da transação.
+O comando de reset deve provar a ordem EF Core -> SQL RLS/grants -> fixtures
+quando o schema existir. Nesta task, validar apenas conexão, roles, fail-closed e
+idempotência do pipeline; testes de usuário A/B, policies e reset de contexto
+concreto pertencem à Task 002-06.
 
 ## Definição de pronto
 
 - PostgreSQL local inicia por comando documentado;
 - migrations EF Core são a única fonte de tabelas/constraints;
 - SQL separado aplica somente RLS/grants/objetos permitidos;
+- não cria policies de domínio antes da migration das tabelas; bridge A/B fica na
+  Task 002-06;
 - reset local é reproduzível e não usa produção;
 - Firebase Emulator/fixtures estão disponíveis para testes posteriores;
-- projetos Staging/Production são distintos e sem secrets versionados;
+- referências Staging/Production são distintas e sem secrets versionados;
+- schema CrownPilot não depende da Supabase Data API;
+- migration bundle/job é separado do container de runtime;
 - região, backups e residência são gates antes de dados reais;
 - nenhuma tabela futura ou payload de jogador é criada por conveniência.
 

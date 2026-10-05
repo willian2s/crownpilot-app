@@ -13,22 +13,30 @@ Docker. O resultado ainda não configura login real, banco remoto ou lookup.
 ## Requisitos cobertos
 
 - SDK .NET pinado e solution versionada;
+- .NET 10 LTS e Node.js 24 LTS pinados, com patches atualizados conforme suporte
+  oficial vigente;
 - camadas `API`, `Application`, `Domain` e `Infrastructure`;
 - React, TypeScript strict e Vite independentes da API;
 - EF Core e Npgsql referenciados somente na Infrastructure;
 - testes .NET/frontend, lint, type-check, build e health;
 - Docker/OCI portátil, sem dependência estrutural de Vercel;
 - comandos de desenvolvimento e CI mínimo documentados.
+- documentação Mac/Linux equivalente e aprendizado incremental em `docs/learning/`.
 
 ## Escopo incluído
 
-- criar `global.json`, solution e projetos `.csproj`;
+- criar `global.json` com .NET 10, solution e projetos `.csproj`;
 - fixar Node/npm/package manager por `.nvmrc`, `packageManager` ou equivalente;
+- criar manifesto local de ferramentas `dotnet-ef` e registrar versões de Firebase
+  CLI, Supabase CLI e Docker exigidas pelo setup;
 - criar `src/Api`, `src/Application`, `src/Domain` e `src/Infrastructure`;
 - configurar referências para impedir Infrastructure no Domain e API no Domain;
 - criar frontend Vite separado, com `package.json`, lockfile e TypeScript strict;
 - adicionar EF Core, Npgsql e tooling de migrations sem conectar a ambiente real;
 - adicionar runner de testes .NET, testes frontend e endpoint health mínimo;
+- definir scripts oficiais sem dependência de shell específico: `test:unit`,
+  `test:contract`, `test:rls`, `test:e2e`, `smoke`, `smoke:container`,
+  `openapi:check`, `typecheck`, `lint` e `build`;
 - criar `Dockerfile` multi-stage para API e documentação de execução local;
 - criar `.env.example`/settings sem secrets;
 - criar `AGENTS.md` local com comandos, boundaries e limites de escopo;
@@ -58,15 +66,17 @@ Docker. O resultado ainda não configura login real, banco remoto ou lookup.
 
 ## Passos de implementação
 
-1. Fixar versão suportada do SDK .NET e versão Node/npm compatível.
+1. Fixar .NET 10 LTS e Node.js 24 LTS, validando patches suportados na documentação
+   oficial; registrar exceção somente se compatibilidade concreta exigir.
 2. Criar solution/projetos e validar referências entre camadas.
 3. Configurar frontend React/Vite independente, scripts e build `dist/`.
-4. Adicionar EF Core/Npgsql na Infrastructure e tooling `dotnet ef` sem migration
-   de domínio ainda.
+4. Adicionar EF Core/Npgsql na Infrastructure, manifesto `dotnet-ef` local e
+   tooling sem migration de domínio ainda.
 5. Criar health mínimo e teste unitário por camada sem provider externo.
 6. Criar imagem Docker genérica da API, com configuração em runtime e filesystem
    efêmero.
-7. Documentar comandos e deixar CI mínimo executável em Pull Request.
+7. Documentar comandos POSIX comuns a Mac/Linux e deixar CI mínimo executável em
+   Pull Request. Scripts que precisem de lógica usam Node ou .NET, não Bash-only.
 
 ## Testes e comandos de validação
 
@@ -86,7 +96,9 @@ docker stop crownpilot-api-bootstrap
 ```
 
 Confirmar clone limpo, ausência de secrets na imagem/bundle e que Domain não
-importa ASP.NET Core, EF Core, Npgsql, Firebase ou HTTP.
+importa ASP.NET Core, EF Core, Npgsql, Firebase ou HTTP. `dotnet build` deve
+gerar/verificar OpenAPI quando a API já possuir endpoints; a fundação não deve
+manter YAML OpenAPI manual. `/health/live` não testa banco ou provider.
 
 ## Definição de pronto
 
@@ -99,6 +111,9 @@ importa ASP.NET Core, EF Core, Npgsql, Firebase ou HTTP.
 - Docker inicia sem secret embutido e sem depender de Vercel;
 - CI mínimo bloqueia falha de restore/build/test/type-check/build;
 - `AGENTS.md` documenta comandos e não permite avançar Auth/persistência nesta task;
+- setup Mac/Linux usa fonte de verdade versionada (`global.json`, Node pinado,
+  lockfile e `dotnet-tools.json`);
+- Task registra primeiro conceito de aprendizado usado, sem criar curso paralelo;
 - nenhum Auth, banco remoto, lookup ou fluxo de negócio é implementado nesta task.
 
 ## Riscos e cuidados

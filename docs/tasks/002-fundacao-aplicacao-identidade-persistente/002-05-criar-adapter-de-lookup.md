@@ -16,6 +16,7 @@ por Player Tag, sem acoplar Domain/Application ao host, proxy ou payload da API.
 - token nunca exposto ao browser;
 - normalização e encoding determinísticos;
 - estados externos distintos e ProblemDetails posterior;
+- códigos de erro estáveis e `Retry-After` sem vazar provider;
 - timeout/retry conservador e fixtures sem rede na CI.
 
 ## Escopo incluído
@@ -40,7 +41,8 @@ por Player Tag, sem acoplar Domain/Application ao host, proxy ou payload da API.
 
 - `002-01` e `002-02`;
 - evidências e constraints da Fase 001;
-- pode executar em paralelo a `002-04` após boundaries definidos.
+- pode executar em paralelo a `002-04` após boundaries definidos;
+- não depende de banco ou identidade persistente.
 
 ## Arquivos e símbolos prováveis
 
@@ -77,6 +79,8 @@ token, host real ou URL com tag.
 - `ResolvePublicProfileAsync` retorna todos estados previstos;
 - `404` não sofre retry automático;
 - `429` respeita `Retry-After` ou teto definido;
+- mapeamento expõe códigos como `player_not_found`, `provider_unavailable` e
+  `provider_rate_limited`, sem URL ou payload externo;
 - resposta externa não é raw para o browser nem persistida;
 - fixtures cobrem status, timeout e payload incompleto;
 - logs são redacted e testes passam.

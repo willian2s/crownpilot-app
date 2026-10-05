@@ -141,7 +141,8 @@ Decisões iniciais do projeto:
 - região Supabase `sa-east-1` (São Paulo), condicionada à disponibilidade no
   plano/organização;
 - Docker/OCI como runtime portátil da API;
-- Vercel como alvo opcional para frontend estático.
+- Render como hosting inicial da API Docker e alvo preferido do frontend estático;
+- Vercel como alternativa de frontend estático, nunca backend obrigatório.
 
 Vercel não deve se tornar um boundary do domínio.
 
@@ -149,6 +150,11 @@ O core da aplicação e integrações devem permanecer portáveis para outro run
 sem reescrita do domínio. Serviços exclusivos da Vercel podem ser usados apenas
 quando isolados atrás de adapters ou quando existir estratégia clara de
 substituição. A API não depende da Vercel para executar.
+
+Render é escolha inicial por simplicidade, custo e suporte a containers, não
+dependência arquitetural. A imagem OCI deve poder executar futuramente em Azure
+App Service, Azure Container Apps, AWS, GCP ou outro runtime. Azure não é hosting
+obrigatório nesta fase; Kubernetes só entra mediante necessidade real.
 
 A integração com a Clash Royale API deve permanecer separada do runtime,
 especialmente por possíveis requisitos de egress/IP allowlist.
@@ -159,6 +165,11 @@ A fundação deve nascer segura por padrão:
 
 - segredos de integração permanecem somente no servidor;
 - browser não acessa PostgreSQL ou Data API para dados CrownPilot;
+- API REST versionada em `/api/v1`, com OpenAPI gerado e ProblemDetails;
+- health checks liveness/readiness, structured logging, correlation IDs, métricas
+  básicas e redaction desde a fundação;
+- testes unit, Application, integration, persistence/RLS, authn/authz, contract,
+  API/OpenAPI, frontend, E2E e smoke como gates progressivos;
 - EF Core migrations e SQL de RLS/grants são versionados/testados, sem duplicar schema;
 - acesso server-side usa EF Core + Npgsql com secrets mínimos;
 - local, preview e produção não devem compartilhar dados/segredos de forma
@@ -188,7 +199,7 @@ Desenvolvimento local usa:
 ### Pull Request / Preview
 
 Branches de feature e Pull Requests podem gerar Preview Deployments efêmeros em
-Vercel ou outro host estático.
+Render Static Site, Vercel ou outro host estático.
 
 Preview serve para:
 
@@ -284,10 +295,13 @@ motivo técnico.
 Gates mínimos esperados:
 
 - **PR:** restore/build/test .NET + lint + type-check + unit + integration +
-  persistence + contract + RLS + build;
-- **main push:** mesmos gates + build Docker/OCI + smoke da API;
-- **staging:** gates de PR + E2E + smoke;
-- **production:** gates aprovados + deploy + smoke.
+  persistence + contract + RLS + build Docker descartável;
+- **staging candidate:** gates de PR + publica um digest OCI imutável e executa
+  migration job, E2E e smoke;
+- **main:** promove o mesmo digest aprovado, sem rebuild divergente, e executa
+  health smoke;
+- **production:** somente após aprovação dos gates, deploy do digest promovido e
+  smoke não destrutivo.
 
 A ferramenta específica de testes é escolhida no bootstrap da Fase 002.
 
@@ -453,12 +467,15 @@ Player Tag em cada dispositivo.
 - `AGENTS.md` e comandos operacionais do repositório;
 - toolchain de testes unitários, integração, contract e E2E;
 - CI com gates de lint, type-check, testes e build;
+- OpenAPI/ProblemDetails como contrato de API e health checks como contrato
+  operacional;
 - `.env.example` sem secrets;
 - estratégia local / preview / staging / production;
 - Preview Deployments efêmeros para PRs sem dependência de Firebase real;
 - branch `staging` com hostname fixo para validação completa;
 - deploy de produção somente a partir da `main`;
-- frontend estático hospedável em Vercel sem dependência obrigatória do backend.
+- frontend estático hospedável no Render Static Site, Vercel ou alternativa
+  compatível, sem dependência obrigatória do backend.
 
 #### Identidade e persistência
 
@@ -488,6 +505,19 @@ Player Tag em cada dispositivo.
 - estratégia inicial para exclusão dos dados da conta;
 - observabilidade inicial.
 
+#### Arquitetura e aprendizado
+
+- Clean Architecture pragmática dentro de um Modular Monolith;
+- um processo/backend e uma imagem OCI, com módulos internos e boundaries claros;
+- Domain sem dependência de ASP.NET Core, Firebase, Supabase, EF Core, Npgsql ou
+  providers externos;
+- Application dependente de ports/interfaces, Infrastructure implementando
+  adapters e API compondo transporte;
+- código didático sem artificialidade, com comentários de intenção na primeira
+  ocorrência de DI, middleware, authn/authz, EF Core, migrations, Npgsql,
+  `async/await`, `CancellationToken`, options e lifecycle;
+- documentação incremental em `docs/learning/`, somente para conceitos usados.
+
 ### Boundary da fase
 
 A Fase 002 pode consultar a Clash Royale API para validar o vínculo, mas **não**
@@ -507,6 +537,8 @@ O token da Clash Royale API nunca é exposto ao browser.
 - autenticação não é tratada como autorização;
 - falhas da API externa não invalidam a identidade local;
 - runtime/domain não dependem de API proprietária da Vercel;
+- mesma imagem Docker/OCI deve ser promovível por digest entre Staging e
+  Production, sem acoplamento ao Render;
 - authentication não é authorization; regras críticas ficam no backend.
 
 ### Critérios de aceite
@@ -514,7 +546,8 @@ O token da Clash Royale API nunca é exposto ao browser.
 - [ ] bootstrap pode ser reproduzido a partir do repositório limpo;
 - [ ] lint, type-check, unit, integration, contract, E2E e build possuem comandos definidos;
 - [ ] CI executa lint, type-check, unit, integration, contract, RLS e build nos PRs;
-- [ ] CI repete gates, build Docker e smoke de container em push para `main`;
+- [ ] staging candidate publica digest OCI e executa smoke; `main` promove o
+      mesmo digest sem rebuild divergente e executa health smoke;
 - [ ] EF Core migrations e testes RLS executam contra PostgreSQL/Supabase CLI/Docker;
 - [ ] PRs geram Preview Deployments sem depender de Firebase/Google Sign-In real;
 - [ ] branch `staging` possui hostname fixo e ambiente de pré-produção;
@@ -532,8 +565,12 @@ O token da Clash Royale API nunca é exposto ao browser.
 - [ ] usuário consegue trocar/desvincular a tag;
 - [ ] erros de integração não causam perda do vínculo;
 - [ ] nenhum token da Supercell, Firebase service account ou secret de banco chega ao client;
-- [ ] frontend estático e API Docker funcionam sem tornar Vercel parte do domínio;
-- [ ] smoke tests passam em staging e production.
+- [ ] frontend estático e API Docker funcionam sem tornar Render ou Vercel parte
+      do domínio;
+- [ ] OpenAPI gerado documenta endpoints, authn/authz, ProblemDetails e status;
+- [ ] health liveness/readiness e observabilidade redacted possuem checks;
+- [ ] smoke de Staging passa; smoke de Production é executado quando o ambiente
+      for provisionado e houver go/no-go explícito.
 
 ### Dependências
 

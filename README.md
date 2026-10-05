@@ -91,9 +91,12 @@ Recommendations should account for the real state of the player's account.
 
 ### Persistent identity
 
-The player should link a Clash Royale Player Tag once.
+The player should submit a Clash Royale Player Tag once as a public-profile
+reference; this does not verify account ownership.
 
-After signing in on another device, CrownPilot should already know which Clash Royale account belongs to that user.
+After signing in on another device, CrownPilot should recover the public profile
+reference linked by that user. The link remains `unverified`; CrownPilot does not
+claim ownership or control of the external account.
 
 ### Data-driven recommendations
 

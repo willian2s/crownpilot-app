@@ -17,6 +17,7 @@ verificado.
 - recuperação em outro dispositivo;
 - troca/desvinculação explícitas;
 - erros de input/provider compreensíveis via ProblemDetails;
+- contrato OpenAPI gerado e validado sem arquivo manual concorrente;
 - exclusão inicial de dados próprios;
 - disclaimer de conteúdo não oficial.
 
@@ -24,12 +25,14 @@ verificado.
 
 - telas/estados de login, vínculo, vínculo existente, troca e unlink;
 - controllers/minimal endpoints finos para read/link/replace/unlink/delete;
+- paths `/api/v1/me/player-link` e `/api/v1/me` conforme contrato da spec;
 - DTOs JSON sem entidades de persistência expostas;
 - confirmação antes de troca, desvinculação e exclusão;
 - mensagem “Perfil público salvo — ownership não verificado”;
 - loading, vazio, `401`, `403`, `404`, `409`, `429`, `503` e token expirado;
 - reload/outro dispositivo recuperando vínculo após login;
 - caminho funcional para apagar usuário e documentos próprios.
+- autenticação recente (`auth_time`) para exclusão, sem excluir Firebase/Google.
 
 ## Escopo excluído
 
@@ -62,6 +65,8 @@ verificado.
 3. Executar lookup server-side e persistir somente após `resolved`.
 4. Fazer replace somente após confirmação e preservar vínculo anterior em falha.
 5. Implementar unlink e exclusão com autorização, confirmação e idempotência.
+   Exigir `auth_time` recente e retornar `reauthentication_required` quando
+   necessário.
 6. Tratar `401`, reload, logout/login e novo dispositivo.
 7. Exibir `public_profile`/`unverified` sem linguagem de ownership.
 8. Adicionar disclaimer legível de fan content não oficial.
@@ -87,6 +92,8 @@ indisponível, rate limit, replace falho, unlink repetido e delete repetido.
 - unlink e exclusão funcionam sem reentrada indevida;
 - UI nunca diz que usuário possui ou controla perfil;
 - estados vazios/erro/loading são acessíveis e build passa.
+- OpenAPI documenta request/response, authn/authz, ProblemDetails e status;
+- exclusão exige reautenticação recente e remove somente dados CrownPilot.
 
 ## Riscos e cuidados
 

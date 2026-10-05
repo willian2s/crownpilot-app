@@ -1,4 +1,4 @@
-# 002-04 — Implementar Firebase Auth Google e bearer
+# 002-04 — Implementar Google Sign-In e autenticação Firebase bearer
 
 - **Ticker:** `002`
 - **Número:** `04`
@@ -7,8 +7,8 @@
 ## Objetivo e resultado esperado
 
 Implementar Google Sign-In no React e validação server-side do Firebase ID Token
-na API ASP.NET Core. O resultado é um `AuthContext` seguro, sem sessão cookie,
-UID arbitrário ou credencial Supercell.
+na API ASP.NET Core. O resultado é um `AuthenticatedSubject` seguro e um bearer
+validado, sem sessão cookie, UID arbitrário ou credencial Supercell.
 
 ## Requisitos cobertos
 
@@ -24,11 +24,12 @@ UID arbitrário ou credencial Supercell.
 
 - cliente Firebase Web configurado por ambiente;
 - login, refresh, logout e estados loading/error;
-- middleware/handler de autenticação ASP.NET Core em Infrastructure;
-- integração suportada para validação Firebase, sem JWT manual;
-- `AuthenticatedSubject` e resolução para `CrownPilotUserId` via abstração;
-- caso de uso idempotente `EnsureCrownPilotUser`, com tratamento de corrida no
-  primeiro login e falha de banco sem autenticação parcial;
+- middleware/handler de autenticação ASP.NET Core em API, com verifier Firebase
+  atrás de adapter na Infrastructure;
+- Firebase Admin SDK para .NET ou integração oficial equivalente, sem JWT manual;
+- `AuthenticatedSubject` e contrato de resolução para `CrownPilotUserId` via
+  abstração Application;
+- contrato/fake de `EnsureCrownPilotUser`, sem conectar EF/RLS nesta task;
 - configuração de project ID/issuer por ambiente;
 - CORS exato e envio HTTPS do bearer;
 - testes de token, rotação, project errado e UID adulterado.
@@ -43,29 +44,30 @@ UID arbitrário ou credencial Supercell.
 
 ## Dependências
 
-- `002-01`, `002-02` e `002-03`;
+- `002-01` e `002-02`;
 - Firebase Emulator/fixtures e projetos por ambiente;
 - configuração de Google provider em Staging, fora do Git.
 
 ## Arquivos e símbolos prováveis
 
 - `frontend/src/auth/firebase.ts`, `AuthProvider.tsx`;
-- `src/Infrastructure/Authentication/FirebaseAuthentication.cs`;
+- `src/Infrastructure/Authentication/FirebaseTokenVerifier.cs`;
 - `src/Api/Program.cs`, `AuthenticationOptions`, `AuthContext`;
 - `src/Application/Identity/IUserIdentityResolver.cs`;
-- endpoints/controllers de sessão mínima e testes de API/auth.
+- componentes de authentication/authorization e testes de API/auth.
 
 ## Passos de implementação
 
 1. Configurar Firebase Web SDK e Google provider por ambiente.
 2. Implementar login/refresh/logout sem persistir token manualmente além do SDK.
 3. Enviar somente ID Token bearer por HTTPS às rotas da API.
-4. Configurar validação suportada na Infrastructure com project ID/issuer allowlist.
+4. Configurar validação suportada na Infrastructure com project ID/issuer allowlist
+   e credencial server-only; não persistir ou criar usuário no handler.
 5. Derivar Firebase UID do token verificado e resolver ID interno via abstração;
    rejeitar UID em body/query/header.
 6. Retornar `401` sem detalhes internos e manter autorização em políticas/casos
    de uso posteriores.
-7. Provar login em Staging; usar Emulator/fixtures nos testes locais/CI.
+7. Usar Emulator/fixtures nos testes locais/CI; Google real fica para Task 002-09.
 
 ## Testes e comandos de validação
 
@@ -78,16 +80,19 @@ npm run build
 ```
 
 Cobrir token ausente, inválido, expirado, issuer/audience/project incorretos,
-assinatura/`kid` rotacionado, `sub` vazio, usuário A/B e logout. Verificar bundle
-sem service account, database password, token externo ou código server-only.
+assinatura/`kid` rotacionado, `sub` vazio e logout. Testar separadamente
+authentication válida sem authorization. Verificar bundle sem service account,
+database password, token externo ou código server-only.
 
 ## Definição de pronto
 
-- Google Sign-In funciona no projeto Firebase de Staging;
+- Google Sign-In usa Firebase Web SDK com configuração pública por ambiente;
 - API aceita somente Firebase ID Token verificável em bearer;
+- handler de authentication não escreve no banco nem cria identidade como efeito
+  colateral;
 - UID é derivado server-side e não é chave de domínio;
 - authentication não concede autorização sobre usuário B;
-- outro dispositivo recupera a mesma identidade após login;
+- resolução/criação de identidade fica disponível como port/fake para 002-06;
 - API não usa cookie/sessão paralela nesta fase;
 - `401`, CORS e configuração por ambiente são testados;
 - bundle não contém secrets nem refresh token enviado à API.

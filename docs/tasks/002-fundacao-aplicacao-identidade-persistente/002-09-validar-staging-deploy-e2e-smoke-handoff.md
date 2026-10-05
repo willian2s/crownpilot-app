@@ -6,18 +6,19 @@
 
 ## Objetivo e resultado esperado
 
-Provar a fundação em Staging e Production controlados, mantendo Preview
-efêmero, Google Sign-In real em Staging, E2E do fluxo crítico, smoke pós-deploy
-e handoff explícito para a próxima fase.
+Provar a fundação em Staging controlado, mantendo Preview efêmero, Google Sign-In
+real em Staging, E2E do fluxo crítico, smoke pós-deploy e handoff explícito para
+a próxima fase. Production é promoção posterior e controlada, não pré-requisito
+para bootstrap local.
 
 ## Requisitos cobertos
 
 - Preview sem Firebase Auth real;
 - Staging com hostname fixo, projeto Firebase e banco Supabase separados;
 - E2E de login/vínculo/recuperação/troca/unlink;
-- Production somente por promoção controlada de `main`;
+- Production somente por promoção controlada de `main`, quando houver aprovação;
 - API ASP.NET Core em imagem Docker/OCI portátil;
-- frontend Vite estático hospedado opcionalmente em Vercel;
+- frontend Vite estático hospedado inicialmente no Render Static Site ou alternativa;
 - migrations controladas e health endpoints;
 - CI verde, smoke e riscos remanescentes documentados.
 
@@ -29,8 +30,10 @@ e handoff explícito para a próxima fase.
 - Firebase project de Staging com Google Sign-In e allowlist do hostname fixo;
 - Supabase project/database de Staging separado, com SSL e conexão validados;
 - migration job controlado antes da aplicação, sem auto-migration concorrente;
-- E2E com conta Google/test data de Staging;
-- smoke controlado pós-deploy em Staging e Production;
+- E2E com identidade de teste controlada e bearer Firebase; smoke/manual confirma
+  Google Sign-In real e authorized domain, sem credencial persistida no repositório;
+- smoke controlado pós-deploy em Staging; Production somente após go/no-go;
+- promoção do mesmo digest OCI validado em Staging;
 - evidência de isolamento, redaction e ausência de secrets no client;
 - registro de handoff, débitos e bloqueios da Fase 003.
 
@@ -61,14 +64,17 @@ e handoff explícito para a próxima fase.
 
 1. Criar Preview e comprovar build/smoke sem login real.
 2. Construir imagem ASP.NET Core e provar health localmente e no CI.
-3. Publicar frontend Vite em host estático, sem dependência exclusiva de Vercel.
+3. Publicar frontend Vite no Render Static Site ou host compatível, sem dependência
+   exclusiva de Vercel.
 4. Configurar Staging fixo, Firebase separado, Supabase separado e secrets
    próprios.
 5. Aplicar migrations EF Core via job controlado e SQL RLS/grants posterior.
 6. Executar E2E do fluxo completo em Staging.
 7. Corrigir isolamento, acessibilidade, erros, CORS e redaction.
-8. Promover somente via `main` para Production após aprovação dos gates.
-9. Executar smoke controlado e registrar handoff/riscos residuais.
+8. Registrar decisão explícita de go/no-go para Production; se aprovada, promover
+   via `main` o mesmo digest OCI, aplicar migration job e executar smoke não
+   destrutivo.
+9. Registrar handoff/riscos residuais.
 
 ## Testes e comandos de validação
 
@@ -82,10 +88,11 @@ npm run test:e2e
 npm run smoke
 ```
 
-E2E deve confirmar login, vínculo, reload/outro dispositivo, replace, falha de
-provider sem perda, unlink e logout/login. Smoke confirma build, health,
-authentication, endpoint de vínculo e isolamento de ambiente; não faz ingestão ou
-polling.
+E2E deve confirmar login por identidade de teste, vínculo, reload/outro dispositivo,
+replace, falha de provider sem perda, unlink e logout/login. Smoke confirma build,
+health, authentication, endpoint de vínculo e isolamento de ambiente; não faz
+ingestão ou polling. Google UI real pode ser confirmação manual controlada, não
+dependência frágil de automação de terceiro.
 
 ## Definição de pronto
 
@@ -94,8 +101,10 @@ polling.
 - migrations são aplicadas por job controlado;
 - Staging tem host fixo, Firebase/Supabase separados e login Google funcional;
 - E2E crítico passa em Staging;
-- Production só recebe promoção aprovada da `main`;
-- smoke passa sem expor dados de teste ou secrets;
+- Production só recebe promoção aprovada da `main`, caso go/no-go exista;
+- Staging e Production usam digest OCI promovível, não rebuild divergente;
+- smoke de Staging passa sem expor dados de teste ou secrets; smoke de Production
+  é obrigatório somente após provisionamento e go/no-go explícitos;
 - overview/spec registram 9/9 subtarefas, decisões, riscos e handoff;
 - Fase 003 continua bloqueada até gates da Fase 001 serem reabertos.
 

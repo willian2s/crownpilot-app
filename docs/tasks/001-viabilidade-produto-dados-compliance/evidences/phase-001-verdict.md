@@ -270,8 +270,9 @@ completa.
 > produto, dados e compliance continuam normativas.
 
 - Firebase Authentication com Google, Cloud Firestore e Vercel como decisões-base
-  da [ADR 001](../../../decisions/001-firebase-firestore-vercel-portable.md),
-  mantendo domínio e integração portáveis;
+  históricas da [ADR 001](../../../decisions/001-firebase-firestore-vercel-portable.md).
+  Esse item foi substituído para implementação da Fase 002 pela ADR 004; somente
+  constraints de produto, dados e compliance permanecem normativas;
 - um usuário CrownPilot e uma Player Tag primária, com associação privada
   server-side a `crownpilotUserId`;
 - semântica `public_profile` + `ownershipStatus: unverified`, com texto de UI

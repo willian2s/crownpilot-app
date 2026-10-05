@@ -17,16 +17,20 @@ diagnosticar authentication, vínculo e provider sem registrar dados sensíveis.
 - contract tests do lookup sem chamadas live;
 - build/smoke da imagem ASP.NET Core sem secrets;
 - E2E/smoke com comandos e pré-condições claros;
+- validação do documento OpenAPI gerado e drift de contrato;
 - logs/métricas com redaction e correlation ID;
 - gates separados para PR, main e Staging.
 
 ## Escopo incluído
 
-- workflow `.github/workflows/ci.yml` para `pull_request` e push em `main`;
+- workflow `.github/workflows/ci.yml` para `pull_request`, staging candidate e
+  promoção em `main`;
 - jobs .NET, frontend, persistence/RLS, contract, image e health;
 - PostgreSQL local/descartável e Firebase Emulator/fixtures sem produção;
 - scripts de E2E e smoke staging-only;
 - logger/métricas com request ID, ambiente, resultado e latência;
+- liveness sem dependências e readiness com configuração/PostgreSQL, nunca lookup
+  live;
 - scans para secrets, URLs com tag e imports server-only no bundle;
 - documentação de owner/pré-condição dos gates Staging/Production.
 
@@ -55,13 +59,14 @@ diagnosticar authentication, vínculo e provider sem registrar dados sensíveis.
 
 1. Definir jobs e falhas para PR e push em `main`.
 2. Executar restore/build/test .NET e frontend sem secrets reais.
-3. Subir PostgreSQL descartável, aplicar EF migrations, RLS e fixtures.
+3. Subir PostgreSQL descartável, aplicar EF migrations, RLS e fixtures; executar
+   checks de pool/reset e isolamento A/B.
 4. Executar testes de token Firebase com Emulator/fixtures assinadas.
 5. Adicionar métricas de authentication, link, erro, latência e ambiente.
 6. Aplicar redaction antes de serializar logs ou exceptions.
 7. Construir imagem Docker e testar `/health/live`/`ready` sem secret na imagem.
 8. Criar workflow protegido/manual de Staging com owner, aprovação, migration
-   job e smoke antes de promoção para `main`.
+    job, mesmo digest OCI e smoke antes de promoção para `main`.
 9. Documentar gates Staging/Production fora dos gates de PR/main.
 
 ## Testes e comandos de validação
@@ -75,18 +80,26 @@ npm run lint
 npm run typecheck
 npm run test:unit
 npm run test:contract
-npm run test:rls
 npm run build
+dotnet test --filter Category=Persistence
+dotnet test --filter Category=Rls
+dotnet test --filter Category=Api
+npm run openapi:check
 docker build -t crownpilot-api:ci .
-curl --fail http://localhost:8080/health/live
+npm run smoke:container -- --image crownpilot-api:ci
 ```
+
+`smoke:container` deve iniciar a imagem, aguardar readiness/liveness, falhar
+fechado em resposta inválida e remover o container mesmo em erro. Não usar
+processo residual do host como substituto do container validado.
 
 Validar que qualquer falha bloqueia merge/release e que nenhuma chamada live ou
 secret de Production ocorre em PR/Preview.
 
 ## Definição de pronto
 
-- CI executa gates .NET/frontend em PR e em cada push para `main`;
+- CI executa gates .NET/frontend em PR; staging candidate publica digest OCI e
+  `main` promove o mesmo digest sem rebuild;
 - persistence/RLS/contract tests usam ambientes descartáveis/fixtures;
 - imagem ASP.NET Core constrói e health smoke passa sem secrets;
 - testes de authentication/authorization e redaction são obrigatórios;

@@ -1,4 +1,4 @@
-# 002-02 — Fixar boundaries e ambientes
+# 002-02 — Estabelecer arquitetura, contrato HTTP e ambientes
 
 - **Ticker:** `002`
 - **Número:** `02`
@@ -6,7 +6,8 @@
 
 ## Objetivo e resultado esperado
 
-Fixar contratos de camadas, authentication/authorization, API JSON e matriz de
+Fixar Clean Architecture pragmática, boundaries do Modular Monolith,
+authentication/authorization, API JSON e matriz de
 Local, Preview, Staging e Production antes de provisionar dados reais. O
 resultado é um boundary explícito entre React/Vite, Firebase, API ASP.NET Core,
 Application/Domain/Infrastructure, PostgreSQL/Supabase e provider externo.
@@ -15,6 +16,8 @@ Application/Domain/Infrastructure, PostgreSQL/Supabase e provider externo.
 
 - stack e boundaries da [ADR 004](../../decisions/004-aspnet-core-react-vite-firebase-postgresql.md);
 - bearer Firebase ID Token, sem sessão cookie nesta fase;
+- API REST `/api/v1` com OpenAPI gerado por `Microsoft.AspNetCore.OpenApi`;
+- UI Scalar consumindo o mesmo `/openapi/v1.json`, somente Local/Staging;
 - authorization obrigatória no backend;
 - PostgreSQL/Supabase sem SDK central do provider;
 - Preview sem login real e Staging com hostname fixo;
@@ -24,13 +27,23 @@ Application/Domain/Infrastructure, PostgreSQL/Supabase e provider externo.
 ## Escopo incluído
 
 - documentar dependências permitidas por camada;
-- definir DTOs JSON, ProblemDetails, status (`401`, `403`, `404`, `409`) e CORS por ambiente;
+- definir DTOs JSON, ProblemDetails, códigos estáveis, status (`400`, `401`, `403`,
+  `404`, `409`, `422` quando necessário, `429`, `500`, `503`) e CORS por ambiente;
+- registrar códigos `invalid_player_tag`, `player_not_found`,
+  `provider_rate_limited`, `provider_unavailable`, `version_conflict` e
+  `reauthentication_required` sem dados sensíveis;
+- fixar paths `/api/v1/me/player-link`, `/api/v1/me`, `/openapi/v1.json` e `/docs`;
+- fixar `version`/`expectedVersion` como concorrência JSON, sem ETag paralelo;
+- fixar OpenAPI: JSON `200` em Local/Staging, `404` em Preview/Production por
+  padrão; UI `/docs` somente Local/Staging;
 - definir fluxo `React -> Firebase -> Bearer -> ASP.NET Core -> Application`;
 - separar `FirebaseUid` externo de `CrownPilotUserId` interno;
 - definir variáveis públicas, server-only e allowlists por ambiente;
 - definir Local com emuladores/fixtures, Preview sem Auth real, Staging fixo e
   Production separado;
 - definir frontend estático opcional em Vercel e API Docker/OCI portátil;
+- exigir `auth_time` presente, janela de 5 minutos e tolerância de relógio de 60
+  segundos para exclusão de dados CrownPilot, sem apagar Firebase;
 - registrar ownership de EF migrations versus SQL RLS/grants.
 
 ## Escopo excluído
@@ -59,14 +72,16 @@ Application/Domain/Infrastructure, PostgreSQL/Supabase e provider externo.
 
 1. Desenhar fluxo bearer e separar authentication de authorization.
 2. Registrar dependências permitidas e proibidas em cada camada.
-3. Definir contrato HTTP JSON, ProblemDetails, CORS e respostas `401`/`403`.
+3. Definir contrato HTTP JSON, ProblemDetails, OpenAPI, CORS e respostas de
+   authentication/authorization.
 4. Definir matriz de hosts, Firebase project IDs, Supabase databases e secrets.
 5. Definir Preview sem hostname autorizado para login real e Staging com hostname
    fixo/Google Sign-In.
-6. Definir API containerizada fora de Vercel e frontend estático relocável.
+6. Definir API containerizada no Render inicialmente, fora de Render/Vercel no
+   domínio, e frontend estático relocável.
 7. Definir matriz: token ausente/inválido -> `401`, token válido sem permissão ->
-   `403`, recurso próprio ausente -> `404`, usuário A tentando recurso de B sem
-   revelar dados -> `403` ou `404` conforme contrato anti-enumeração.
+    `403`, recurso próprio ausente -> `404`, conflito -> `409`, provider
+    indisponível -> `503`; usuário A não enumera dados de B.
 8. Registrar rollout, fail-closed e rollback sem dados compartilhados.
 
 ## Testes e comandos de validação
@@ -84,10 +99,14 @@ Firebase/Supabase de Staging/Production.
 
 - boundaries e dependências de camadas estão documentados;
 - API JSON, bearer, ProblemDetails e authorization possuem contrato;
+- contrato OpenAPI gerado documenta authn/authz, bodies, responses, erros e
+  headers sem segundo arquivo manual;
+- paths e semântica de `version`/`expectedVersion` estão fixados;
 - Firebase e Supabase têm configuração independente por ambiente;
 - Preview e Staging são explicitamente diferentes;
 - Vercel é opcional para frontend e não é dependência da API;
 - configuração inválida falha fechado;
+- Local/Staging expõem UI OpenAPI; Production segue política restrita;
 - ownership de migrations e ordem EF -> SQL de segurança estão definidos;
 - nenhum secret real ou provisionamento foi criado.
 
