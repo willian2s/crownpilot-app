@@ -8,7 +8,8 @@
 
 Modelar e provar somente usuário CrownPilot e vínculo primário de perfil público
 usando EF Core + Npgsql, com ID interno, isolamento por usuário e sem criar
-snapshot de API. Casos de uso e endpoints ficam na Task 002-07.
+snapshot de API. Casos de uso e endpoints ficam na Task
+`002-07-implementar-casos-de-uso-e-api-v1.md`.
 
 ## Requisitos cobertos
 
@@ -48,8 +49,9 @@ snapshot de API. Casos de uso e endpoints ficam na Task 002-07.
 
 ## Dependências
 
-- `002-02` e `002-03`; lookup/authentication podem ser substituídos por ports e
-  fakes nesta task;
+- `002-02-estabelecer-boundaries-contrato-base-e-ambientes.md` e
+  `002-03-preparar-postgresql-migrations-e-harness-rls.md`;
+  lookup/authentication podem ser substituídos por ports e fakes nesta task;
 - contrato `PrimaryPlayerLink` da spec;
 - conexão PostgreSQL local/Staging aprovada;
 - [ADR 004](../../decisions/004-aspnet-core-react-vite-firebase-postgresql.md).
@@ -74,7 +76,8 @@ snapshot de API. Casos de uso e endpoints ficam na Task 002-07.
 4. Implementar repositories usando ID resolvido do `AuthContext`; ignorar UID do
    body/query.
 5. Expor repositories e operações transacionais necessárias, deixando validação do
-   provider e orquestração de casos de uso para a Task 002-07.
+   provider e orquestração de casos de uso para a Task
+   `002-07-implementar-casos-de-uso-e-api-v1.md`.
 6. Aplicar e testar RLS/grants após migration EF, mantendo authorization obrigatória.
    Resolver/criar `crownpilot_users` por Firebase UID verificado dentro da mesma
    transação que define contexto RLS; nunca confiar em UID do request. Policies

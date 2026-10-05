@@ -39,9 +39,11 @@ por Player Tag, sem acoplar Domain/Application ao host, proxy ou payload da API.
 
 ## Dependências
 
-- `002-01` e `002-02`;
+- `002-01-bootstrap-toolchain.md` e
+  `002-02-estabelecer-boundaries-contrato-base-e-ambientes.md`;
 - evidências e constraints da Fase 001;
-- pode executar em paralelo a `002-04` após boundaries definidos;
+- pode executar em paralelo a `002-04-implementar-google-sign-in-e-firebase-bearer.md`
+  após boundaries definidos;
 - não depende de banco ou identidade persistente.
 
 ## Arquivos e símbolos prováveis

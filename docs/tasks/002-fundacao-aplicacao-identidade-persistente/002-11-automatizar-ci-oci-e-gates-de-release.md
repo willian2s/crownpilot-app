@@ -7,7 +7,8 @@
 ## Objetivo e resultado esperado
 
 Automatizar gates de Pull Request/main e preparar candidate Staging com imagem
-OCI imutável, sem secrets, mantendo observabilidade já definida na Task 002-10.
+OCI imutável, sem secrets, mantendo observabilidade já definida na Task
+`002-10-instrumentar-observabilidade-health-e-redaction.md`.
 
 ## Requisitos cobertos
 
@@ -18,7 +19,8 @@ OCI imutável, sem secrets, mantendo observabilidade já definida na Task 002-10
 - build/smoke da imagem ASP.NET Core sem secrets;
 - E2E/smoke com comandos e pré-condições claros;
 - validação do documento OpenAPI gerado e drift de contrato;
-- checks de observabilidade, health e redaction da Task 002-10;
+- checks de observabilidade, health e redaction da Task
+  `002-10-instrumentar-observabilidade-health-e-redaction.md`;
 - gates separados para PR, main e Staging.
 
 ## Escopo incluído
@@ -46,7 +48,9 @@ OCI imutável, sem secrets, mantendo observabilidade já definida na Task 002-10
 
 ## Dependências
 
-- `002-01` a `002-10` para fechamento; gates mínimos começam em `002-01`;
+- `002-01-bootstrap-toolchain.md` a
+  `002-10-instrumentar-observabilidade-health-e-redaction.md` para fechamento;
+  gates mínimos começam em `002-01-bootstrap-toolchain.md`;
 - Docker/PostgreSQL e fixtures disponíveis em CI;
 - secrets reais somente em ambientes controlados de Staging.
 
@@ -68,7 +72,8 @@ OCI imutável, sem secrets, mantendo observabilidade já definida na Task 002-10
    `Infrastructure → Application/Domain`, sem providers em Domain/Application.
 6. Construir imagem Docker e testar `/health/live`/`ready` sem secret na imagem.
 7. Gerar e versionar como artefato de candidate o bundle/job final de migrations;
-   não reutilizar bundle produzido antes da Task 002-06.
+   não reutilizar bundle produzido antes da Task
+   `002-06-modelar-persistencia-repositories-e-rls.md`.
 8. Criar workflow protegido/manual de Staging com owner, aprovação, migration
    job, mesmo digest OCI e smoke antes de promoção para `main`.
 9. Documentar gates Staging/Production fora dos gates de PR/main.
@@ -107,7 +112,8 @@ secret de Production ocorre em PR/Preview.
 - persistence/RLS/contract tests usam ambientes descartáveis/fixtures;
 - imagem ASP.NET Core constrói e health smoke passa sem secrets;
 - testes de authentication/authorization e redaction são obrigatórios;
-- checks de observabilidade e redaction da Task 002-10 são obrigatórios;
+- checks de observabilidade e redaction da Task
+  `002-10-instrumentar-observabilidade-health-e-redaction.md` são obrigatórios;
 - architecture tests impedem dependências invertidas e SDKs em Domain/Application;
 - métricas distinguem resultado, latência e ambiente sem dados sensíveis;
 - E2E/smoke possuem owner e pré-condição de Staging documentados.

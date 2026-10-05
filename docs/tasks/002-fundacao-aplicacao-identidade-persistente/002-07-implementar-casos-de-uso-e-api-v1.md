@@ -8,7 +8,8 @@
 
 Orquestrar casos de uso de identidade e vínculo e expor API REST `/api/v1`, com
 autorização server-side, contrato OpenAPI completo e comunicação honesta de
-perfil público não verificado. A UI fica na Task 002-08.
+perfil público não verificado. A UI fica na Task
+`002-08-entregar-frontend-de-identidade-e-vinculo.md`.
 
 ## Requisitos cobertos
 
@@ -46,9 +47,11 @@ perfil público não verificado. A UI fica na Task 002-08.
 
 ## Dependências
 
-- `002-04`, `002-05` e `002-06`;
+- `002-04-implementar-google-sign-in-e-firebase-bearer.md`,
+  `002-05-implementar-port-e-adapter-de-lookup.md` e
+  `002-06-modelar-persistencia-repositories-e-rls.md`;
 - contrato HTTP/ProblemDetails e política de observabilidade da spec;
-- frontend/API de `002-01`;
+- frontend/API de `002-01-bootstrap-toolchain.md`;
 - hostname fixo de Staging para validação posterior.
 
 ## Arquivos e símbolos prováveis

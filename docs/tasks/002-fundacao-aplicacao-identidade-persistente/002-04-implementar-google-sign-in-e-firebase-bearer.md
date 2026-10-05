@@ -44,7 +44,8 @@ validado, sem sessão cookie, UID arbitrário ou credencial Supercell.
 
 ## Dependências
 
-- `002-01` e `002-02`;
+- `002-01-bootstrap-toolchain.md` e
+  `002-02-estabelecer-boundaries-contrato-base-e-ambientes.md`;
 - Firebase Emulator/fixtures e projetos por ambiente, configurados nesta task;
 - configuração de Google provider em Staging, fora do Git.
 
@@ -67,7 +68,8 @@ validado, sem sessão cookie, UID arbitrário ou credencial Supercell.
    rejeitar UID em body/query/header.
 6. Retornar `401` sem detalhes internos e manter autorização em políticas/casos
    de uso posteriores.
-7. Usar Emulator/fixtures nos testes locais/CI; Google real fica para Task 002-12.
+7. Usar Emulator/fixtures nos testes locais/CI; Google real fica para Task
+   `002-12-validar-staging-e2e-smoke-e-handoff.md`.
 
 ## Testes e comandos de validação
 
@@ -92,7 +94,8 @@ bundle sem service account, database password, token externo ou código server-o
   colateral;
 - UID é derivado server-side e não é chave de domínio;
 - authentication não concede autorização sobre usuário B;
-- resolução/criação de identidade fica disponível como port/fake para 002-06;
+- resolução/criação de identidade fica disponível como port/fake para
+  `002-06-modelar-persistencia-repositories-e-rls.md`;
 - API não usa cookie/sessão paralela nesta fase;
 - `401`, CORS e configuração por ambiente são testados;
 - bundle não contém secrets nem refresh token enviado à API.

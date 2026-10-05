@@ -29,7 +29,8 @@ para bootstrap local.
 - `.dockerignore` validado e imagem sem `.env*`, secrets ou testes;
 - Firebase project de Staging com Google Sign-In e allowlist do hostname fixo;
 - Supabase project/database de Staging separado, com SSL e conexão validados;
-- bundle/job final de migrations produzido pela Task 002-11, executado antes da
+- bundle/job final de migrations produzido pela Task
+  `002-11-automatizar-ci-oci-e-gates-de-release.md`, executado antes da
   aplicação, sem auto-migration concorrente;
 - E2E com identidade de teste controlada e bearer Firebase; smoke/manual confirma
   Google Sign-In real e authorized domain, sem credencial persistida no repositório;
@@ -48,7 +49,8 @@ para bootstrap local.
 
 ## Dependências
 
-- `002-01` a `002-11` concluídas;
+- `002-01-bootstrap-toolchain.md` a
+  `002-11-automatizar-ci-oci-e-gates-de-release.md` concluídas;
 - projetos Firebase/Supabase e região aprovados;
 - hostname Staging, Google provider e secrets próprios disponíveis;
 - branch `staging` e `main` protegidas conforme workflow.
@@ -69,7 +71,8 @@ para bootstrap local.
    exclusiva de Vercel.
 4. Configurar Staging fixo, Firebase separado, Supabase separado e secrets
    próprios.
-5. Executar exatamente o bundle/job final produzido pela Task 002-11 e aplicar
+5. Executar exatamente o bundle/job final produzido pela Task
+   `002-11-automatizar-ci-oci-e-gates-de-release.md` e aplicar
    SQL RLS/grants posterior.
 6. Executar E2E do fluxo completo em Staging.
 7. Corrigir isolamento, acessibilidade, erros, CORS e redaction.

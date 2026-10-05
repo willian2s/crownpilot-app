@@ -262,8 +262,8 @@ conceitos efetivamente usados.
 ## Gates e revisão
 
 - Domain e Application não importam SDK, HTTP ou framework;
-- Task 002-01 usa .NET 10 LTS e Node.js 24 LTS pinados, produz API, frontend, EF
-  Core, Npgsql, testes e Docker sem Auth real;
+- Task `002-01-bootstrap-toolchain.md` usa .NET 10 LTS e Node.js 24 LTS pinados,
+  produz API, frontend, EF Core, Npgsql, testes e Docker sem Auth real;
 - tokens Firebase têm validação por ambiente e testes de rotação;
 - migrations EF e SQL RLS não duplicam schema;
 - PR não usa Firebase/Supabase production nem API Clash Royale live;
@@ -278,8 +278,8 @@ invalidarem a decisão.
 
 ## Fontes oficiais consultadas
 
-Consulta em 2026-10-05; versões e limites devem ser revalidados na Task 002-01 ou
-antes de provisionar:
+Consulta em 2026-10-05; versões e limites devem ser revalidados na Task
+`002-01-bootstrap-toolchain.md` ou antes de provisionar:
 
 - [.NET support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core);
 - [ASP.NET Core OpenAPI](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/openapi/overview?view=aspnetcore-10.0) e [UI do documento gerado](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/openapi/using-openapi-documents?view=aspnetcore-10.0);

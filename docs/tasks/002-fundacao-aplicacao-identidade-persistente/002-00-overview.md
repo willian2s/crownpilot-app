@@ -52,8 +52,10 @@ inicial portátil, testes e observabilidade.
   OCI deve poder ser promovido entre ambientes.
 - Mac/Linux usam toolchain pinado e comandos comuns; código didático explica
   intenção, boundaries e comportamento não óbvio sem comentários artificiais.
-- `002-04` entrega validação Firebase e contrato/fakes de `EnsureCrownPilotUser`;
-  `002-06` integra o Ensure ao schema, repositories e RLS reais.
+- `002-04-implementar-google-sign-in-e-firebase-bearer.md` entrega validação
+  Firebase e contrato/fakes de `EnsureCrownPilotUser`;
+  `002-06-modelar-persistencia-repositories-e-rls.md` integra o Ensure ao schema,
+  repositories e RLS reais.
 - Authentication handler não escreve no banco; leitura/exclusão não criam usuário
   implicitamente. Criação ocorre no caso de uso de vínculo.
 - RLS usa schema dedicado e contexto transacional; prova com pooler é gate, nunca
@@ -66,14 +68,28 @@ inicial portátil, testes e observabilidade.
   login real; Staging possui hostname fixo, Firebase e banco separados.
 - Não persistir snapshot, coleção, Arena, battle history, cache ou payload raw.
 - Não alegar ownership; usar `public_profile` + `unverified`.
-- `002-04` e `002-05` podem avançar em paralelo depois de `002-01` e `002-02`;
-  `002-06` depende do banco e dos contratos; `002-07` integra auth, lookup e
-  persistência; `002-08` entrega UI antes da revisão arquitetural/visual em `002-09`.
-  `002-10` e `002-11` fecham observabilidade e gates antes de `002-12`.
+- `002-04-implementar-google-sign-in-e-firebase-bearer.md` e
+  `002-05-implementar-port-e-adapter-de-lookup.md` podem avançar em paralelo
+  depois de `002-01-bootstrap-toolchain.md` e
+  `002-02-estabelecer-boundaries-contrato-base-e-ambientes.md`;
+  `002-06-modelar-persistencia-repositories-e-rls.md` depende do banco e dos
+  contratos; `002-07-implementar-casos-de-uso-e-api-v1.md` integra auth, lookup e
+  persistência; `002-08-entregar-frontend-de-identidade-e-vinculo.md` entrega UI
+  antes da revisão arquitetural/visual em
+  `002-09-revisar-arquitetura-frontend-e-ux-visual.md`.
+  `002-10-instrumentar-observabilidade-health-e-redaction.md` e
+  `002-11-automatizar-ci-oci-e-gates-de-release.md` fecham observabilidade e gates
+  antes de `002-12-validar-staging-e2e-smoke-e-handoff.md`.
+- `002-01-bootstrap-toolchain.md` permanece primeiro e desmarcado. Como bootstrap
+  ainda não iniciou e o repositório não possui `package.json` nem runtime, os
+  comandos de banco de `002-03-preparar-postgresql-migrations-e-harness-rls.md`
+  são contrato documental para o bootstrap, não
+  comandos executáveis presentes no estado atual.
 - Staging exige workflow protegido/manual, owner, aprovação, migration job e
   smoke antes de promoção. Production é etapa controlada posterior, não requisito
   para bootstrap local.
-- `002-09` deve revisar código React existente e comportamento visual em viewports
+- `002-09-revisar-arquitetura-frontend-e-ux-visual.md` deve revisar código React
+  existente e comportamento visual em viewports
   mobile/desktop; não é uma task genérica de “melhorar frontend”.
 - Preview consome somente build/smoke sem login real; Staging e Production
   promovem o mesmo digest OCI, sem rebuild divergente.

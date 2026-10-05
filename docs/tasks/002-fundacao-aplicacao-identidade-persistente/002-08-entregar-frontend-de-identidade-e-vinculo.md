@@ -35,15 +35,19 @@ comunicando honestamente `public_profile`/`unverified`.
 
 ## Escopo excluído
 
-- revisão arquitetural/visual abrangente, que pertence à Task 002-09;
+- revisão arquitetural/visual abrangente, que pertence à Task
+  `002-09-revisar-arquitetura-frontend-e-ux-visual.md`;
 - dashboard de coleção, Arena, sync ou snapshot;
 - múltiplas tags, social, clãs, billing ou coaching;
 - chamada direta do browser à Clash Royale API, PostgreSQL ou Supabase Data API.
 
 ## Dependências
 
-- `002-04`, `002-07` e frontend do `002-01`;
-- contrato OpenAPI e ProblemDetails da Task 002-07;
+- `002-04-implementar-google-sign-in-e-firebase-bearer.md`,
+  `002-07-implementar-casos-de-uso-e-api-v1.md` e frontend do
+  `002-01-bootstrap-toolchain.md`;
+- contrato OpenAPI e ProblemDetails da Task
+  `002-07-implementar-casos-de-uso-e-api-v1.md`;
 - hostname fixo de Staging para validação posterior.
 
 ## Arquivos e símbolos prováveis
@@ -62,7 +66,8 @@ comunicando honestamente `public_profile`/`unverified`.
    receber `reauthentication_required`.
 4. Mapear ProblemDetails para mensagens úteis sem expor UID, tag, URL ou provider.
 5. Cobrir reload, logout/login, novo dispositivo simulado e falhas controladas.
-6. Entregar estados acessíveis e deixar inventário de arquitetura/UX para `002-09`.
+6. Entregar estados acessíveis e deixar inventário de arquitetura/UX para
+   `002-09-revisar-arquitetura-frontend-e-ux-visual.md`.
 
 ## Testes e comandos de validação
 
@@ -96,4 +101,5 @@ não chamar Firebase ou Clash Royale live na CI normal.
 
 - Não colocar autorização crítica somente no React.
 - Não logar Player Tag real no client-side analytics.
-- Não transformar esta task em redesign sem inventário; revisão ocorre em `002-09`.
+- Não transformar esta task em redesign sem inventário; revisão ocorre em
+  `002-09-revisar-arquitetura-frontend-e-ux-visual.md`.

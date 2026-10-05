@@ -39,8 +39,13 @@ correlation/request ID e métricas de baixa cardinalidade.
 
 ## Dependências
 
-- `002-01`, `002-02`, `002-04`, `002-05`, `002-07` e frontend `002-08`;
-- configuração de banco da `002-03`.
+- `002-01-bootstrap-toolchain.md`,
+  `002-02-estabelecer-boundaries-contrato-base-e-ambientes.md`,
+  `002-04-implementar-google-sign-in-e-firebase-bearer.md`,
+  `002-05-implementar-port-e-adapter-de-lookup.md`,
+  `002-07-implementar-casos-de-uso-e-api-v1.md` e frontend
+  `002-08-entregar-frontend-de-identidade-e-vinculo.md`;
+- configuração de banco da `002-03-preparar-postgresql-migrations-e-harness-rls.md`.
 
 ## Passos de implementação
 

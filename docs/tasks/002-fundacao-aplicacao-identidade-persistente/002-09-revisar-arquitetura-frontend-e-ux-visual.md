@@ -42,9 +42,9 @@ registro de decisões; não é um placeholder genérico para “melhorar fronten
 
 ## Dependências
 
-- `002-08` concluída;
-- contrato `/api/v1` da `002-07`;
-- frontend React/Vite executável do `002-01`.
+- `002-08-entregar-frontend-de-identidade-e-vinculo.md` concluída;
+- contrato `/api/v1` da `002-07-implementar-casos-de-uso-e-api-v1.md`;
+- frontend React/Vite executável do `002-01-bootstrap-toolchain.md`.
 
 ## Arquivos e evidências prováveis
 

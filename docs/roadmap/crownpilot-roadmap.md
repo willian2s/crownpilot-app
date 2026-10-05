@@ -522,25 +522,29 @@ Player Tag em cada dispositivo.
 
 As subtarefas são implementáveis e verificáveis nesta ordem:
 
-1. bootstrap do toolchain;
-2. boundaries, contrato HTTP base e ambientes;
-3. PostgreSQL, migrations e harness RLS;
-4. Google Sign-In e Firebase bearer;
-5. port e adapter de lookup;
-6. persistência, repositories e RLS;
-7. casos de uso e API v1;
-8. frontend de identidade e vínculo;
-9. revisão arquitetural e visual do frontend existente;
-10. observabilidade, health e redaction;
-11. CI, OCI e gates de release;
-12. Staging, E2E, smoke e handoff.
+1. [002-01-bootstrap-toolchain.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-01-bootstrap-toolchain.md);
+2. [002-02-estabelecer-boundaries-contrato-base-e-ambientes.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-02-estabelecer-boundaries-contrato-base-e-ambientes.md);
+3. [002-03-preparar-postgresql-migrations-e-harness-rls.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-03-preparar-postgresql-migrations-e-harness-rls.md);
+4. [002-04-implementar-google-sign-in-e-firebase-bearer.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-04-implementar-google-sign-in-e-firebase-bearer.md);
+5. [002-05-implementar-port-e-adapter-de-lookup.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-05-implementar-port-e-adapter-de-lookup.md);
+6. [002-06-modelar-persistencia-repositories-e-rls.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-06-modelar-persistencia-repositories-e-rls.md);
+7. [002-07-implementar-casos-de-uso-e-api-v1.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-07-implementar-casos-de-uso-e-api-v1.md);
+8. [002-08-entregar-frontend-de-identidade-e-vinculo.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-08-entregar-frontend-de-identidade-e-vinculo.md);
+9. [002-09-revisar-arquitetura-frontend-e-ux-visual.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-09-revisar-arquitetura-frontend-e-ux-visual.md);
+10. [002-10-instrumentar-observabilidade-health-e-redaction.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-10-instrumentar-observabilidade-health-e-redaction.md);
+11. [002-11-automatizar-ci-oci-e-gates-de-release.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-11-automatizar-ci-oci-e-gates-de-release.md);
+12. [002-12-validar-staging-e2e-smoke-e-handoff.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-12-validar-staging-e2e-smoke-e-handoff.md).
 
-`002-04` e `002-05` podem avançar em paralelo depois de `002-01` e `002-02`.
-`002-09` não é uma task genérica de melhoria: analisa o código React entregue,
+`002-04-implementar-google-sign-in-e-firebase-bearer.md` e
+`002-05-implementar-port-e-adapter-de-lookup.md` podem avançar em paralelo depois
+de `002-01-bootstrap-toolchain.md` e
+`002-02-estabelecer-boundaries-contrato-base-e-ambientes.md`.
+`002-09-revisar-arquitetura-frontend-e-ux-visual.md` não é uma task genérica de
+melhoria: analisa o código React entregue,
 seus boundaries, auth/API client, estado, configuração, testes, acessibilidade,
 responsividade e estados visuais em mobile/desktop, registrando achados e
-correções. `002-12` promove exatamente o digest OCI validado em Staging; não há
-rebuild divergente.
+correções. `002-12-validar-staging-e2e-smoke-e-handoff.md` promove exatamente o
+digest OCI validado em Staging; não há rebuild divergente.
 
 ### Boundary da fase
 

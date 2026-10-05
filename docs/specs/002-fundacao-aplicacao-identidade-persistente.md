@@ -46,8 +46,8 @@ O backend expõe REST versionada em `/api/v1/...`, com OpenAPI como contrato
 gerado a partir da API. A estratégia é `Microsoft.AspNetCore.OpenApi` code-first,
 com `/openapi/v1.json` gerado pela API/build e Scalar consumindo o mesmo documento
 para visualização navegável em Local/Staging. Não haverá YAML manual nem segundo
-gerador concorrente. A Task 002-01 confirma versões suportadas contra documentação
-oficial atual, sem alterar o contrato.
+gerador concorrente. A Task `002-01-bootstrap-toolchain.md` confirma versões
+suportadas contra documentação oficial atual, sem alterar o contrato.
 
 Ao fim da fase, um usuário deve conseguir:
 
@@ -458,7 +458,7 @@ controllers/endpoints de vínculo e `ProblemDetails` mapping.
 ## Critérios de aceite verificáveis
 
 - clone limpo restaura solution .NET e frontend, compila e executa testes;
-- Task 002-01 contém ASP.NET Core, React, TypeScript, Vite, EF Core, Npgsql,
+- Task `002-01-bootstrap-toolchain.md` contém ASP.NET Core, React, TypeScript, Vite, EF Core, Npgsql,
       Docker, Node/npm pinados, `AGENTS.md` e toolchain de testes, sem Auth real
       ou provisionamento;
 - Domain não referencia Firebase, Supabase, EF Core, Npgsql, HTTP, ASP.NET
@@ -507,7 +507,7 @@ controllers/endpoints de vínculo e `ProblemDetails` mapping.
 - structured logs, health liveness/readiness, request/correlation IDs,
       métricas básicas e redaction possuem testes ou checks verificáveis;
 - ambiente Mac/Linux, pinagem de SDK/Node/tools e regra de código didático
-      estão documentados como fonte de verdade da Task 002-01;
+      estão documentados como fonte de verdade da Task `002-01-bootstrap-toolchain.md`;
 - E2E Staging cobre login, vínculo, reload/outro dispositivo, replace e unlink;
 - Staging smoke passa; Production smoke fica condicionado a ambiente
       provisionado e aprovação explícita, sem bloquear bootstrap local;
@@ -619,24 +619,31 @@ preservar schema e vínculo; mudanças incompatíveis usam expand/contract.
 
 ## Ordem das subtarefas
 
-1. [002-01 — bootstrap do toolchain](../tasks/002-fundacao-aplicacao-identidade-persistente/002-01-bootstrap-toolchain.md)
-2. [002-02 — boundaries, contrato base e ambientes](../tasks/002-fundacao-aplicacao-identidade-persistente/002-02-estabelecer-boundaries-contrato-base-e-ambientes.md)
-3. [002-03 — PostgreSQL, migrations e harness RLS](../tasks/002-fundacao-aplicacao-identidade-persistente/002-03-preparar-postgresql-migrations-e-harness-rls.md)
-4. [002-04 — Google Sign-In e Firebase bearer](../tasks/002-fundacao-aplicacao-identidade-persistente/002-04-implementar-google-sign-in-e-firebase-bearer.md)
-5. [002-05 — port e adapter de lookup](../tasks/002-fundacao-aplicacao-identidade-persistente/002-05-implementar-port-e-adapter-de-lookup.md)
-6. [002-06 — persistência, repositories e RLS](../tasks/002-fundacao-aplicacao-identidade-persistente/002-06-modelar-persistencia-repositories-e-rls.md)
-7. [002-07 — casos de uso e API v1](../tasks/002-fundacao-aplicacao-identidade-persistente/002-07-implementar-casos-de-uso-e-api-v1.md)
-8. [002-08 — frontend de identidade e vínculo](../tasks/002-fundacao-aplicacao-identidade-persistente/002-08-entregar-frontend-de-identidade-e-vinculo.md)
-9. [002-09 — revisão arquitetural e visual do frontend](../tasks/002-fundacao-aplicacao-identidade-persistente/002-09-revisar-arquitetura-frontend-e-ux-visual.md)
-10. [002-10 — observabilidade, health e redaction](../tasks/002-fundacao-aplicacao-identidade-persistente/002-10-instrumentar-observabilidade-health-e-redaction.md)
-11. [002-11 — CI, OCI e gates de release](../tasks/002-fundacao-aplicacao-identidade-persistente/002-11-automatizar-ci-oci-e-gates-de-release.md)
-12. [002-12 — Staging, E2E, smoke e handoff](../tasks/002-fundacao-aplicacao-identidade-persistente/002-12-validar-staging-e2e-smoke-e-handoff.md)
+1. [002-01-bootstrap-toolchain.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-01-bootstrap-toolchain.md)
+2. [002-02-estabelecer-boundaries-contrato-base-e-ambientes.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-02-estabelecer-boundaries-contrato-base-e-ambientes.md)
+3. [002-03-preparar-postgresql-migrations-e-harness-rls.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-03-preparar-postgresql-migrations-e-harness-rls.md)
+4. [002-04-implementar-google-sign-in-e-firebase-bearer.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-04-implementar-google-sign-in-e-firebase-bearer.md)
+5. [002-05-implementar-port-e-adapter-de-lookup.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-05-implementar-port-e-adapter-de-lookup.md)
+6. [002-06-modelar-persistencia-repositories-e-rls.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-06-modelar-persistencia-repositories-e-rls.md)
+7. [002-07-implementar-casos-de-uso-e-api-v1.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-07-implementar-casos-de-uso-e-api-v1.md)
+8. [002-08-entregar-frontend-de-identidade-e-vinculo.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-08-entregar-frontend-de-identidade-e-vinculo.md)
+9. [002-09-revisar-arquitetura-frontend-e-ux-visual.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-09-revisar-arquitetura-frontend-e-ux-visual.md)
+10. [002-10-instrumentar-observabilidade-health-e-redaction.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-10-instrumentar-observabilidade-health-e-redaction.md)
+11. [002-11-automatizar-ci-oci-e-gates-de-release.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-11-automatizar-ci-oci-e-gates-de-release.md)
+12. [002-12-validar-staging-e2e-smoke-e-handoff.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-12-validar-staging-e2e-smoke-e-handoff.md)
 
-`002-04` e `002-05` podem ser implementadas em paralelo após `002-01` e `002-02`;
-`002-05` é fixture-driven e não depende de authentication. `002-06` depende do
-pipeline PostgreSQL e dos contratos, `002-07` integra os casos de uso e a API,
-`002-08` entrega a UI e `002-09` revisa o frontend já existente. `002-10` e
-`002-11` fecham observabilidade e automação antes da validação em `002-12`.
+`002-04-implementar-google-sign-in-e-firebase-bearer.md` e
+`002-05-implementar-port-e-adapter-de-lookup.md` podem ser implementadas em
+paralelo após `002-01-bootstrap-toolchain.md` e
+`002-02-estabelecer-boundaries-contrato-base-e-ambientes.md`;
+`002-05-implementar-port-e-adapter-de-lookup.md` é fixture-driven e não depende
+de authentication. `002-06-modelar-persistencia-repositories-e-rls.md` depende do
+pipeline PostgreSQL e dos contratos, `002-07-implementar-casos-de-uso-e-api-v1.md`
+integra os casos de uso e a API, `002-08-entregar-frontend-de-identidade-e-vinculo.md`
+entrega a UI e `002-09-revisar-arquitetura-frontend-e-ux-visual.md` revisa o
+frontend já existente. `002-10-instrumentar-observabilidade-health-e-redaction.md`
+e `002-11-automatizar-ci-oci-e-gates-de-release.md` fecham observabilidade e
+automação antes da validação em `002-12-validar-staging-e2e-smoke-e-handoff.md`.
 
 ## Premissas explícitas
 
@@ -657,8 +664,10 @@ pipeline PostgreSQL e dos contratos, `002-07` integra os casos de uso e a API,
 - OpenAPI code-first gerado por `Microsoft.AspNetCore.OpenApi` é contrato único;
   UI navegável não gera contrato concorrente;
 - Clean Architecture é pragmática e o deploy permanece Modular Monolith único;
-- `EnsureCrownPilotUser` pertence à Application: 002-04 define contrato/fakes e
-  002-06 conecta schema/repository/RLS real;
+- `EnsureCrownPilotUser` pertence à Application:
+  `002-04-implementar-google-sign-in-e-firebase-bearer.md` define contrato/fakes
+  e `002-06-modelar-persistencia-repositories-e-rls.md` conecta
+  schema/repository/RLS real;
 - health liveness não consulta dependências externas; readiness pode validar
   configuração/banco conforme ambiente, nunca Clash Royale live;
 - comentários e `docs/learning/` seguem regra de aprendizado incremental;

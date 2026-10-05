@@ -33,7 +33,7 @@ Application/Domain/Infrastructure, PostgreSQL/Supabase e provider externo.
   `provider_rate_limited`, `provider_unavailable`, `version_conflict` e
   `reauthentication_required` sem dados sensíveis;
 - fixar prefixo `/api/v1`, convenções de `/openapi/v1.json` e `/docs`; contratos
-  completos de endpoint ficam na Task 002-07;
+  completos de endpoint ficam na Task `002-07-implementar-casos-de-uso-e-api-v1.md`;
 - fixar `version`/`expectedVersion` como concorrência JSON, sem ETag paralelo;
 - fixar OpenAPI: JSON `200` em Local/Staging, `404` em Preview/Production por
   padrão; UI `/docs` somente Local/Staging;
@@ -41,7 +41,8 @@ Application/Domain/Infrastructure, PostgreSQL/Supabase e provider externo.
 - separar `FirebaseUid` externo de `CrownPilotUserId` interno;
 - definir variáveis públicas, server-only e allowlists por ambiente;
 - definir Local com configuração isolada, Preview sem Auth real, Staging fixo e
-  Production separado; Emulator/fixtures de token pertencem à Task 002-04;
+  Production separado; Emulator/fixtures de token pertencem à Task
+  `002-04-implementar-google-sign-in-e-firebase-bearer.md`;
 - definir frontend estático opcional em Vercel e API Docker/OCI portátil;
 - exigir `auth_time` presente, janela de 5 minutos e tolerância de relógio de 60
   segundos para exclusão de dados CrownPilot, sem apagar Firebase;
@@ -57,7 +58,7 @@ Application/Domain/Infrastructure, PostgreSQL/Supabase e provider externo.
 
 ## Dependências
 
-- `002-01`;
+- `002-01-bootstrap-toolchain.md`;
 - [ADR 004](../../decisions/004-aspnet-core-react-vite-firebase-postgresql.md);
 - veredito da Fase 001.
 
@@ -102,7 +103,8 @@ Firebase/Supabase de Staging/Production.
 - boundaries e dependências de camadas estão documentados;
 - API JSON, bearer, ProblemDetails e authorization possuem contrato;
 - contrato HTTP base e pipeline OpenAPI estão definidos; documentação completa de
-  endpoints, bodies, responses, erros e headers será verificada na Task 002-07;
+  endpoints, bodies, responses, erros e headers será verificada na Task
+  `002-07-implementar-casos-de-uso-e-api-v1.md`;
 - paths e semântica de `version`/`expectedVersion` estão fixados;
 - Firebase e Supabase têm configuração independente por ambiente;
 - Preview e Staging são explicitamente diferentes;
