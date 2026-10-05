@@ -2,7 +2,7 @@
 
 - **Status geral:** pending
 - **Spec:** [002-fundacao-aplicacao-identidade-persistente.md](../../specs/002-fundacao-aplicacao-identidade-persistente.md)
-- **Progresso:** 0/9 subtarefas concluídas
+- **Progresso:** 0/12 subtarefas concluídas
 
 ## Objetivo
 
@@ -16,20 +16,26 @@ inicial portátil, testes e observabilidade.
 ## Checklist
 
 - [ ] [002-01-bootstrap-toolchain.md](002-01-bootstrap-toolchain.md)
-- [ ] [002-02-estabelecer-arquitetura-contrato-e-ambientes.md](002-02-estabelecer-arquitetura-contrato-e-ambientes.md)
-- [ ] [002-03-preparar-postgresql-local-e-migrations.md](002-03-preparar-postgresql-local-e-migrations.md)
-- [ ] [002-04-implementar-google-sign-in-e-bearer.md](002-04-implementar-google-sign-in-e-bearer.md)
-- [ ] [002-05-criar-adapter-de-lookup.md](002-05-criar-adapter-de-lookup.md)
-- [ ] [002-06-persistir-vinculo-com-autorizacao.md](002-06-persistir-vinculo-com-autorizacao.md)
-- [ ] [002-07-entregar-fluxos-de-vinculo-e-exclusao.md](002-07-entregar-fluxos-de-vinculo-e-exclusao.md)
-- [ ] [002-08-automatizar-quality-gates-e-observabilidade.md](002-08-automatizar-quality-gates-e-observabilidade.md)
-- [ ] [002-09-validar-staging-deploy-e2e-smoke-handoff.md](002-09-validar-staging-deploy-e2e-smoke-handoff.md)
+- [ ] [002-02-estabelecer-boundaries-contrato-base-e-ambientes.md](002-02-estabelecer-boundaries-contrato-base-e-ambientes.md)
+- [ ] [002-03-preparar-postgresql-migrations-e-harness-rls.md](002-03-preparar-postgresql-migrations-e-harness-rls.md)
+- [ ] [002-04-implementar-google-sign-in-e-firebase-bearer.md](002-04-implementar-google-sign-in-e-firebase-bearer.md)
+- [ ] [002-05-implementar-port-e-adapter-de-lookup.md](002-05-implementar-port-e-adapter-de-lookup.md)
+- [ ] [002-06-modelar-persistencia-repositories-e-rls.md](002-06-modelar-persistencia-repositories-e-rls.md)
+- [ ] [002-07-implementar-casos-de-uso-e-api-v1.md](002-07-implementar-casos-de-uso-e-api-v1.md)
+- [ ] [002-08-entregar-frontend-de-identidade-e-vinculo.md](002-08-entregar-frontend-de-identidade-e-vinculo.md)
+- [ ] [002-09-revisar-arquitetura-frontend-e-ux-visual.md](002-09-revisar-arquitetura-frontend-e-ux-visual.md)
+- [ ] [002-10-instrumentar-observabilidade-health-e-redaction.md](002-10-instrumentar-observabilidade-health-e-redaction.md)
+- [ ] [002-11-automatizar-ci-oci-e-gates-de-release.md](002-11-automatizar-ci-oci-e-gates-de-release.md)
+- [ ] [002-12-validar-staging-e2e-smoke-e-handoff.md](002-12-validar-staging-e2e-smoke-e-handoff.md)
 
 ## Observações
 
 - Fase 001 liberou somente bootstrap, identidade e vínculo privado read-only.
-- `Domain` não conhece Firebase, Supabase, EF Core, Npgsql, HTTP, ASP.NET Core
-  ou Vercel; `Application` usa abstrações; `Infrastructure` implementa adapters.
+- `API → Application → Domain`; `Infrastructure → Application` e `Infrastructure →
+  Domain`. `Domain` não conhece Firebase, Supabase, EF Core, Npgsql, HTTP, ASP.NET
+  Core ou Vercel; `Application` usa abstrações; `Infrastructure` implementa
+  adapters. `Identity` e `PlayerLink` são módulos funcionais; providers ficam em
+  `Infrastructure`.
 - Supabase é provedor do PostgreSQL, não backend da aplicação. EF Core é dono do
   schema; SQL separado cobre somente RLS/grants/objetos de plataforma.
 - RLS usa role sem `BYPASSRLS` e contexto transacional de `CrownPilotUserId`; a
@@ -60,13 +66,19 @@ inicial portátil, testes e observabilidade.
   login real; Staging possui hostname fixo, Firebase e banco separados.
 - Não persistir snapshot, coleção, Arena, battle history, cache ou payload raw.
 - Não alegar ownership; usar `public_profile` + `unverified`.
-- `002-05` pode avançar em paralelo depois de `002-01` e `002-02`; `002-08`
-  estabelece gates mínimos no bootstrap e fecha automação após as features.
+- `002-04` e `002-05` podem avançar em paralelo depois de `002-01` e `002-02`;
+  `002-06` depende do banco e dos contratos; `002-07` integra auth, lookup e
+  persistência; `002-08` entrega UI antes da revisão arquitetural/visual em `002-09`.
+  `002-10` e `002-11` fecham observabilidade e gates antes de `002-12`.
 - Staging exige workflow protegido/manual, owner, aprovação, migration job e
   smoke antes de promoção. Production é etapa controlada posterior, não requisito
   para bootstrap local.
+- `002-09` deve revisar código React existente e comportamento visual em viewports
+  mobile/desktop; não é uma task genérica de “melhorar frontend”.
+- Preview consome somente build/smoke sem login real; Staging e Production
+  promovem o mesmo digest OCI, sem rebuild divergente.
 - Decisões pendentes de implementação: versão exata de packages, runner .NET,
   controller versus Minimal API, transporte final do pooler, provider/egress live
   e região/backups antes de dados reais.
 - Fase 003 permanece bloqueada até reabertura dos gates de API data, retenção,
-  operação, egress, privacidade e meta.
+  ownership, egress, meta e compliance definidos no veredito da Fase 001.

@@ -5,13 +5,10 @@
 
 Este documento registra o contexto que levou ao desenho atual do CrownPilot.
 
-Ele é um **resumo histórico de produto**. Quando houver divergência, os documentos normativos do repositório têm precedência:
-
-1. `docs/decisions/`
-2. `docs/specs/`
-3. `docs/roadmap/`
-4. `docs/tasks/`
-5. implementação na `main`
+Ele é um **resumo histórico de produto**. Para intenção futura, precedem:
+`docs/decisions/`, `docs/specs/`, `docs/roadmap/` e `docs/tasks/`. Para estado já
+existente, a implementação em `main` é a fonte de verdade. Divergências exigem
+investigação; planejamento não deve fingir que entrega foi implementada.
 
 ---
 
@@ -729,7 +726,8 @@ Resumo de responsabilidades:
 - **Task:** unidade executável;
 - **Decision/ADR:** decisão arquitetural duradoura;
 - **Context:** histórico e motivação;
-- **main:** fonte final de verdade do que realmente existe.
+- **main:** fonte final de verdade do que realmente existe; não substitui decisões
+  normativas sobre intenção futura.
 
 ---
 
@@ -747,4 +745,6 @@ Antes de implementar a aplicação, precisamos responder com evidência:
 4. quais limites técnicos e comerciais existem;
 5. se esses dados sustentam de fato **Best Decks for You**.
 
-Somente depois disso a arquitetura de domínio e a modelagem do Firestore devem começar a ser congeladas.
+Somente depois disso a arquitetura de domínio e a modelagem persistente deveriam
+começar a ser congeladas. A referência histórica a Firestore foi substituída por
+PostgreSQL via EF Core + Npgsql na Fase 002; não orienta a implementação atual.

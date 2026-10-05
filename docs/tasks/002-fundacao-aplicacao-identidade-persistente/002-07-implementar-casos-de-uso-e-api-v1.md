@@ -1,4 +1,4 @@
-# 002-07 — Entregar fluxos de vínculo e exclusão
+# 002-07 — Implementar casos de uso e API v1
 
 - **Ticker:** `002`
 - **Número:** `07`
@@ -6,14 +6,14 @@
 
 ## Objetivo e resultado esperado
 
-Entregar API JSON e experiência React para consultar, criar, trocar, desvincular
-e excluir dados CrownPilot, com comunicação honesta de perfil público não
-verificado.
+Orquestrar casos de uso de identidade e vínculo e expor API REST `/api/v1`, com
+autorização server-side, contrato OpenAPI completo e comunicação honesta de
+perfil público não verificado. A UI fica na Task 002-08.
 
 ## Requisitos cobertos
 
 - uma Player Tag primária;
-- API ASP.NET Core consumida pelo frontend Vite;
+- API ASP.NET Core consumível pelo frontend Vite;
 - recuperação em outro dispositivo;
 - troca/desvinculação explícitas;
 - erros de input/provider compreensíveis via ProblemDetails;
@@ -23,15 +23,17 @@ verificado.
 
 ## Escopo incluído
 
-- telas/estados de login, vínculo, vínculo existente, troca e unlink;
 - controllers/minimal endpoints finos para read/link/replace/unlink/delete;
+- casos de uso para read/link/replace/unlink/delete usando ports;
 - paths `/api/v1/me/player-link` e `/api/v1/me` conforme contrato da spec;
 - DTOs JSON sem entidades de persistência expostas;
-- confirmação antes de troca, desvinculação e exclusão;
-- mensagem “Perfil público salvo — ownership não verificado”;
-- loading, vazio, `401`, `403`, `404`, `409`, `429`, `503` e token expirado;
-- reload/outro dispositivo recuperando vínculo após login;
-- caminho funcional para apagar usuário e documentos próprios.
+- respostas com `400`, `401`, `403`, `404`, `409`, `422` quando aplicável, `429`,
+  `500`, `503` e `ProblemDetails` sem vazamento;
+- `auth_time` recente para exclusão, com distinção entre claim ausente, malformada,
+  futura e expirada;
+- OpenAPI documentando método, authn/authz, parâmetros, body, response, status e
+  exemplos úteis;
+- preservação do vínculo anterior em falha de provider e `409` em concorrência;
 - autenticação recente (`auth_time`) para exclusão, sem excluir Firebase/Google.
 
 ## Escopo excluído
@@ -51,7 +53,6 @@ verificado.
 
 ## Arquivos e símbolos prováveis
 
-- `frontend/src/pages/Login.tsx`, `PlayerLink.tsx`;
 - `src/Api/Endpoints/PlayerLinkEndpoints.cs` ou controllers equivalentes;
 - `src/Application/PlayerLinks/`;
 - `PlayerLinkRequest`, `PlayerLinkResponse`, `MapLinkError`;
@@ -60,38 +61,36 @@ verificado.
 
 ## Passos de implementação
 
-1. Expor leitura do estado vinculado do usuário autenticado.
-2. Validar tag no client para UX e novamente no Application/API.
-3. Executar lookup server-side e persistir somente após `resolved`.
-4. Fazer replace somente após confirmação e preservar vínculo anterior em falha.
-5. Implementar unlink e exclusão com autorização, confirmação e idempotência.
-   Exigir `auth_time` recente e retornar `reauthentication_required` quando
-   necessário.
-6. Tratar `401`, reload, logout/login e novo dispositivo.
-7. Exibir `public_profile`/`unverified` sem linguagem de ownership.
-8. Adicionar disclaimer legível de fan content não oficial.
+1. Implementar casos de uso de leitura, vínculo, replace, unlink e exclusão.
+2. Validar tag no Application e executar lookup server-side antes da escrita.
+3. Preservar vínculo anterior em falha externa e proteger replace por
+   `expectedVersion`, retornando `409` sem last-write-wins.
+4. Exigir `auth_time` recente para exclusão e mapear reautenticação necessária.
+5. Expor endpoints finos e DTOs sem entidades EF ou payload externo.
+6. Gerar OpenAPI code-first único e documentar todos os status aplicáveis.
+7. Adicionar autorização e API tests para A/B, UID arbitrário e todos os estados
+   do provider, incluindo `Retry-After`, `traceId` e redaction.
 
 ## Testes e comandos de validação
 
 ```text
+dotnet test --filter Category=Application
 dotnet test --filter Category=Api
-npm run test:unit
-npm run build
+npm run openapi:check
 ```
 
-Cobrir ausência inicial, sucesso, tag inválida, perfil inexistente, provider
-indisponível, rate limit, replace falho, unlink repetido e delete repetido.
+Cobrir ausência inicial, sucesso, input inválido/malformado, perfil inexistente,
+provider indisponível/mal configurado, rate limit, replace falho, conflito,
+unlink repetido, delete repetido, `401`/`403`, `422` quando aplicável, erro
+inesperado `500` e claim `auth_time` inválida.
 
 ## Definição de pronto
 
-- usuário autentica e informa tag uma vez;
+- casos de uso usam somente identidade resolvida no backend;
 - API retorna somente dados do usuário autenticado;
-- reload e outro dispositivo recuperam vínculo após login;
 - replace valida nova tag antes de substituir antiga;
 - falha externa preserva vínculo anterior;
 - unlink e exclusão funcionam sem reentrada indevida;
-- UI nunca diz que usuário possui ou controla perfil;
-- estados vazios/erro/loading são acessíveis e build passa.
 - OpenAPI documenta request/response, authn/authz, ProblemDetails e status;
 - exclusão exige reautenticação recente e remove somente dados CrownPilot.
 

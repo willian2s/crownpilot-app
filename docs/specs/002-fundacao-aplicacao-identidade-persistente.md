@@ -37,7 +37,7 @@ Sign-In e PostgreSQL hospedado no Supabase através de EF Core + Npgsql.
 
 A fundação segue **Clean Architecture pragmática dentro de um Modular Monolith**:
 um único processo/backend e um único deploy inicial, com módulos internos claros
-(`Identity`, `PlayerLink` e `ExternalProviders`) que não compartilham entidades,
+(`Identity` e `PlayerLink`) que não compartilham entidades,
 casos de uso ou acesso a dados sem contrato explícito. Extração para workers ou
 serviços separados só será considerada quando existir necessidade operacional
 demonstrada.
@@ -193,9 +193,10 @@ conceito realmente utilizado merecer registro, sem curso paralelo.
 ### Arquitetura em camadas
 
 O deploy é um Modular Monolith: um backend ASP.NET Core, um processo e uma
-imagem OCI, com módulos internos `Identity`, `PlayerLink` e `ExternalProviders`.
-Módulos não são microservices e não ganham filas, brokers, gateway adicional ou
-orquestração distribuída sem requisito concreto.
+imagem OCI, com módulos funcionais internos `Identity` e `PlayerLink`. Firebase,
+PostgreSQL e Clash Royale permanecem adapters técnicos em `Infrastructure`, não
+módulos distribuídos. Módulos não são microservices e não ganham filas, brokers,
+gateway adicional ou orquestração distribuída sem requisito concreto.
 
 ```text
 API
@@ -457,12 +458,14 @@ controllers/endpoints de vínculo e `ProblemDetails` mapping.
 ## Critérios de aceite verificáveis
 
 - clone limpo restaura solution .NET e frontend, compila e executa testes;
-- Task 01 contém ASP.NET Core, React, TypeScript, Vite, EF Core, Npgsql,
+- Task 002-01 contém ASP.NET Core, React, TypeScript, Vite, EF Core, Npgsql,
       Docker, Node/npm pinados, `AGENTS.md` e toolchain de testes, sem Auth real
       ou provisionamento;
 - Domain não referencia Firebase, Supabase, EF Core, Npgsql, HTTP, ASP.NET
       Core ou Vercel;
 - Application usa ports/interfaces, sem SDK direto de provider;
+- testes arquiteturais comprovam `API → Application → Domain` e
+      `Infrastructure → Application/Domain`, sem SDK/provider em Domain/Application;
 - Clean Architecture pragmática e Modular Monolith possuem módulos,
       dependências permitidas e regra de um deploy/processo documentadas;
 - API REST `/api/v1/...` expõe JSON, ProblemDetails e OpenAPI gerado, e
@@ -478,6 +481,8 @@ controllers/endpoints de vínculo e `ProblemDetails` mapping.
 - `subject_type` e `ownership_status` são `NOT NULL` com checks invariantes;
 - replace usa token/version precondition e retorna `409` em conflito;
 - bridge RLS define role, contexto, reset e testes sem contexto, A/B e usuário correto;
+- role runtime não possui `BYPASSRLS` e acesso ao schema CrownPilot via Supabase
+      Data API/PostgREST é negado;
 - EF Core migrations criam schema; SQL posterior cobre somente RLS/grants;
 - migrations não são aplicadas automaticamente por múltiplas réplicas;
 - acesso A/B é autorizado no backend e RLS é testado como defesa adicional;
@@ -491,6 +496,9 @@ controllers/endpoints de vínculo e `ProblemDetails` mapping.
 - Preview não depende de hostname fixo ou login real; Staging possui hostname
       fixo, Firebase separado e Google Sign-In funcional;
 - frontend pode ser hospedado fora de Vercel e API inicia fora de Vercel;
+- revisão da arquitetura e UX do frontend analisa código existente, auth/API
+      boundary, estado, configuração, acessibilidade, responsividade e estados
+      visuais em mobile/desktop, com achados e débitos registrados;
 - `IClashRoyaleClient` é o único boundary de lookup e não aceita host do usuário;
 - somente `resolved` cria/substitui vínculo `public_profile/unverified`;
 - falha externa não remove vínculo anterior; replace concorrente é protegido;
@@ -523,6 +531,8 @@ controllers/endpoints de vínculo e `ProblemDetails` mapping.
   sem rede live;
 - **API:** request, response, headers, status, ProblemDetails, bearer,
   authorization e schemas OpenAPI;
+- **Frontend:** componentes, API client, auth lifecycle, loading/error/empty,
+  responsividade, acessibilidade e fluxos críticos com fixtures;
 - **E2E:** Playwright ou equivalente em Staging com Google Sign-In real;
 - **Smoke:** liveness, readiness, configuração, build, autenticação, endpoint
   crítico e isolamento de ambiente pós-deploy.
@@ -598,10 +608,11 @@ Render.
    etapa.
 5. Implementar lookup por fixture e persistência mínima; integrar o Ensure após
    schema, RLS e repositories existirem.
-6. Entregar API/React, OpenAPI e fluxos de vínculo.
-7. Fechar CI, observabilidade, imagem OCI e health smoke.
-8. Validar Render/Staging com Google Sign-In real, E2E e smoke.
-9. Promover Production somente por `main`, com migration job controlado.
+6. Entregar casos de uso/API e depois frontend de identidade e vínculo.
+7. Revisar arquitetura e UX visual do frontend em mobile/desktop.
+8. Fechar observabilidade, CI, imagem OCI e health smoke.
+9. Validar Render/Staging com Google Sign-In real, E2E e smoke.
+10. Promover Production somente por `main`, com migration job controlado.
 
 Não há migração de dados legados nem dual-write. Rollback de aplicação deve
 preservar schema e vínculo; mudanças incompatíveis usam expand/contract.
@@ -609,18 +620,23 @@ preservar schema e vínculo; mudanças incompatíveis usam expand/contract.
 ## Ordem das subtarefas
 
 1. [002-01 — bootstrap do toolchain](../tasks/002-fundacao-aplicacao-identidade-persistente/002-01-bootstrap-toolchain.md)
-2. [002-02 — arquitetura, contrato HTTP e ambientes](../tasks/002-fundacao-aplicacao-identidade-persistente/002-02-estabelecer-arquitetura-contrato-e-ambientes.md)
-3. [002-03 — PostgreSQL local e pipeline de migrations](../tasks/002-fundacao-aplicacao-identidade-persistente/002-03-preparar-postgresql-local-e-migrations.md)
-4. [002-04 — Google Sign-In e Firebase bearer](../tasks/002-fundacao-aplicacao-identidade-persistente/002-04-implementar-google-sign-in-e-bearer.md)
-5. [002-05 — adapter de lookup](../tasks/002-fundacao-aplicacao-identidade-persistente/002-05-criar-adapter-de-lookup.md)
-6. [002-06 — persistência e autorização](../tasks/002-fundacao-aplicacao-identidade-persistente/002-06-persistir-vinculo-com-autorizacao.md)
-7. [002-07 — fluxos de vínculo e exclusão](../tasks/002-fundacao-aplicacao-identidade-persistente/002-07-entregar-fluxos-de-vinculo-e-exclusao.md)
-8. [002-08 — quality gates e observabilidade](../tasks/002-fundacao-aplicacao-identidade-persistente/002-08-automatizar-quality-gates-e-observabilidade.md)
-9. [002-09 — Staging, deploy, E2E e handoff](../tasks/002-fundacao-aplicacao-identidade-persistente/002-09-validar-staging-deploy-e2e-smoke-handoff.md)
+2. [002-02 — boundaries, contrato base e ambientes](../tasks/002-fundacao-aplicacao-identidade-persistente/002-02-estabelecer-boundaries-contrato-base-e-ambientes.md)
+3. [002-03 — PostgreSQL, migrations e harness RLS](../tasks/002-fundacao-aplicacao-identidade-persistente/002-03-preparar-postgresql-migrations-e-harness-rls.md)
+4. [002-04 — Google Sign-In e Firebase bearer](../tasks/002-fundacao-aplicacao-identidade-persistente/002-04-implementar-google-sign-in-e-firebase-bearer.md)
+5. [002-05 — port e adapter de lookup](../tasks/002-fundacao-aplicacao-identidade-persistente/002-05-implementar-port-e-adapter-de-lookup.md)
+6. [002-06 — persistência, repositories e RLS](../tasks/002-fundacao-aplicacao-identidade-persistente/002-06-modelar-persistencia-repositories-e-rls.md)
+7. [002-07 — casos de uso e API v1](../tasks/002-fundacao-aplicacao-identidade-persistente/002-07-implementar-casos-de-uso-e-api-v1.md)
+8. [002-08 — frontend de identidade e vínculo](../tasks/002-fundacao-aplicacao-identidade-persistente/002-08-entregar-frontend-de-identidade-e-vinculo.md)
+9. [002-09 — revisão arquitetural e visual do frontend](../tasks/002-fundacao-aplicacao-identidade-persistente/002-09-revisar-arquitetura-frontend-e-ux-visual.md)
+10. [002-10 — observabilidade, health e redaction](../tasks/002-fundacao-aplicacao-identidade-persistente/002-10-instrumentar-observabilidade-health-e-redaction.md)
+11. [002-11 — CI, OCI e gates de release](../tasks/002-fundacao-aplicacao-identidade-persistente/002-11-automatizar-ci-oci-e-gates-de-release.md)
+12. [002-12 — Staging, E2E, smoke e handoff](../tasks/002-fundacao-aplicacao-identidade-persistente/002-12-validar-staging-e2e-smoke-e-handoff.md)
 
-`002-05` pode ser implementada em paralelo após `002-01` e `002-02`, pois é
-fixture-driven e não depende de authentication. `002-08` deve deixar gates
-mínimos no bootstrap, embora seu fechamento dependa das features anteriores.
+`002-04` e `002-05` podem ser implementadas em paralelo após `002-01` e `002-02`;
+`002-05` é fixture-driven e não depende de authentication. `002-06` depende do
+pipeline PostgreSQL e dos contratos, `002-07` integra os casos de uso e a API,
+`002-08` entrega a UI e `002-09` revisa o frontend já existente. `002-10` e
+`002-11` fecham observabilidade e automação antes da validação em `002-12`.
 
 ## Premissas explícitas
 

@@ -1,13 +1,13 @@
-# 002-08 — Automatizar quality gates e observabilidade
+# 002-11 — Automatizar CI, OCI e gates de release
 
 - **Ticker:** `002`
-- **Número:** `08`
+- **Número:** `11`
 - **Status:** `pending`
 
 ## Objetivo e resultado esperado
 
-Automatizar gates de Pull Request/main e instrumentar o mínimo operacional para
-diagnosticar authentication, vínculo e provider sem registrar dados sensíveis.
+Automatizar gates de Pull Request/main e preparar candidate Staging com imagem
+OCI imutável, sem secrets, mantendo observabilidade já definida na Task 002-10.
 
 ## Requisitos cobertos
 
@@ -18,17 +18,19 @@ diagnosticar authentication, vínculo e provider sem registrar dados sensíveis.
 - build/smoke da imagem ASP.NET Core sem secrets;
 - E2E/smoke com comandos e pré-condições claros;
 - validação do documento OpenAPI gerado e drift de contrato;
-- logs/métricas com redaction e correlation ID;
+- checks de observabilidade, health e redaction da Task 002-10;
 - gates separados para PR, main e Staging.
 
 ## Escopo incluído
 
 - workflow `.github/workflows/ci.yml` para `pull_request`, staging candidate e
   promoção em `main`;
+- geração do bundle/job final de migrations a partir do schema atual, separado do
+  container de runtime;
 - jobs .NET, frontend, persistence/RLS, contract, image e health;
 - PostgreSQL local/descartável e Firebase Emulator/fixtures sem produção;
 - scripts de E2E e smoke staging-only;
-- logger/métricas com request ID, ambiente, resultado e latência;
+- validação de logger/métricas, health e redaction já instrumentados;
 - liveness sem dependências e readiness com configuração/PostgreSQL, nunca lookup
   live;
 - scans para secrets, URLs com tag e imports server-only no bundle;
@@ -44,7 +46,7 @@ diagnosticar authentication, vínculo e provider sem registrar dados sensíveis.
 
 ## Dependências
 
-- `002-01` a `002-07` para fechamento; gates mínimos começam em `002-01`;
+- `002-01` a `002-10` para fechamento; gates mínimos começam em `002-01`;
 - Docker/PostgreSQL e fixtures disponíveis em CI;
 - secrets reais somente em ambientes controlados de Staging.
 
@@ -62,11 +64,13 @@ diagnosticar authentication, vínculo e provider sem registrar dados sensíveis.
 3. Subir PostgreSQL descartável, aplicar EF migrations, RLS e fixtures; executar
    checks de pool/reset e isolamento A/B.
 4. Executar testes de token Firebase com Emulator/fixtures assinadas.
-5. Adicionar métricas de authentication, link, erro, latência e ambiente.
-6. Aplicar redaction antes de serializar logs ou exceptions.
-7. Construir imagem Docker e testar `/health/live`/`ready` sem secret na imagem.
+5. Executar architecture tests para provar `API → Application → Domain` e
+   `Infrastructure → Application/Domain`, sem providers em Domain/Application.
+6. Construir imagem Docker e testar `/health/live`/`ready` sem secret na imagem.
+7. Gerar e versionar como artefato de candidate o bundle/job final de migrations;
+   não reutilizar bundle produzido antes da Task 002-06.
 8. Criar workflow protegido/manual de Staging com owner, aprovação, migration
-    job, mesmo digest OCI e smoke antes de promoção para `main`.
+   job, mesmo digest OCI e smoke antes de promoção para `main`.
 9. Documentar gates Staging/Production fora dos gates de PR/main.
 
 ## Testes e comandos de validação
@@ -103,8 +107,9 @@ secret de Production ocorre em PR/Preview.
 - persistence/RLS/contract tests usam ambientes descartáveis/fixtures;
 - imagem ASP.NET Core constrói e health smoke passa sem secrets;
 - testes de authentication/authorization e redaction são obrigatórios;
-- logs não contêm tag, e-mail, UID, token, IP, URL real ou payload;
-- métricas distinguem resultado, latência e ambiente;
+- checks de observabilidade e redaction da Task 002-10 são obrigatórios;
+- architecture tests impedem dependências invertidas e SDKs em Domain/Application;
+- métricas distinguem resultado, latência e ambiente sem dados sensíveis;
 - E2E/smoke possuem owner e pré-condição de Staging documentados.
 
 ## Riscos e cuidados

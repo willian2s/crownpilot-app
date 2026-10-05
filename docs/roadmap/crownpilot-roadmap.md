@@ -518,6 +518,30 @@ Player Tag em cada dispositivo.
   `async/await`, `CancellationToken`, options e lifecycle;
 - documentação incremental em `docs/learning/`, somente para conceitos usados.
 
+### Plano executável da Fase 002
+
+As subtarefas são implementáveis e verificáveis nesta ordem:
+
+1. bootstrap do toolchain;
+2. boundaries, contrato HTTP base e ambientes;
+3. PostgreSQL, migrations e harness RLS;
+4. Google Sign-In e Firebase bearer;
+5. port e adapter de lookup;
+6. persistência, repositories e RLS;
+7. casos de uso e API v1;
+8. frontend de identidade e vínculo;
+9. revisão arquitetural e visual do frontend existente;
+10. observabilidade, health e redaction;
+11. CI, OCI e gates de release;
+12. Staging, E2E, smoke e handoff.
+
+`002-04` e `002-05` podem avançar em paralelo depois de `002-01` e `002-02`.
+`002-09` não é uma task genérica de melhoria: analisa o código React entregue,
+seus boundaries, auth/API client, estado, configuração, testes, acessibilidade,
+responsividade e estados visuais em mobile/desktop, registrando achados e
+correções. `002-12` promove exatamente o digest OCI validado em Staging; não há
+rebuild divergente.
+
 ### Boundary da fase
 
 A Fase 002 pode consultar a Clash Royale API para validar o vínculo, mas **não**
@@ -875,7 +899,7 @@ Priorizar:
 - privacidade;
 - fluxo de exclusão de conta/dados;
 - revisão de autorização e RLS/grants;
-- avaliar controles Supabase equivalentes se houver acesso client-side direto à Data API;
+  - manter dados CrownPilot fora do acesso client-side à Supabase Data API;
 - disclaimer de conteúdo não oficial.
 
 ### Métricas iniciais
@@ -1167,7 +1191,8 @@ A partir dela:
 **002 Fundação + Identidade**
 
 Depois da fundação, 003 e 004 permanecem bloqueadas até reabertura explícita dos
-gates de API data, retenção, operação e aquisição de meta. Quando liberadas,
+gates de API data, retenção, ownership, egress, meta e compliance definidos no
+veredito da Fase 001. Quando liberadas,
 podem avançar em paralelo:
 
 - **003 Player Sync**

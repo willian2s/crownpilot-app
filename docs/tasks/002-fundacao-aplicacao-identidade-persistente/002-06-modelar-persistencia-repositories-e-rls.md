@@ -1,4 +1,4 @@
-# 002-06 — Persistir vínculo com autorização
+# 002-06 — Modelar persistência, repositories e RLS
 
 - **Ticker:** `002`
 - **Número:** `06`
@@ -6,9 +6,9 @@
 
 ## Objetivo e resultado esperado
 
-Persistir somente usuário CrownPilot e vínculo primário de perfil público usando
-EF Core + Npgsql, com ID interno, autorização por usuário autenticado e sem
-criar snapshot de API.
+Modelar e provar somente usuário CrownPilot e vínculo primário de perfil público
+usando EF Core + Npgsql, com ID interno, isolamento por usuário e sem criar
+snapshot de API. Casos de uso e endpoints ficam na Task 002-07.
 
 ## Requisitos cobertos
 
@@ -29,7 +29,8 @@ criar snapshot de API.
 - bootstrap RLS transacional: `set_config('app.firebase_uid', <claim>, true)`
   permite resolver/criar somente a linha correspondente em `crownpilot_users`;
   depois `set_config('app.crownpilot_user_id', <id>, true)` limita os vínculos;
-- operações read, create/replace, unlink e delete idempotente;
+- repositories e transações necessárias aos casos de uso, sem possuir transporte
+  HTTP;
 - transaction/concurrency token/precondition para replace;
 - timestamps e `last_validated_at`;
 - migration EF Core e SQL posterior de RLS/grants;
@@ -72,13 +73,9 @@ criar snapshot de API.
 3. Gerar migration EF Core; não criar as mesmas tabelas em SQL de segurança.
 4. Implementar repositories usando ID resolvido do `AuthContext`; ignorar UID do
    body/query.
-5. Implementar read/insert/replace após lookup `resolved`, preservando vínculo
-   antigo quando provider falha.
-6. Proteger replace com `version`/`expectedVersion` JSON, transação e mapear
-    conflito para `409` sem last-write-wins silencioso; não introduzir ETag
-    paralelo.
-7. Implementar unlink/delete idempotentes somente para dados próprios.
-8. Aplicar e testar RLS/grants após migration EF, mantendo authorization obrigatória.
+5. Expor repositories e operações transacionais necessárias, deixando validação do
+   provider e orquestração de casos de uso para a Task 002-07.
+6. Aplicar e testar RLS/grants após migration EF, mantendo authorization obrigatória.
    Resolver/criar `crownpilot_users` por Firebase UID verificado dentro da mesma
    transação que define contexto RLS; nunca confiar em UID do request. Policies
    de `crownpilot_users` usam `app.firebase_uid` somente para a linha própria;
@@ -96,9 +93,9 @@ dotnet test --filter Category=Rls
 ```
 
 Cobrir usuário novo/existente, A/B, anônimo, contexto RLS ausente/adulterado,
-`app.firebase_uid` divergente, UID adulterado,
-FK/unique/NOT NULL/check constraints, `expectedVersion` ausente ou incorreto,
-replace concorrente, falha antes da escrita, unlink repetido e delete repetido.
+`app.firebase_uid` divergente, UID adulterado, FK/unique/NOT NULL/check
+constraints, role runtime sem `BYPASSRLS`, acesso Data API/PostgREST negado,
+cleanup após pooling, reset/rollback transacional e bridge direta/session pooler.
 
 ## Definição de pronto
 
@@ -110,9 +107,9 @@ replace concorrente, falha antes da escrita, unlink repetido e delete repetido.
 - A não lê/altera B;
 - usuário novo resolve/cria identidade sem abrir linhas de outro usuário;
 - contexto externo e interno são transacionais e não vazam em conexão pooled;
-- falha de provider não remove vínculo anterior;
-- replace concorrente não produz estado silenciosamente incorreto;
-- unlink/delete são idempotentes;
+- repositories não aceitam identidade controlada pelo request;
+- contexto RLS não vaza entre transações/conexões pooled;
+- acesso Data API/PostgREST ao schema CrownPilot é negado;
 - nenhum snapshot/raw/API data é persistido;
 - testes de aplicação, persistência, integração e RLS passam.
 

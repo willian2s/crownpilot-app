@@ -262,7 +262,7 @@ conceitos efetivamente usados.
 ## Gates e revisão
 
 - Domain e Application não importam SDK, HTTP ou framework;
-- Task 01 usa .NET 10 LTS e Node.js 24 LTS pinados, produz API, frontend, EF
+- Task 002-01 usa .NET 10 LTS e Node.js 24 LTS pinados, produz API, frontend, EF
   Core, Npgsql, testes e Docker sem Auth real;
 - tokens Firebase têm validação por ambiente e testes de rotação;
 - migrations EF e SQL RLS não duplicam schema;

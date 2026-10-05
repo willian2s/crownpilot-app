@@ -1,4 +1,4 @@
-# 002-04 — Implementar Google Sign-In e autenticação Firebase bearer
+# 002-04 — Implementar Google Sign-In e Firebase bearer
 
 - **Ticker:** `002`
 - **Número:** `04`
@@ -45,7 +45,7 @@ validado, sem sessão cookie, UID arbitrário ou credencial Supercell.
 ## Dependências
 
 - `002-01` e `002-02`;
-- Firebase Emulator/fixtures e projetos por ambiente;
+- Firebase Emulator/fixtures e projetos por ambiente, configurados nesta task;
 - configuração de Google provider em Staging, fora do Git.
 
 ## Arquivos e símbolos prováveis
@@ -58,7 +58,7 @@ validado, sem sessão cookie, UID arbitrário ou credencial Supercell.
 
 ## Passos de implementação
 
-1. Configurar Firebase Web SDK e Google provider por ambiente.
+1. Configurar Firebase Web SDK, Emulator/fixtures e Google provider por ambiente.
 2. Implementar login/refresh/logout sem persistir token manualmente além do SDK.
 3. Enviar somente ID Token bearer por HTTPS às rotas da API.
 4. Configurar validação suportada na Infrastructure com project ID/issuer allowlist
@@ -67,7 +67,7 @@ validado, sem sessão cookie, UID arbitrário ou credencial Supercell.
    rejeitar UID em body/query/header.
 6. Retornar `401` sem detalhes internos e manter autorização em políticas/casos
    de uso posteriores.
-7. Usar Emulator/fixtures nos testes locais/CI; Google real fica para Task 002-09.
+7. Usar Emulator/fixtures nos testes locais/CI; Google real fica para Task 002-12.
 
 ## Testes e comandos de validação
 
@@ -79,10 +79,10 @@ npm run typecheck
 npm run build
 ```
 
-Cobrir token ausente, inválido, expirado, issuer/audience/project incorretos,
-assinatura/`kid` rotacionado, `sub` vazio e logout. Testar separadamente
-authentication válida sem authorization. Verificar bundle sem service account,
-database password, token externo ou código server-only.
+Cobrir token ausente, inválido, expirado, issuer incorreto, audience incorreta,
+projeto Firebase incorreto, assinatura inválida, `kid` rotacionado, `sub` vazio e
+logout. Testar separadamente authentication válida sem authorization. Verificar
+bundle sem service account, database password, token externo ou código server-only.
 
 ## Definição de pronto
 

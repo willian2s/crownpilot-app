@@ -1,4 +1,4 @@
-# 002-05 — Criar adapter de lookup
+# 002-05 — Implementar port e adapter de lookup
 
 - **Ticker:** `002`
 - **Número:** `05`
@@ -11,7 +11,7 @@ por Player Tag, sem acoplar Domain/Application ao host, proxy ou payload da API.
 
 ## Requisitos cobertos
 
-- port `IClashRoyaleClient` na Application;
+- port `IClashRoyaleClient` na Application, sem host ou provider no Domain;
 - adapter HTTP na Infrastructure usando `HttpClientFactory`;
 - token nunca exposto ao browser;
 - normalização e encoding determinísticos;

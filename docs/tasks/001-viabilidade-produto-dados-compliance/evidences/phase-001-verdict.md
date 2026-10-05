@@ -310,9 +310,9 @@ ser server-side, sem credencial Supercell, sem sync completo e sem persistência
 de resposta além do mínimo de vínculo autorizado.
 
 Não iniciar Fase 003/004, billing ou AI Coach como consequência deste fechamento.
-Depois de Fase 002, reabrir os gates de API data, retenção, operação, meta e
-compliance antes de transformar o perfil em snapshot persistente ou promessa de
-meta.
+Depois de Fase 002, reabrir os gates de API data, retenção, ownership, egress,
+meta e compliance antes de transformar o perfil em snapshot persistente ou
+promessa de meta.
 
 ## Atualização posterior de infraestrutura
 
