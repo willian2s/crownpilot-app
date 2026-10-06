@@ -2,7 +2,7 @@
 
 - **Ticker:** `002`
 - **Número:** `01`
-- **Status:** `completed with constraints`
+- **Status:** `completed`
 
 ## Objetivo e resultado esperado
 
@@ -211,8 +211,8 @@ npm run test:e2e --prefix frontend        # exit 2; staging não configurado
 
 ## Atualização posterior — Swagger UI
 
-- **Status:** `completed with constraints` mantido; documentação navegável
-  adicionada sem liberar authentication ou endpoints de negócio.
+- **Status:** `completed`; documentação navegável adicionada sem liberar
+  authentication ou endpoints de negócio.
 - **Arquivos alterados:** `src/Api/Api.csproj`, `src/Api/Program.cs`,
   `tests/Api/HealthEndpointTests.cs` e `docs/operations/local-development.md`.
 - **Decisão:** `Swashbuckle.AspNetCore.SwaggerUI` `10.2.3` serve UI em `/docs`
@@ -234,3 +234,14 @@ npm run test:e2e --prefix frontend        # exit 2; staging não configurado
   e execução passaram; `Container smoke passed: /health/live`.
 - **Evidência:** imagem `crownpilot-api:bootstrap` criada e container smoke
   encerrado pelo script sem erro.
+
+## Correção posterior — diagnósticos editoriais
+
+- **Arquivos alterados:** `src/Api/Program.cs`, `src/Api/BootstrapStatus.cs` e
+  testes em `tests/Api`, `tests/Contract`, `tests/Application`,
+  `tests/Architecture` e `tests/Unit`.
+- **Decisões:** removido `public partial class Program` redundante; `BootstrapStatus`
+  movido para namespace `CrownPilot.Api`; namespaces dos testes alinhados às
+  pastas; construtores de fixtures convertidos para primary constructors.
+- **Validação:** build passou com `0` warnings e `0` errors; `dotnet test`
+  passou com `11` testes; smoke Docker passou novamente após reiniciar daemon.

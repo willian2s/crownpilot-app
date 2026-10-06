@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace CrownPilot.ArchitectureTests;
+namespace Architecture.Tests;
 
 public sealed class LayerReferenceTests
 {

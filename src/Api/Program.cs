@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using CrownPilot.Api;
 using CrownPilot.Infrastructure;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -79,9 +80,3 @@ app.MapGet("/api/v1/bootstrap", () =>
     .ProducesProblem(StatusCodes.Status500InternalServerError);
 
 app.Run();
-
-public sealed record BootstrapStatus(string Status, string Stage);
-
-public partial class Program
-{
-}

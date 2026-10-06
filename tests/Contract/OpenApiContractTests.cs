@@ -2,16 +2,12 @@ using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 
-namespace CrownPilot.ContractTests;
+namespace Contract.Tests;
 
-public sealed class OpenApiContractTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class OpenApiContractTests(WebApplicationFactory<Program> factory)
+    : IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly HttpClient client;
-
-    public OpenApiContractTests(WebApplicationFactory<Program> factory)
-    {
-        client = factory.CreateClient();
-    }
+    private readonly HttpClient client = factory.CreateClient();
 
     [Fact]
     public async Task BootstrapContractContainsOnlyDocumentedFoundationRoute()

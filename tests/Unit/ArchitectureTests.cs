@@ -1,6 +1,6 @@
 using CrownPilot.Domain;
 
-namespace CrownPilot.UnitTests;
+namespace Unit.Tests;
 
 public sealed class ArchitectureTests
 {

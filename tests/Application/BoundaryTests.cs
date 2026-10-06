@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace CrownPilot.ApplicationTests;
+namespace Application.Tests;
 
 public sealed class BoundaryTests
 {
