@@ -2,7 +2,7 @@
 
 - **Status geral:** pending
 - **Spec:** [002-fundacao-aplicacao-identidade-persistente.md](../../specs/002-fundacao-aplicacao-identidade-persistente.md)
-- **Progresso:** 0/12 subtarefas concluídas
+- **Progresso:** 1/12 subtarefas concluídas
 
 ## Objetivo
 
@@ -15,7 +15,7 @@ inicial portátil, testes e observabilidade.
 
 ## Checklist
 
-- [ ] [002-01-bootstrap-toolchain.md](002-01-bootstrap-toolchain.md)
+- [x] [002-01-bootstrap-toolchain.md](002-01-bootstrap-toolchain.md)
 - [ ] [002-02-estabelecer-boundaries-contrato-base-e-ambientes.md](002-02-estabelecer-boundaries-contrato-base-e-ambientes.md)
 - [ ] [002-03-preparar-postgresql-migrations-e-harness-rls.md](002-03-preparar-postgresql-migrations-e-harness-rls.md)
 - [ ] [002-04-implementar-google-sign-in-e-firebase-bearer.md](002-04-implementar-google-sign-in-e-firebase-bearer.md)
@@ -47,6 +47,9 @@ inicial portátil, testes e observabilidade.
   permanecem responsabilidades distintas do backend.
 - OpenAPI code-first via `Microsoft.AspNetCore.OpenApi` será contrato único;
   UI navegável não cria especificação concorrente.
+- Swagger UI foi adicionada em `/docs` para Development/Staging, consumindo
+  `/openapi/v1.json`; permanece apenas camada de visualização, sem alterar
+  contrato OpenAPI.
 - Render executa imagem Docker da API e é alvo inicial preferido do frontend
   estático; Vercel é alternativa, Azure é destino futuro possível. Mesmo digest
   OCI deve poder ser promovido entre ambientes.
@@ -80,11 +83,10 @@ inicial portátil, testes e observabilidade.
   `002-10-instrumentar-observabilidade-health-e-redaction.md` e
   `002-11-automatizar-ci-oci-e-gates-de-release.md` fecham observabilidade e gates
   antes de `002-12-validar-staging-e2e-smoke-e-handoff.md`.
-- `002-01-bootstrap-toolchain.md` permanece primeiro e desmarcado. Como bootstrap
-  ainda não iniciou e o repositório não possui `package.json` nem runtime, os
-  comandos de banco de `002-03-preparar-postgresql-migrations-e-harness-rls.md`
-  são contrato documental para o bootstrap, não
-  comandos executáveis presentes no estado atual.
+- `002-01-bootstrap-toolchain.md` permanece primeiro na ordem e foi concluída
+  com restrição de Docker local. Os comandos de banco de
+  `002-03-preparar-postgresql-migrations-e-harness-rls.md` continuam contrato
+  documental para essa subtarefa posterior, não são executados pelo bootstrap.
 - Staging exige workflow protegido/manual, owner, aprovação, migration job e
   smoke antes de promoção. Production é etapa controlada posterior, não requisito
   para bootstrap local.
@@ -98,3 +100,6 @@ inicial portátil, testes e observabilidade.
   e região/backups antes de dados reais.
 - Fase 003 permanece bloqueada até reabertura dos gates de API data, retenção,
   ownership, egress, meta e compliance definidos no veredito da Fase 001.
+- `002-01` concluiu implementação e validações locais; smoke OCI passou após
+  recuperação do Docker Desktop. RLS e E2E seguem bloqueados por pertencerem a
+  subtarefas posteriores.

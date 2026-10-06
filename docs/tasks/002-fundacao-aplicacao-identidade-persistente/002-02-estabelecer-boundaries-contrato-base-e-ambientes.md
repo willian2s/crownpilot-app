@@ -17,7 +17,7 @@ Application/Domain/Infrastructure, PostgreSQL/Supabase e provider externo.
 - stack e boundaries da [ADR 004](../../decisions/004-aspnet-core-react-vite-firebase-postgresql.md);
 - bearer Firebase ID Token, sem sessão cookie nesta fase;
 - API REST `/api/v1` com pipeline OpenAPI gerado por `Microsoft.AspNetCore.OpenApi`;
-- UI Scalar consumindo o mesmo `/openapi/v1.json`, somente Local/Staging;
+- Swagger UI consumindo o mesmo `/openapi/v1.json`, somente Local/Staging;
 - authorization obrigatória no backend;
 - PostgreSQL/Supabase sem SDK central do provider;
 - Preview sem login real e Staging com hostname fixo;

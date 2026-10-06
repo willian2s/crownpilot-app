@@ -1,0 +1,53 @@
+{
+  "name": "crownpilot-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@11.19.0",
+  "engines": {
+    "node": ">=24.20.0 <25",
+    "npm": ">=11.19.0 <12"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc -b --pretty false",
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:contract": "node scripts/openapi-check.mjs",
+    "test:rls": "node scripts/blocked-gate.mjs rls",
+    "test:e2e": "node scripts/e2e-gate.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "smoke:container": "node scripts/container-smoke.mjs",
+    "openapi:check": "node scripts/openapi-check.mjs",
+    "db:start": "node scripts/db-gate.mjs start",
+    "db:stop": "node scripts/db-gate.mjs stop",
+    "db:migrate": "node scripts/db-gate.mjs migrate",
+    "db:security": "node scripts/db-gate.mjs security",
+    "db:fixtures": "node scripts/db-gate.mjs fixtures",
+    "db:reset": "node scripts/db-gate.mjs reset"
+  },
+  "dependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "26.6.4",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "eslint": "10.12.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-react-refresh": "0.5.7",
+    "globals": "17.13.0",
+    "jsdom": "30.1.2",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.1",
+    "vite": "8.3.3",
+    "vitest": "5.0.3"
+  }
+}

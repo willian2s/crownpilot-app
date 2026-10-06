@@ -1,0 +1,17 @@
+.git
+.github
+.env
+.env.*
+bin
+obj
+**/bin/
+**/obj/
+frontend
+frontend/node_modules/
+frontend/dist/
+tests
+docs
+README.md
+AGENTS.md
+.vscode
+.DS_Store

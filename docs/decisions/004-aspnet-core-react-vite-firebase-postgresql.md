@@ -157,10 +157,10 @@ GET    /openapi/v1.json
 GET    /docs                    # Local e Staging controlado
 ```
 
-OpenAPI é gerado do código por `Microsoft.AspNetCore.OpenApi`; Scalar consome o
-mesmo documento para navegação, sem segundo gerador. Geração em build e contract
-tests detectam drift. UI fica desabilitada em Production; política de exposição
-do JSON é explícita por ambiente.
+OpenAPI é gerado do código por `Microsoft.AspNetCore.OpenApi`; Swagger UI consome
+o mesmo documento para navegação, sem segundo gerador. Geração em build e contract
+tests detectam drift. UI e JSON ficam desabilitados em Production; política de
+exposição é explícita por ambiente.
 
 Erros usam `IProblemDetailsService`, `ProblemDetails` e
 `ValidationProblemDetails`, com `traceId` e código estável sem stack trace,

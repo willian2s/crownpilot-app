@@ -44,8 +44,8 @@ demonstrada.
 
 O backend expõe REST versionada em `/api/v1/...`, com OpenAPI como contrato
 gerado a partir da API. A estratégia é `Microsoft.AspNetCore.OpenApi` code-first,
-com `/openapi/v1.json` gerado pela API/build e Scalar consumindo o mesmo documento
-para visualização navegável em Local/Staging. Não haverá YAML manual nem segundo
+com `/openapi/v1.json` gerado pela API/build e Swagger UI consumindo o mesmo
+documento para visualização navegável em Local/Staging. Não haverá YAML manual nem segundo
 gerador concorrente. A Task `002-01-bootstrap-toolchain.md` confirma versões
 suportadas contra documentação oficial atual, sem alterar o contrato.
 
