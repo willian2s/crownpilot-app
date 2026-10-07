@@ -20,6 +20,13 @@ public sealed class OpenApiContractTests(WebApplicationFactory<Program> factory)
         Assert.True(paths.TryGetProperty("/api/v1/bootstrap", out var bootstrap));
         Assert.True(bootstrap.TryGetProperty("get", out var get));
         Assert.Equal("GetBootstrapStatus", get.GetProperty("operationId").GetString());
+        Assert.True(get.GetProperty("security").EnumerateArray().Any());
+        Assert.True(get.GetProperty("responses").TryGetProperty("401", out _));
+        Assert.True(get.GetProperty("responses").TryGetProperty("403", out _));
+        Assert.True(document.RootElement.GetProperty("components")
+            .GetProperty("securitySchemes").TryGetProperty("Bearer", out var bearer));
+        Assert.Equal("http", bearer.GetProperty("type").GetString());
+        Assert.Equal("bearer", bearer.GetProperty("scheme").GetString());
         Assert.False(paths.TryGetProperty("/api/v1/me/player-link", out _));
     }
 }

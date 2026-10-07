@@ -2,7 +2,7 @@
 
 - **Ticker:** `002`
 - **Número:** `02`
-- **Status:** `pending`
+- **Status:** `completed`
 
 ## Objetivo e resultado esperado
 
@@ -89,8 +89,8 @@ Application/Domain/Infrastructure, PostgreSQL/Supabase e provider externo.
 ## Testes e comandos de validação
 
 ```text
-npm run typecheck
-npm run lint
+npm run typecheck --prefix frontend
+npm run lint --prefix frontend
 ```
 
 Revisão documental e teste arquitetural inicial devem confirmar `API → Application
@@ -121,3 +121,80 @@ Firebase/Supabase de Staging/Production.
 - Não permitir CORS amplo por conveniência.
 - Não introduzir cookie, sessão ou segundo esquema bearer nesta fase.
 - Não transformar Vercel em boundary de domínio ou API.
+
+## Implementação e evidências
+
+### Arquivos alterados
+
+- `.env.example`;
+- `src/Api/Program.cs`, `src/Api/Authentication/`, `src/Api/Configuration/`,
+  `src/Api/OpenApi/`, `src/Api/ProblemDetails/` e configurações
+  `appsettings.Development.json`, `appsettings.Preview.json`,
+  `appsettings.Staging.json` e `appsettings.Production.json`;
+- `src/Application/Identity/AuthContracts.cs` e
+  `src/Domain/Identity/CrownPilotUserId.cs`;
+- `tests/Api/HealthEndpointTests.cs`, `tests/Api/RuntimeOptionsTests.cs` e
+  `tests/Contract/OpenApiContractTests.cs`;
+- `docs/operations/002-02-boundaries-environments.md` e
+  `docs/operations/local-development.md`;
+- `docs/learning/001-minimal-api-composition-root.md` e `AGENTS.md`.
+
+### Decisões e desvios
+
+- Authentication e authorization foram separadas no pipeline. A API usa bearer
+  contratual somente em Local, com fixtures determinísticas para provar `401`,
+  `403` e acesso autorizado; Firebase real permanece na Task `002-04`.
+- `RuntimeOptions` resolve `Development` como `Local`, exige correspondência
+  entre `CrownPilot:Environment` e `ASPNETCORE_ENVIRONMENT`, rejeita CORS
+  curinga e falha no startup para exposição OpenAPI proibida ou configuração
+  inválida. Modes de provider futuros permanecem compatíveis; somente fixture
+  contratual é restrita a Local.
+- OpenAPI e Swagger UI continuam code-first e compartilham `/openapi/v1.json`;
+  Local/Staging expõem documentação e Preview/Production respondem `404`.
+- Contratos `AuthenticatedSubject`/`AuthContext` e `CrownPilotUserId` registram
+  separação entre Firebase UID externo e identidade interna sem criar usuário,
+  provider real, schema ou migration.
+- O contrato completo de endpoints de Player Link não foi antecipado; somente
+  prefixo, ProblemDetails, códigos/status, bearer e concorrência
+  `version`/`expectedVersion` foram fixados.
+
+### Comandos executados e resultados
+
+Passaram:
+
+```text
+dotnet tool restore
+dotnet restore CrownPilot.sln
+dotnet build CrownPilot.sln --configuration Release
+dotnet test CrownPilot.sln --configuration Release
+npm ci --prefix frontend
+npm run typecheck --prefix frontend
+npm run lint --prefix frontend
+npm run test:unit --prefix frontend
+npm run build --prefix frontend
+npm run smoke --prefix frontend
+npm run openapi:check --prefix frontend
+```
+
+Evidências: build .NET passou com `0` warnings e `0` errors; testes .NET
+passaram com `20` testes; testes frontend passaram com `1` teste; typecheck,
+lint, build, smoke local e verificação OpenAPI passaram. Testes API cobrem
+OpenAPI/UI por ambiente, bearer `401`/`403`/`200`, CORS allowlist,
+ProblemDetails e validação de opções. A primeira execução após atualizar o
+teste de ProblemDetails encontrou título legado `Not Found`; a asserção foi
+ajustada para o código estável `resource_not_found` e a suíte final passou.
+
+### Riscos residuais
+
+- Firebase ID Token real, Emulator/fixtures oficiais, `auth_time`, issuer,
+  audience, assinatura, rotação de `kid` e autorização de casos de uso ainda
+  pertencem à Task `002-04`/`002-07`.
+- Firebase/Supabase não foram provisionados; origins fixos de Staging/Production
+  e secrets devem ser fornecidos por runtime antes desses ambientes.
+- CORS sem origins em Preview/Staging/Production falha fechado até allowlist ser
+  configurada. Não há dados ou secrets reais versionados.
+- Staging/Production dependem de TLS termination e forwarded headers confiáveis
+  no ingress; essa prova operacional fica para validação de ambiente posterior.
+- A policy do endpoint bootstrap exige autenticação; fora da fixture Local ela
+  não inventa permission claims. Policies de recurso específicas serão definidas
+  quando provider e casos de uso forem implementados.

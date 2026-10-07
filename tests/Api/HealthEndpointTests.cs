@@ -1,6 +1,8 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using CrownPilot.Api.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 
@@ -58,6 +60,73 @@ public sealed class HealthEndpointTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
+    public async Task PreviewDoesNotExposeDocumentationRoutes()
+    {
+        await using var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+                builder.UseSetting(WebHostDefaults.EnvironmentKey, "Preview"));
+        using var previewClient = factory.CreateClient();
+
+        using var openApiResponse = await previewClient.GetAsync("/openapi/v1.json");
+        using var docsResponse = await previewClient.GetAsync("/docs/index.html");
+
+        Assert.Equal(HttpStatusCode.NotFound, openApiResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, docsResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task BootstrapRequiresAuthenticationAndAuthorization()
+    {
+        using var unauthenticatedResponse = await client.GetAsync("/api/v1/bootstrap");
+        Assert.Equal(HttpStatusCode.Unauthorized, unauthenticatedResponse.StatusCode);
+        Assert.Equal("Bearer", unauthenticatedResponse.Headers.WwwAuthenticate.Single().Scheme);
+        var unauthorizedProblem = await unauthenticatedResponse.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("authentication_required", unauthorizedProblem.GetProperty("code").GetString());
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", ContractAuthenticationDefaults.AuthenticatedToken);
+
+        using var forbiddenResponse = await client.GetAsync("/api/v1/bootstrap");
+        Assert.Equal(HttpStatusCode.Forbidden, forbiddenResponse.StatusCode);
+        var forbiddenProblem = await forbiddenResponse.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("authorization_forbidden", forbiddenProblem.GetProperty("code").GetString());
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", ContractAuthenticationDefaults.AuthorizedToken);
+        using var authorizedResponse = await client.GetAsync("/api/v1/bootstrap");
+        Assert.Equal(HttpStatusCode.OK, authorizedResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task CorsAllowsOnlyConfiguredLocalOrigins()
+    {
+        using var allowedRequest = new HttpRequestMessage(HttpMethod.Get, "/health/live");
+        allowedRequest.Headers.TryAddWithoutValidation("Origin", "http://localhost:5173");
+        using var allowedResponse = await client.SendAsync(allowedRequest);
+
+        Assert.Equal(HttpStatusCode.OK, allowedResponse.StatusCode);
+        Assert.Equal("http://localhost:5173",
+            allowedResponse.Headers.GetValues("Access-Control-Allow-Origin").Single());
+
+        using var deniedRequest = new HttpRequestMessage(HttpMethod.Get, "/health/live");
+        deniedRequest.Headers.TryAddWithoutValidation("Origin", "https://untrusted.example");
+        using var deniedResponse = await client.SendAsync(deniedRequest);
+
+        Assert.Equal(HttpStatusCode.OK, deniedResponse.StatusCode);
+        Assert.False(deniedResponse.Headers.Contains("Access-Control-Allow-Origin"));
+
+        using var preflightRequest = new HttpRequestMessage(HttpMethod.Options, "/health/live");
+        preflightRequest.Headers.TryAddWithoutValidation("Origin", "http://localhost:5173");
+        preflightRequest.Headers.TryAddWithoutValidation("Access-Control-Request-Method", "GET");
+        preflightRequest.Headers.TryAddWithoutValidation("Access-Control-Request-Headers", "Authorization");
+        using var preflightResponse = await client.SendAsync(preflightRequest);
+
+        Assert.Equal(HttpStatusCode.NoContent, preflightResponse.StatusCode);
+        Assert.Equal("http://localhost:5173",
+            preflightResponse.Headers.GetValues("Access-Control-Allow-Origin").Single());
+    }
+
+    [Fact]
     public async Task ProductionDoesNotExposeDocumentationRoutes()
     {
         await using var factory = new WebApplicationFactory<Program>()
@@ -79,7 +148,7 @@ public sealed class HealthEndpointTests(WebApplicationFactory<Program> factory)
         var problem = await response.Content.ReadFromJsonAsync<JsonElement>();
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        Assert.Equal("The request could not be completed.", problem.GetProperty("title").GetString());
+        Assert.Equal("resource_not_found", problem.GetProperty("code").GetString());
         Assert.True(problem.TryGetProperty("traceId", out _));
         Assert.DoesNotContain("ConnectionStrings", problem.ToString(), StringComparison.OrdinalIgnoreCase);
     }

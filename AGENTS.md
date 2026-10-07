@@ -1,40 +1,34 @@
-# CrownPilot implementation boundaries
+# CrownPilot repository guide
 
-## Current scope
+## Scope and sources
 
-This checkout is executing only SDD task `002-01-bootstrap-toolchain.md`.
-Keep changes limited to reproducible toolchain, Clean Architecture project
-boundaries, bootstrap health/OpenAPI, frontend build/test tooling, local test
-harnesses, OCI packaging, and minimum CI.
+- Work is organized as SDD tasks under
+  `docs/tasks/002-fundacao-aplicacao-identidade-persistente/`; check
+  `002-00-overview.md` and the assigned task before changing code. ADR 004
+  describes the target architecture, not permission to implement later tasks.
+- Repository state is authoritative when planning docs lag. Update task status
+  and implementation evidence when completing an SDD task.
+- Never read, copy, or embed ignored `.env.local`; it may contain secrets.
+  `VITE_*` values are public bundle configuration. Server credentials belong
+  only in runtime secret storage.
 
-Do not implement Firebase authentication, Google Sign-In, Supabase provisioning,
-remote PostgreSQL access, domain schema/migrations, player lookup, authorization
-rules, Player Tag behavior, or product identity flows here. Those belong to later
-`002-*` tasks.
+## Toolchain and commands
 
-## Dependency boundaries
-
-- `Domain` has no framework, HTTP, database, Firebase, Supabase, Npgsql, or
-  provider dependency.
-- `Application` references `Domain` and owns future ports/use cases; it does not
-  reference provider SDKs.
-- `Infrastructure` references `Application`/`Domain` and is the only layer that
-  carries EF Core/Npgsql packages. Bootstrap registers no connection or migration.
-- `Api` owns HTTP, ProblemDetails, health, OpenAPI, and composition; it may
-  reference `Application` and `Infrastructure`.
-- Frontend remains an independent static Vite artifact. Firebase SDK is not part
-  of bootstrap.
-
-## Official commands
-
-Mac and Linux use the same commands from repository root:
+- Required versions are pinned: .NET SDK `10.0.401` (`global.json`), Node
+  `>=24.20.0 <25`, npm `>=11.19.0 <12` (`frontend/package.json`).
+- Initial setup from repository root:
 
 ```text
 dotnet tool restore
 dotnet restore CrownPilot.sln
+npm ci --prefix frontend
+```
+
+- Main verification:
+
+```text
 dotnet build CrownPilot.sln --configuration Release
 dotnet test CrownPilot.sln --configuration Release
-npm ci --prefix frontend
 npm run typecheck --prefix frontend
 npm run lint --prefix frontend
 npm run test:unit --prefix frontend
@@ -43,13 +37,48 @@ npm run smoke --prefix frontend
 npm run openapi:check --prefix frontend
 ```
 
-The scripts `test:contract`, `test:e2e`, `test:rls`, `smoke:container`, and
-`db:*` are real cross-platform Node entry points. They fail with an explicit
-blocked status when their later-task environment is absent; they must not be
-replaced with Bash-only wrappers or empty tests.
+- `smoke` and `openapi:check` start the Release API with `--no-build
+  --no-restore`; run restore/build first. Override their port with
+  `CROWNPILOT_SMOKE_PORT` if `5089` is occupied.
+- Focus one .NET test with `dotnet test <test-project> --filter
+  "FullyQualifiedName~ClassName.TestName"`; focus frontend with
+  `npm run test:unit --prefix frontend -- src/App.test.tsx`.
+- `npm run smoke:container --prefix frontend` builds/runs Docker and requires a
+  live daemon. `test:rls`, `test:e2e`, `db:*`, and unavailable container
+  prerequisites intentionally exit `2` as blocked gates; do not replace them
+  with no-op passes.
 
-## Validation expectations
+## Architecture
 
-`/health/live` is process-only and must not contact a provider. OpenAPI is
-generated from Minimal API code by `Microsoft.AspNetCore.OpenApi`; no hand-written
-YAML is allowed. Do not read or embed ignored `.env.local`. Never commit secrets.
+- Backend is one ASP.NET Core modular monolith. `src/Api/Program.cs` is HTTP and
+  composition root; frontend is an independent static Vite artifact.
+- Dependency direction is enforced by architecture tests: `Domain` has no
+  outward dependency; `Application -> Domain`; `Infrastructure -> Application
+  + Domain`; `Api -> Application + Infrastructure` only for composition.
+- Keep HTTP, DTOs, ProblemDetails, authentication, CORS, health, and OpenAPI in
+  `Api`; use cases/ports in `Application`; invariants in `Domain`; provider,
+  EF Core, and Npgsql adapters in `Infrastructure`.
+- Firebase UID is an authenticated external subject, never domain identity or
+  trusted request input. Domain identity is `CrownPilotUserId`. Authentication
+  and resource authorization remain separate backend checks.
+- Supabase is PostgreSQL hosting, not application backend. EF Core owns schema
+  and migrations; versioned SQL owns only RLS, grants, roles, extensions, and
+  platform objects. Deployment order is EF migration, security/RLS SQL, then
+  sanitized fixtures; never migrate on multi-replica startup.
+
+## HTTP and environments
+
+- REST contract lives under `/api/v1`; generate OpenAPI code-first through
+  `Microsoft.AspNetCore.OpenApi`. `/docs` must consume `/openapi/v1.json`; do not
+  add handwritten YAML or a second schema generator.
+- `/health/live` is process-only and must not contact providers. OpenAPI JSON/UI
+  are enabled only in Local and Staging; Preview and Production return `404`.
+- ASP.NET Core `Development` maps to runtime `Local`; `Preview`, `Staging`, and
+  `Production` are explicit. If `CrownPilot:Environment` is supplied, it must
+  match `ASPNETCORE_ENVIRONMENT` or startup fails.
+- CORS is an exact allowlist: no wildcard; non-Local origins require HTTPS.
+  Local contract bearer tokens prove `401`/`403`/`200` pipeline behavior only;
+  they are not Firebase token validation and must never be enabled elsewhere.
+- Errors use ProblemDetails with stable `code` and `traceId`; never expose token,
+  Firebase UID, Player Tag, external URL, raw payload, stack, or infrastructure
+  detail.

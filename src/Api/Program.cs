@@ -1,10 +1,16 @@
 using System.Diagnostics;
+using CrownPilot.Api.Authentication;
+using CrownPilot.Api.Configuration;
+using CrownPilot.Api.OpenApi;
+using CrownPilot.Api.ProblemDetails;
 using CrownPilot.Api;
 using CrownPilot.Infrastructure;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,15 +26,55 @@ builder.Services.AddProblemDetails(options =>
 {
     options.CustomizeProblemDetails = context =>
     {
+        var statusCode = context.ProblemDetails.Status ?? context.HttpContext.Response.StatusCode;
+        ProblemDetailsContract.ApplyDefaults(context.ProblemDetails, statusCode);
         context.ProblemDetails.Extensions["traceId"] =
             Activity.Current?.Id ?? context.HttpContext.TraceIdentifier;
     };
 });
 builder.Services.AddHealthChecks();
-builder.Services.AddOpenApi("v1");
+builder.Services.AddCors();
+builder.Services.AddOptions<RuntimeOptions>()
+    .BindConfiguration(RuntimeOptions.SectionName)
+    .Configure<IHostEnvironment>((options, hostEnvironment) =>
+        options.ResolveForHost(hostEnvironment.EnvironmentName))
+    .ValidateOnStart();
+builder.Services.AddSingleton<IValidateOptions<RuntimeOptions>, RuntimeOptionsValidator>();
+builder.Services.AddAuthentication(ContractAuthenticationDefaults.Scheme)
+    .AddScheme<AuthenticationSchemeOptions, ContractBearerAuthenticationHandler>(
+        ContractAuthenticationDefaults.Scheme,
+        _ => { });
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(ContractAuthenticationDefaults.BootstrapPolicy, policy =>
+    {
+        policy.AddAuthenticationSchemes(ContractAuthenticationDefaults.Scheme);
+        policy.RequireAuthenticatedUser();
+        policy.RequireAssertion(context =>
+        {
+            if (context.Resource is not HttpContext httpContext)
+            {
+                return false;
+            }
+
+            var runtime = httpContext.RequestServices
+                .GetRequiredService<IOptions<RuntimeOptions>>().Value;
+
+            return !runtime.UseContractAuthentication || context.User.HasClaim(
+                ContractAuthenticationDefaults.PermissionClaim,
+                ContractAuthenticationDefaults.BootstrapReadPermission);
+        });
+    });
+});
+builder.Services.AddOpenApi("v1", options =>
+{
+    options.AddDocumentTransformer<BearerOpenApiDocumentTransformer>();
+    options.AddOperationTransformer<BearerOpenApiOperationTransformer>();
+});
 builder.Services.AddInfrastructure();
 
 var app = builder.Build();
+var runtimeOptions = app.Services.GetRequiredService<IOptions<RuntimeOptions>>().Value;
 
 app.UseExceptionHandler();
 app.UseStatusCodePages(async statusCodeContext =>
@@ -48,21 +94,26 @@ app.UseStatusCodePages(async statusCodeContext =>
         ProblemDetails = new ProblemDetails
         {
             Status = response.StatusCode,
-            Title = "The request could not be completed.",
-            Type = "https://www.rfc-editor.org/rfc/rfc9457"
+            Type = ProblemDetailsContract.Type
         }
     });
 });
+app.UseCors(runtimeOptions.ConfigureCorsPolicy);
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapHealthChecks("/health/live", new HealthCheckOptions
 {
     Predicate = _ => false
 });
 
-if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Staging"))
+if (runtimeOptions.ExposeOpenApiJson)
 {
     app.MapOpenApi("/openapi/{documentName}.json");
+}
 
+if (runtimeOptions.ExposeOpenApiUi)
+{
     app.UseSwaggerUI(options =>
     {
         options.RoutePrefix = "docs";
@@ -73,10 +124,13 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Staging"))
 
 app.MapGet("/api/v1/bootstrap", () =>
     TypedResults.Ok(new BootstrapStatus("ready", "bootstrap")))
+    .RequireAuthorization(ContractAuthenticationDefaults.BootstrapPolicy)
     .WithName("GetBootstrapStatus")
     .WithTags("Bootstrap")
-    .WithSummary("Reports that the local application foundation is running.")
+    .WithSummary("Reports that the authenticated application foundation is running.")
     .Produces<BootstrapStatus>(StatusCodes.Status200OK)
+    .ProducesProblem(StatusCodes.Status401Unauthorized)
+    .ProducesProblem(StatusCodes.Status403Forbidden)
     .ProducesProblem(StatusCodes.Status500InternalServerError);
 
 app.Run();

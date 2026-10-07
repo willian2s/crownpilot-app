@@ -2,7 +2,7 @@
 
 - **Status geral:** pending
 - **Spec:** [002-fundacao-aplicacao-identidade-persistente.md](../../specs/002-fundacao-aplicacao-identidade-persistente.md)
-- **Progresso:** 1/12 subtarefas concluídas
+- **Progresso:** 2/12 subtarefas concluídas
 
 ## Objetivo
 
@@ -16,7 +16,7 @@ inicial portátil, testes e observabilidade.
 ## Checklist
 
 - [x] [002-01-bootstrap-toolchain.md](002-01-bootstrap-toolchain.md)
-- [ ] [002-02-estabelecer-boundaries-contrato-base-e-ambientes.md](002-02-estabelecer-boundaries-contrato-base-e-ambientes.md)
+- [x] [002-02-estabelecer-boundaries-contrato-base-e-ambientes.md](002-02-estabelecer-boundaries-contrato-base-e-ambientes.md)
 - [ ] [002-03-preparar-postgresql-migrations-e-harness-rls.md](002-03-preparar-postgresql-migrations-e-harness-rls.md)
 - [ ] [002-04-implementar-google-sign-in-e-firebase-bearer.md](002-04-implementar-google-sign-in-e-firebase-bearer.md)
 - [ ] [002-05-implementar-port-e-adapter-de-lookup.md](002-05-implementar-port-e-adapter-de-lookup.md)
@@ -103,3 +103,7 @@ inicial portátil, testes e observabilidade.
 - `002-01` concluiu implementação e validações locais; smoke OCI passou após
   recuperação do Docker Desktop. RLS e E2E seguem bloqueados por pertencerem a
   subtarefas posteriores.
+- `002-02` concluiu boundaries, contrato HTTP base, ProblemDetails, CORS,
+  exposição OpenAPI por ambiente e fixture bearer local. Firebase real,
+  provisionamento e endpoints de negócio seguem bloqueados para subtarefas
+  posteriores.

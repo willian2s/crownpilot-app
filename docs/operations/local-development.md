@@ -1,7 +1,7 @@
 # Execução local
 
-Guia para executar bootstrap CrownPilot em Mac/Linux. Bootstrap ainda não
-possui autenticação real, banco remoto ou lookup.
+Guia para executar base CrownPilot em Mac/Linux. Local usa fixture contratual de
+bearer; Firebase real, banco remoto e lookup pertencem a subtarefas posteriores.
 
 ## Pré-requisitos
 
@@ -57,6 +57,17 @@ Verifique API:
 curl --fail http://localhost:5080/health/live
 curl --fail http://localhost:5080/openapi/v1.json
 ```
+
+Endpoint protegido de contrato:
+
+```text
+curl --fail -H 'Authorization: Bearer contract-authorized-token' \
+  http://localhost:5080/api/v1/bootstrap
+```
+
+`contract-authenticated-token` prova authentication sem permissão e retorna
+`403`; token ausente ou inválido retorna `401`. Fixtures são aceitas somente em
+Local e não representam validação Firebase.
 
 Swagger UI:
 
