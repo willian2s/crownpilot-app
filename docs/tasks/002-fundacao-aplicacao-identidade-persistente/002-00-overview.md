@@ -2,7 +2,7 @@
 
 - **Status geral:** pending
 - **Spec:** [002-fundacao-aplicacao-identidade-persistente.md](../../specs/002-fundacao-aplicacao-identidade-persistente.md)
-- **Progresso:** 2/12 subtarefas concluídas
+- **Progresso:** 3/12 subtarefas concluídas
 
 ## Objetivo
 
@@ -17,7 +17,7 @@ inicial portátil, testes e observabilidade.
 
 - [x] [002-01-bootstrap-toolchain.md](002-01-bootstrap-toolchain.md)
 - [x] [002-02-estabelecer-boundaries-contrato-base-e-ambientes.md](002-02-estabelecer-boundaries-contrato-base-e-ambientes.md)
-- [ ] [002-03-preparar-postgresql-migrations-e-harness-rls.md](002-03-preparar-postgresql-migrations-e-harness-rls.md)
+- [x] [002-03-preparar-postgresql-migrations-e-harness-rls.md](002-03-preparar-postgresql-migrations-e-harness-rls.md)
 - [ ] [002-04-implementar-google-sign-in-e-firebase-bearer.md](002-04-implementar-google-sign-in-e-firebase-bearer.md)
 - [ ] [002-05-implementar-port-e-adapter-de-lookup.md](002-05-implementar-port-e-adapter-de-lookup.md)
 - [ ] [002-06-modelar-persistencia-repositories-e-rls.md](002-06-modelar-persistencia-repositories-e-rls.md)
@@ -107,3 +107,6 @@ inicial portátil, testes e observabilidade.
   exposição OpenAPI por ambiente e fixture bearer local. Firebase real,
   provisionamento e endpoints de negócio seguem bloqueados para subtarefas
   posteriores.
+- `002-03` concluiu runner Docker local, migration EF Core inicial, SQL de
+  roles/grants/schema e fail-closed por ambiente. Fixtures de domínio e policies
+  concretas permanecem responsabilidades de `002-06`.

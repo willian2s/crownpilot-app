@@ -2,7 +2,7 @@
 
 - **Ticker:** `002`
 - **Número:** `03`
-- **Status:** `pending`
+- **Status:** `completed`
 
 ## Objetivo e resultado esperado
 
@@ -118,10 +118,9 @@ somente para o banco local descartável e deve falhar fechado se a referência d
 banco apontar para Staging ou Production. O reset não aplica migrations no
 startup da API nem em múltiplas réplicas.
 
-O `package.json` e seus scripts ainda não existem porque a Task
-`002-01-bootstrap-toolchain.md` não iniciou. Qualquer runner interno de shell é
-detalhe de implementação encapsulado
-por esses scripts; desenvolvedores e CI usam somente a interface `npm run`.
+O `package.json` e os scripts foram fornecidos por `002-01`; o runner Node agora
+encapsula Docker, `dotnet ef` e `psql`. Desenvolvedores e CI usam somente a
+interface `npm run`; nenhum runner interno vira contrato público.
 
 ## Testes e comandos de validação
 
@@ -165,49 +164,50 @@ EF Core -> SQL RLS/grants -> fixtures quando o schema existir.
 - Não confundir projeto de banco Supabase com projeto Firebase.
 - Não provisionar Production durante bootstrap local.
 
-## Registro de execução desta correção documental
+## Registro de execução
 
-- **Status:** `pending`; a Task `002-03-preparar-postgresql-migrations-e-harness-rls.md`
-  não foi executada.
-- **Arquivos alterados:** `docs/roadmap/crownpilot-roadmap.md`,
-  `docs/specs/002-fundacao-aplicacao-identidade-persistente.md`,
-  `docs/decisions/004-aspnet-core-react-vite-firebase-postgresql.md`,
-  `docs/tasks/002-fundacao-aplicacao-identidade-persistente/002-00-overview.md`,
-  `002-02-estabelecer-boundaries-contrato-base-e-ambientes.md`,
-  `002-03-preparar-postgresql-migrations-e-harness-rls.md`,
-  `002-04-implementar-google-sign-in-e-firebase-bearer.md`,
-  `002-05-implementar-port-e-adapter-de-lookup.md`,
-  `002-06-modelar-persistencia-repositories-e-rls.md`,
-  `002-07-implementar-casos-de-uso-e-api-v1.md`,
-  `002-08-entregar-frontend-de-identidade-e-vinculo.md`,
-  `002-09-revisar-arquitetura-frontend-e-ux-visual.md`,
-  `002-10-instrumentar-observabilidade-health-e-redaction.md`,
-  `002-11-automatizar-ci-oci-e-gates-de-release.md` e
-  `002-12-validar-staging-e2e-smoke-e-handoff.md`, todos em
-  `docs/tasks/002-fundacao-aplicacao-identidade-persistente/`.
-- **Decisões/desvios:** referências atuais da Fase 002 usam filenames canônicos;
-  comandos de banco foram definidos como contrato `npm run db:*`; nenhum
-  `package.json`, runtime ou runner executável foi criado porque
-  `002-01-bootstrap-toolchain.md` ainda
-  está pending. Shell runner permanece detalhe interno.
-- **Comandos executados:** `git diff --check`; validação `rg` de referências de
-  task e comandos shell; contagem de checklist com `rg`; verificador Python de
-  filenames, links e targets; varredura global `rg` dos termos arquiteturais;
-  inspeção de `git diff --stat`; verificador Python de estrutura SDD, ticker,
-  checklist, filenames e links canônicos. Uma primeira checagem inline de links
-  falhou por erro de sintaxe do próprio comando de validação; a versão corrigida
-  passou. Os comandos oficiais `npm run db:*` não foram executados:
-  `package.json` ainda não existe.
-- **Resultados/evidências:** checks finais passaram; roadmap e spec têm 12
-  links canônicos na ordem; overview tem um único checklist com 12 itens
-  desmarcados e progresso `0/12`; nenhum comando direto de shell runner aparece
-  nos docs da Fase 002; varredura global preserva ocorrências históricas,
-  superseded, ADR antigo, Fase 001 e alternativas estáticas não conflitantes;
-  todos os 12 arquivos têm ticker `002` e numeração correspondente. Revisão
-  independente encontrou três referências abreviadas fora do conjunto inicial;
-  foram normalizadas para filenames canônicos. Segunda revisão independente
-  passou sem novos achados.
-- **Riscos residuais:** scripts npm, migrations EF Core, SQL RLS/grants, fixtures,
-  roles e testes ainda não existem; `002-03-preparar-postgresql-migrations-e-harness-rls.md`
-  permanece bloqueada por `002-01-bootstrap-toolchain.md` e
-  `002-02-estabelecer-boundaries-contrato-base-e-ambientes.md`.
+- **Status:** `completed`; pipeline local EF Core → SQL security foi executado
+  com Docker PostgreSQL descartável.
+- **Arquivos alterados:** `.env.example`, `CrownPilot.sln`,
+  `frontend/scripts/db-gate.mjs`, `src/Api/Program.cs`,
+  `src/Infrastructure/Infrastructure.csproj`,
+  `src/Infrastructure/Persistence/`, `database/`,
+  `tests/Persistence/` e `docs/operations/002-03-postgresql-migrations-rls.md`.
+- **Decisões/desvios:** Docker Compose com `postgres:17.6-alpine` é o runner local
+  pinado; Supabase CLI não foi introduzida como dependência adicional porque o
+  contrato local é Docker + Npgsql e Supabase remoto será operado por migration
+  job controlado. EF Core cria somente o schema `crownpilot`; tabelas e policies
+  de domínio permanecem em `002-06`. `db:fixtures` falha fechado enquanto não
+  houver fixtures de domínio.
+- **Revisão independente:** apontou validação fraca da migration e aceitação de
+  TLS sem validação de certificado. Corrigido: `db:security`/`db:fixtures` exigem
+  migration conhecida, SQL não cria schema, e Staging/Production aceitam apenas
+  `VerifyCA`/`VerifyFull` sem certificado confiado.
+- **Comandos executados:** `dotnet build CrownPilot.sln --configuration Release`;
+  `dotnet test tests/Persistence/Persistence.Tests.csproj --configuration Release
+  --no-build`; `dotnet test CrownPilot.sln --configuration Release --no-build`;
+  `dotnet ef migrations list --project src/Infrastructure/Infrastructure.csproj
+  --startup-project src/Infrastructure/Infrastructure.csproj --configuration
+  Release`; `npm run lint --prefix frontend`; `npm run typecheck --prefix frontend`;
+  `npm run test:unit --prefix frontend`; `npm run build --prefix frontend`;
+  `CROWNPILOT__ENVIRONMENT=Production npm run db:reset --prefix frontend`;
+  `npm run db:start --prefix frontend`; `npm run db:migrate --prefix frontend`;
+  `npm run db:security --prefix frontend`; `npm run db:fixtures --prefix frontend`;
+  `npm run db:reset --prefix frontend`; segunda execução de
+  `npm run db:security --prefix frontend` seguida de consulta PostgreSQL para
+  roles/schema/history; `npm run db:stop --prefix frontend`.
+- **Resultados/evidências:** build .NET passou sem warnings/erros; suíte .NET
+  passou com 30 testes; Persistence passou com 10 testes; lint, typecheck, testes
+  unitários frontend e build frontend passaram. `dotnet ef migrations list`
+  descobriu `20261007000000_PrepareCrownPilotSchema` antes do banco local estar
+  disponível. Com Docker ativo, `db:start`, `db:migrate` e `db:security` passaram;
+  `db:fixtures` e etapa final de `db:reset` retornaram exit `2` deliberadamente,
+  pois fixtures de domínio pertencem a `002-06`. Reexecução de security passou;
+  consulta confirmou `crownpilot_runtime|false` e
+  `crownpilot_migrator|false`, schema `crownpilot` e migration registrada.
+  `db:reset` em Production recusou exit `2` antes de tocar Docker; `db:stop`
+  passou.
+- **Riscos residuais:** `db:fixtures` só será liberado após tabelas e fixtures
+  sanitizadas de `002-06`; policies concretas, repositories, bridge A/B e pooler
+  continuam fora desta subtarefa. A migration local não deve ser aplicada no
+  startup de réplicas.

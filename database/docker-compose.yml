@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    container_name: crownpilot-postgres-local
+    environment:
+      POSTGRES_DB: crownpilot_local
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "${CROWNPILOT_DB_PORT:-54322}:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d crownpilot_local"]
+      interval: 250ms
+      timeout: 5s
+      retries: 40
+    restart: "no"

@@ -5,6 +5,7 @@ using CrownPilot.Api.OpenApi;
 using CrownPilot.Api.ProblemDetails;
 using CrownPilot.Api;
 using CrownPilot.Infrastructure;
+using CrownPilot.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -40,6 +41,10 @@ builder.Services.AddOptions<RuntimeOptions>()
         options.ResolveForHost(hostEnvironment.EnvironmentName))
     .ValidateOnStart();
 builder.Services.AddSingleton<IValidateOptions<RuntimeOptions>, RuntimeOptionsValidator>();
+// Database credentials are bound for migration/persistence composition only;
+// this task deliberately does not open a connection or migrate during startup.
+builder.Services.AddOptions<DatabaseOptions>()
+    .BindConfiguration(DatabaseOptions.SectionName);
 builder.Services.AddAuthentication(ContractAuthenticationDefaults.Scheme)
     .AddScheme<AuthenticationSchemeOptions, ContractBearerAuthenticationHandler>(
         ContractAuthenticationDefaults.Scheme,
