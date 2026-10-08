@@ -64,13 +64,16 @@ senha e owners reais de Staging/Production fica fora do Git.
 | Ambiente | Referência versionada | Connection string | Operação |
 |---|---|---|---|
 | Local | Docker Compose, `crownpilot_local`, `127.0.0.1:54322` | derivada localmente ou `CROWNPILOT__DATABASE__CONNECTIONSTRING` | scripts `db:*` |
+| Local dev | projeto Supabase exclusivo de desenvolvimento | secret de runtime separado, Session pooler, TLS obrigatório | desenvolvimento/integrações manuais após aprovação da ADR 005; fora de `db:reset` |
 | Preview | nenhum banco | proibida | build/smoke sem dados |
-| Staging | projeto Supabase separado; ref/região fornecidos no provisionamento | secret de runtime separado, TLS obrigatório | migration job manual/protegido |
-| Production | projeto Supabase próprio; nunca ref de Staging | secret de runtime separado, TLS obrigatório | migration job aprovado |
+| Staging | projeto Supabase separado; ref/região fornecidos no provisionamento | secret de runtime separado, Session pooler, TLS obrigatório após aprovação da ADR 005 | migration job manual/protegido |
+| Production | projeto Supabase próprio; nunca ref de Staging | secret de runtime separado, Session pooler, TLS obrigatório após aprovação da ADR 005 | migration job aprovado |
 
-`sa-east-1` é preferência condicionada à disponibilidade, DPA, backups,
-subprocessadores e residência. Nenhum projeto remoto é provisionado por esta
-subtarefa. Preview não recebe secrets de Staging/Production.
+Render usa região Virgínia (`us-east`) e Supabase usa `us-east-1` (Northern
+Virginia). Dados pessoais ficam fora do Brasil; antes de dados reais, registrar
+política de privacidade, DPA, subprocessadores, backups, residência e egress.
+Nenhum projeto remoto é provisionado por esta subtarefa. Preview não recebe
+secrets de Staging/Production.
 
 ## Contexto transacional RLS
 
@@ -100,9 +103,11 @@ não existe no-op que reporte sucesso. Fixtures futuras não podem conter UID
 real, Player Tag real, payload externo, credencial ou dados de produção.
 
 Reset local é destrutivo e reversível por recriação do container. Em ambientes
-remotos, rollback de aplicação preserva schema e vínculos; qualquer downgrade
-EF é job explícito e revisado, nunca startup automático. Bundle/one-shot final
-para release pertence a `002-11` depois do schema concreto.
+remotos, rollback de aplicação preserva schema e vínculos; migrations
+compartilhadas são forward-only e não executam `down`. Migrations `down` ficam
+restritas ao desenvolvimento local; rollback de dados usa backup/restore conforme
+runbook. Bundle/one-shot final para release pertence a `002-11` depois do schema
+concreto.
 
 ## Validação
 

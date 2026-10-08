@@ -2,9 +2,14 @@
 
 - **Ticker:** `002`
 - **Status:** `planned`
-- **Roadmap:** [Fase 002](../roadmap/crownpilot-roadmap.md#002--fundacao-da-aplicacao-e-identidade-persistente)
+- **Roadmap:** [Fase 002](../roadmap/crownpilot-roadmap.md#002--funda%C3%A7%C3%A3o-da-aplica%C3%A7%C3%A3o-e-identidade-persistente-)
 - **ADR canônica:** [ADR 004](../decisions/004-aspnet-core-react-vite-firebase-postgresql.md)
 - **Dependência:** Fase 001 — `GO WITH CONSTRAINTS / APPROVAL DEPENDENCY`
+
+ADR 005 está `proposed`; portanto, esta spec ainda registra o baseline .NET como
+stack vigente até aprovação. Seus requisitos funcionais permanecem autoridade
+durante a migração planejada por `002-13`, `002-14` e `002-15`; essas tasks não
+autorizam implementação antes da decisão da ADR.
 
 ## Contexto e baseline
 
@@ -13,10 +18,12 @@ vínculo privado, read-only, de uma Player Tag que representa perfil público. O
 vínculo usa `subjectType: public_profile` e `ownershipStatus: unverified`; não
 prova que o usuário possui a conta consultada.
 
-O baseline da `main`, verificado em 2026-10-02, contém documentação e arquivos de
-configuração, mas não contém runtime, dependências instaladas, testes, CI ou
-dados de produção. Não há comportamento de aplicação para preservar. A
-documentação anterior da Fase 002 foi substituída pela [ADR 004](../decisions/004-aspnet-core-react-vite-firebase-postgresql.md).
+O baseline documental da `main`, verificado em 2026-10-02, continha somente
+documentação e arquivos de configuração. As tasks `002-01` a `002-04` depois
+criaram o baseline executável .NET, sem dados de produção. Esse baseline é
+histórico e será substituído somente após aprovação da ADR 005 e gates
+`002-13` a `002-15`. A [ADR 004](../decisions/004-aspnet-core-react-vite-firebase-postgresql.md)
+continua referência do baseline até essa aprovação.
 
 ## Problema
 
@@ -32,8 +39,9 @@ Sem fundação executável, não há forma reproduzível de:
 ## Objetivo
 
 Preparar uma aplicação web portátil com React + TypeScript + Vite no frontend e
-ASP.NET Core + C# no backend, usando Firebase Authentication para Google
-Sign-In e PostgreSQL hospedado no Supabase através de EF Core + Npgsql.
+backend modular. O texto original desta spec descreve o baseline ASP.NET Core +
+C# com EF Core + Npgsql; a migração Go proposta pela ADR 005 preserva seus
+requisitos funcionais.
 
 A fundação segue **Clean Architecture pragmática dentro de um Modular Monolith**:
 um único processo/backend e um único deploy inicial, com módulos internos claros
@@ -42,12 +50,11 @@ casos de uso ou acesso a dados sem contrato explícito. Extração para workers 
 serviços separados só será considerada quando existir necessidade operacional
 demonstrada.
 
-O backend expõe REST versionada em `/api/v1/...`, com OpenAPI como contrato
-gerado a partir da API. A estratégia é `Microsoft.AspNetCore.OpenApi` code-first,
-com `/openapi/v1.json` gerado pela API/build e Swagger UI consumindo o mesmo
-documento para visualização navegável em Local/Staging. Não haverá YAML manual nem segundo
-gerador concorrente. A Task `002-01-bootstrap-toolchain.md` confirma versões
-suportadas contra documentação oficial atual, sem alterar o contrato.
+No baseline .NET, o backend expõe REST versionada em `/api/v1/...`, com
+`Microsoft.AspNetCore.OpenApi` code-first e Swagger UI consumindo
+`/openapi/v1.json`. Após aprovação da ADR 005, `002-13` migra o contrato para
+spec-first `api/openapi/v1.json`, com geradores pinados e a mesma Swagger UI como
+visualização. O contrato funcional não muda.
 
 Ao fim da fase, um usuário deve conseguir:
 
@@ -86,6 +93,11 @@ operacional mínimo. Nome, coleção, contexto competitivo, deck e payload raw n
 entram no documento de vínculo.
 
 ## Requisitos consolidados
+
+As referências de stack nas subseções seguintes descrevem o baseline .NET
+histórico. Requisitos funcionais permanecem normativos; após aprovação da ADR
+005, `002-13` a `002-15` substituem somente linguagem, runtime, adapters,
+migrations e geração OpenAPI pelos equivalentes Go registrados nas tasks.
 
 ### Stack e bootstrap
 
@@ -277,10 +289,11 @@ Dentro de transação explícita, o backend define o Firebase UID verificado com
 define `set_config('app.crownpilot_user_id', <id>, true)`; policies de
 `primary_player_links` usam somente esse ID e negam contexto ausente. Commit/
 rollback encerra ambos os contextos; retry repete a transação completa. Conexão
-de migration/admin é separada. A bridge deve ser provada com conexão direta e
-session pooler; se transaction pooler for usado, Npgsql deve provar que todo
-estado necessário vive dentro da transação. Sem prova, não alegar isolamento por
-usuário.
+de migration/admin é separada. A bridge deve ser provada com conexão direta no
+PostgreSQL local descartável e Session pooler no projeto Supabase dev e nos
+ambientes hospedados; se transaction pooler for usado, o adapter Go com `pgx`
+deve usar protocolo simples, sem prepared statements, e provar que todo estado
+necessário vive dentro da transação. Sem prova, não alegar isolamento por usuário.
 
 ### Deploy e ambientes
 
@@ -299,7 +312,7 @@ vigente antes de provisionar.
 
 | Ambiente | API/frontend | Auth | Banco | Validação |
 |---|---|---|---|---|
-| Local | Vite + API local/container | Emulator/fixtures | Supabase CLI/Docker descartável | unit/integration |
+| Local | Vite + API local/container | Emulator/fixtures | PostgreSQL Docker descartável para testes ou projeto Supabase dev separado via Session pooler | unit/integration |
 | Preview | build efêmero, API opcional | sem login real | sem produção | build/UI/smoke |
 | Staging | hostname fixo | Firebase separado + Google real | Supabase separado | E2E/smoke |
 | Production | promoção controlada via `main` | projeto próprio | projeto próprio | smoke controlado |
@@ -440,6 +453,10 @@ controllers/endpoints de vínculo e `ProblemDetails` mapping.
 
 ## Alternativas descartadas
 
+As alternativas abaixo registram decisões do baseline .NET. A mudança para Go,
+spec-first e `goose` somente vigora quando ADR 005 for aprovada e as tasks de
+migração concluírem seus gates.
+
 | Alternativa | Motivo |
 |---|---|
 | Backend server-driven acoplado ao frontend | A decisão oficial exige React/Vite consumindo API ASP.NET Core. |
@@ -451,11 +468,17 @@ controllers/endpoints de vínculo e `ProblemDetails` mapping.
 | EF Core e SQL duplicando schema | Drift e rollback ambíguo. |
 | Firebase UID como ID interno | Acoplamento do domínio ao provider externo. |
 | Microservices por módulo | Custo operacional e distribuição sem necessidade concreta; Modular Monolith mantém boundaries internos. |
-| OpenAPI YAML manual ou segundo gerador | Duas fontes de verdade; `Microsoft.AspNetCore.OpenApi` code-first é o contrato único. |
+| OpenAPI YAML manual ou segundo gerador | No baseline, duas fontes de verdade; a migração mantém uma única fonte em `api/openapi/v1.json` com geradores pinados. |
 | Backend obrigatório na Vercel | Contradiz portabilidade e limita escolha operacional. |
 | Render-native sem Docker | Reduz reprodutibilidade e portabilidade; Render executa a imagem OCI. |
 
 ## Critérios de aceite verificáveis
+
+Os critérios abaixo preservam aceite funcional da spec. Menções a solution,
+ASP.NET, EF Core, Npgsql, `WebApplicationFactory` e OpenAPI code-first são
+critérios históricos do baseline `002-01` a `002-04`; após aprovação da ADR 005,
+`002-13` a `002-15` e tasks posteriores usam equivalentes Go registrados nas
+tasks de migração.
 
 - clone limpo restaura solution .NET e frontend, compila e executa testes;
 - Task `002-01-bootstrap-toolchain.md` contém ASP.NET Core, React, TypeScript, Vite, EF Core, Npgsql,
@@ -483,9 +506,13 @@ controllers/endpoints de vínculo e `ProblemDetails` mapping.
 - bridge RLS define role, contexto, reset e testes sem contexto, A/B e usuário correto;
 - role runtime não possui `BYPASSRLS` e acesso ao schema CrownPilot via Supabase
       Data API/PostgREST é negado;
-- EF Core migrations criam schema; SQL posterior cobre somente RLS/grants;
+- migrations SQL Go criam schema; SQL posterior cobre somente RLS/grants;
 - migrations não são aplicadas automaticamente por múltiplas réplicas;
 - acesso A/B é autorizado no backend e RLS é testado como defesa adicional;
+- teste de CI consulta `pg_class.relrowsecurity` e falha se qualquer tabela do
+      schema `crownpilot` estiver sem RLS ativo; esse teste é gate antes de Staging;
+- em ambientes compartilhados, migrations Go são forward-only; `down` existe
+      somente para desenvolvimento local; mudanças destrutivas usam expand/contract;
 - local, Preview, Staging e Production não compartilham dados/secrets;
 - Dockerfile multi-stage e `.dockerignore` produzem imagem OCI sem secrets,
       `.env` ou filesystem persistente;
@@ -516,14 +543,19 @@ controllers/endpoints de vínculo e `ProblemDetails` mapping.
 
 ## Estratégia de testes e validação
 
+O bloco abaixo descreve cobertura funcional; runner e adapters .NET identificam
+baseline histórico. A migração usa comandos e boundaries Go de `002-13` a
+`002-15`.
+
 - **Unit:** runner .NET escolhido no bootstrap para invariantes de domínio,
   normalização, estados, concorrência e redaction; Vitest/React Testing Library
   para frontend;
 - **Application/use-case:** casos de link, replace, unlink, delete e mapping de
   autorização com ports fake;
-- **Integration:** `WebApplicationFactory`/host ASP.NET, Application,
-  Infrastructure e PostgreSQL local, incluindo transactions e queries;
-- **Persistence:** EF Core migrations, Npgsql, constraints, transações e RLS;
+- **Integration:** host HTTP Go, módulos e PostgreSQL local, incluindo transações
+  e queries;
+- **Persistence:** migrations `goose`, pgx, constraints, transações e RLS,
+  incluindo catálogo `pg_class.relrowsecurity`;
 - **Authentication/authorization:** token ausente, inválido, expirado, issuer,
   audience, project e assinatura incorretos, rotação de `kid`, auth válida sem
   autorização e isolamento A/B;
@@ -537,7 +569,8 @@ controllers/endpoints de vínculo e `ProblemDetails` mapping.
 - **Smoke:** liveness, readiness, configuração, build, autenticação, endpoint
   crítico e isolamento de ambiente pós-deploy.
 
-Gates de PR: restore/build/analyzers .NET, `dotnet test`, `npm ci`, lint,
+Gates históricos de PR usaram restore/build/analyzers .NET e `dotnet test`. A
+migração usa `go mod download`, `go test -race`, `golangci-lint`, `npm ci`, lint,
 type-check, testes frontend, migrations contra PostgreSQL descartável, RLS,
 contract/API/OpenAPI, integration e build Docker descartável. Staging candidate
 publica um digest OCI imutável, aplica migration job e adiciona Firebase/Supabase
@@ -550,9 +583,8 @@ produção.
 
 Structured logging, health checks liveness/readiness, correlation/request ID,
 métricas básicas de request/latência/status/provider e redaction fazem parte da
-fundação. Começar com primitives suportadas pelo ASP.NET Core/.NET (`ILogger`,
-`Activity`/request ID e métricas nativas); adicionar exporter ou OpenTelemetry
-somente se houver necessidade concreta e sem criar plataforma prematura.
+fundação. No baseline foram usados primitives ASP.NET Core/.NET; a migração usa
+`log/slog`, `context` e primitives Go, sem exporter ou OpenTelemetry prematuro.
 
 Registrar somente categoria de resultado, latência, status, ambiente, correlation
 /request ID e versão da aplicação. Redaction obrigatória para Firebase ID/refresh
@@ -593,19 +625,18 @@ Render.
 | replace concorrente perder vínculo | transação/precondition e resposta `409` |
 | lookup externo indisponível | port, fixtures, retry limitado e preservação do vínculo |
 | exposição de dados/segredos | server-only, HTTPS, CORS exato, redaction e scans |
-| contrato HTTP divergir da implementação | OpenAPI code-first único, JSON gerado e contract/API tests |
+| contrato HTTP divergir da implementação | fonte única `api/openapi/v1.json`, artefatos gerados e contract/API tests |
 | Render virar lock-in | container OCI portátil, frontend estático independente e configuração em runtime |
 | comentário didático virar ruído | explicar intenção/boundary na primeira ocorrência; evitar comentário óbvio |
 
 ## Rollout, rollback e migração
 
 1. Bootstrap local sem provisionar Production.
-2. Fixar Clean Architecture pragmática, Modular Monolith, ambientes, OpenAPI,
-   ProblemDetails e contratos.
-3. Configurar PostgreSQL/Supabase local, projetos separados, EF migrations e RLS.
-4. Implementar e testar Firebase bearer authentication; deixar
-   `EnsureCrownPilotUser` como contrato Application sem acesso EF concreto nesta
-   etapa.
+2. Fixar Modular Monolith, ambientes, OpenAPI, ProblemDetails e contratos Go.
+3. Executar `002-13`, `002-14` e `002-15`: PostgreSQL local/Supabase, migrations
+   `goose`, RLS e bearer Firebase.
+4. Implementar e testar casos de uso Go; `EnsureCrownPilotUser` permanece
+   boundary de módulo, sem acesso direto ao transporte.
 5. Implementar lookup por fixture e persistência mínima; integrar o Ensure após
    schema, RLS e repositories existirem.
 6. Entregar casos de uso/API e depois frontend de identidade e vínculo.
@@ -614,8 +645,11 @@ Render.
 9. Validar Render/Staging com Google Sign-In real, E2E e smoke.
 10. Promover Production somente por `main`, com migration job controlado.
 
-Não há migração de dados legados nem dual-write. Rollback de aplicação deve
-preservar schema e vínculo; mudanças incompatíveis usam expand/contract.
+Não há migração de dados legados nem dual-write. Em ambientes compartilhados,
+migrations são forward-only e nunca usam `down`; rollback de aplicação deve
+reimplantar a imagem anterior sobre o schema atual e preservar schema e vínculo.
+Rollback de dados usa backup/restore conforme runbook operacional; mudanças
+incompatíveis usam expand/contract.
 
 ## Ordem das subtarefas
 
@@ -623,22 +657,25 @@ preservar schema e vínculo; mudanças incompatíveis usam expand/contract.
 2. [002-02-estabelecer-boundaries-contrato-base-e-ambientes.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-02-estabelecer-boundaries-contrato-base-e-ambientes.md)
 3. [002-03-preparar-postgresql-migrations-e-harness-rls.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-03-preparar-postgresql-migrations-e-harness-rls.md)
 4. [002-04-implementar-google-sign-in-e-firebase-bearer.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-04-implementar-google-sign-in-e-firebase-bearer.md)
-5. [002-05-implementar-port-e-adapter-de-lookup.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-05-implementar-port-e-adapter-de-lookup.md)
-6. [002-06-modelar-persistencia-repositories-e-rls.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-06-modelar-persistencia-repositories-e-rls.md)
-7. [002-07-implementar-casos-de-uso-e-api-v1.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-07-implementar-casos-de-uso-e-api-v1.md)
-8. [002-08-entregar-frontend-de-identidade-e-vinculo.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-08-entregar-frontend-de-identidade-e-vinculo.md)
-9. [002-09-revisar-arquitetura-frontend-e-ux-visual.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-09-revisar-arquitetura-frontend-e-ux-visual.md)
-10. [002-10-instrumentar-observabilidade-health-e-redaction.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-10-instrumentar-observabilidade-health-e-redaction.md)
-11. [002-11-automatizar-ci-oci-e-gates-de-release.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-11-automatizar-ci-oci-e-gates-de-release.md)
-12. [002-12-validar-staging-e2e-smoke-e-handoff.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-12-validar-staging-e2e-smoke-e-handoff.md)
+5. [002-13-bootstrap-http-config-openapi-go.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-13-bootstrap-http-config-openapi-go.md)
+6. [002-14-autenticacao-firebase-go.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-14-autenticacao-firebase-go.md)
+7. [002-15-persistencia-cutover-remocao-dotnet.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-15-persistencia-cutover-remocao-dotnet.md)
+8. [002-05-implementar-port-e-adapter-de-lookup.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-05-implementar-port-e-adapter-de-lookup.md)
+9. [002-06-modelar-persistencia-repositories-e-rls.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-06-modelar-persistencia-repositories-e-rls.md)
+10. [002-07-implementar-casos-de-uso-e-api-v1.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-07-implementar-casos-de-uso-e-api-v1.md)
+11. [002-08-entregar-frontend-de-identidade-e-vinculo.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-08-entregar-frontend-de-identidade-e-vinculo.md)
+12. [002-09-revisar-arquitetura-frontend-e-ux-visual.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-09-revisar-arquitetura-frontend-e-ux-visual.md)
+13. [002-10-instrumentar-observabilidade-health-e-redaction.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-10-instrumentar-observabilidade-health-e-redaction.md)
+14. [002-11-automatizar-ci-oci-e-gates-de-release.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-11-automatizar-ci-oci-e-gates-de-release.md)
+15. [002-12-validar-staging-e2e-smoke-e-handoff.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-12-validar-staging-e2e-smoke-e-handoff.md)
 
-`002-04-implementar-google-sign-in-e-firebase-bearer.md` e
-`002-05-implementar-port-e-adapter-de-lookup.md` podem ser implementadas em
-paralelo após `002-01-bootstrap-toolchain.md` e
-`002-02-estabelecer-boundaries-contrato-base-e-ambientes.md`;
-`002-05-implementar-port-e-adapter-de-lookup.md` é fixture-driven e não depende
-de authentication. `002-06-modelar-persistencia-repositories-e-rls.md` depende do
-pipeline PostgreSQL e dos contratos, `002-07-implementar-casos-de-uso-e-api-v1.md`
+`002-01` a `002-04` permanecem histórico concluído do baseline. As tasks de
+migração `002-13`, `002-14` e `002-15` devem completar seus gates em sequência;
+somente depois `002-05-implementar-port-e-adapter-de-lookup.md` inicia no backend
+Go. `002-05` é fixture-driven e não depende de authentication.
+`002-06-modelar-persistencia-repositories-e-rls.md` depende do pipeline PostgreSQL
+e dos contratos,
+`002-07-implementar-casos-de-uso-e-api-v1.md`
 integra os casos de uso e a API, `002-08-entregar-frontend-de-identidade-e-vinculo.md`
 entrega a UI e `002-09-revisar-arquitetura-frontend-e-ux-visual.md` revisa o
 frontend já existente. `002-10-instrumentar-observabilidade-health-e-redaction.md`
@@ -647,22 +684,27 @@ automação antes da validação em `002-12-validar-staging-e2e-smoke-e-handoff.
 
 ## Premissas explícitas
 
-- ticker `002` e slug existentes permanecem; não há nova task de implementação;
+- ticker `002` e slug existentes permanecem; `002-13` a `002-15` são tasks de
+  migração propostas;
 - React + TypeScript + Vite continuam oficiais;
 - Firebase Authentication com Google é o único provider de login desta fase;
 - Supabase hospeda PostgreSQL, mas não é backend da aplicação nem provider de
   identidade;
-- EF Core + Npgsql são a integração oficial de persistência;
+- EF Core + Npgsql são o baseline histórico; `pgx`/`sqlc` + `goose` são o destino
+  condicionado à aprovação da ADR 005;
 - bearer Firebase é o único mecanismo de autenticação API nesta fase;
 - uma Player Tag primária basta para o MVP;
 - usuário fornece a tag; não há credential exchange com Supercell;
-- `sa-east-1` permanece preferência condicionada à disponibilidade e revisão de
-  residência, backups e subprocessadores;
+- API no Render fica em Virgínia (`us-east`) e PostgreSQL/Supabase fica em
+  `us-east-1` (Northern Virginia); `sa-east-1` foi descartada porque Render não
+  possui região na América do Sul. Dados pessoais ficam fora do Brasil e a
+  transferência internacional deve constar na política de privacidade antes de
+  dados reais; backups, subprocessadores e egress permanecem gates operacionais;
 - Render é hosting inicial operacional da API Docker e frontend estático, não
   dependência arquitetural; limites numéricos serão verificados no momento do
   provisionamento;
-- OpenAPI code-first gerado por `Microsoft.AspNetCore.OpenApi` é contrato único;
-  UI navegável não gera contrato concorrente;
+- OpenAPI spec-first em `api/openapi/v1.json` será contrato único após aprovação;
+  Swagger UI não gera contrato concorrente;
 - Clean Architecture é pragmática e o deploy permanece Modular Monolith único;
 - `EnsureCrownPilotUser` pertence à Application:
   `002-04-implementar-google-sign-in-e-firebase-bearer.md` define contrato/fakes
@@ -678,7 +720,7 @@ automação antes da validação em `002-12-validar-staging-e2e-smoke-e-handoff.
 ## Handoff esperado
 
 Entregar aplicação reproduzível, API portátil, frontend independente, identidade
-estável, PostgreSQL seguro, migrations EF Core/RLS testadas, vínculo primário
+estável, PostgreSQL seguro, migrations `goose`/RLS testadas, vínculo primário
 removível e `unverified`, lookup server-side com fixtures, CI/E2E/smoke com
 evidência e observabilidade sem dados sensíveis. A Fase 003 só pode começar após
 reabrir e aprovar os gates de API data, retenção, ownership, egress, meta e

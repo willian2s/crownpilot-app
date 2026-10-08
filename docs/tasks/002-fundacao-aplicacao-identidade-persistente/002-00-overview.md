@@ -2,16 +2,16 @@
 
 - **Status geral:** pending
 - **Spec:** [002-fundacao-aplicacao-identidade-persistente.md](../../specs/002-fundacao-aplicacao-identidade-persistente.md)
-- **Progresso:** 4/12 subtarefas concluídas
+- **Progresso:** 4/15 subtarefas concluídas
 
 ## Objetivo
 
-Preparar frontend React + TypeScript + Vite, API ASP.NET Core + C#, Firebase
-Authentication com Google e PostgreSQL no Supabase via EF Core + Npgsql,
+Concluir frontend React + TypeScript + Vite e backend portátil da fundação,
 entregando identidade CrownPilot e vínculo de Player Tag público/read-only com
-`ownershipStatus: unverified`. Fundação usa Clean Architecture pragmática em um
-Modular Monolith, REST `/api/v1`, OpenAPI, ProblemDetails, Docker/OCI, Render
-inicial portátil, testes e observabilidade.
+`ownershipStatus: unverified`. O baseline ASP.NET Core + EF Core permanece
+histórico; a migração Go planejada em `002-13` a `002-15` preserva REST
+`/api/v1`, OpenAPI, ProblemDetails, Docker/OCI, Render inicial portátil, testes e
+observabilidade.
 
 ## Checklist
 
@@ -19,6 +19,9 @@ inicial portátil, testes e observabilidade.
 - [x] [002-02-estabelecer-boundaries-contrato-base-e-ambientes.md](002-02-estabelecer-boundaries-contrato-base-e-ambientes.md)
 - [x] [002-03-preparar-postgresql-migrations-e-harness-rls.md](002-03-preparar-postgresql-migrations-e-harness-rls.md)
 - [x] [002-04-implementar-google-sign-in-e-firebase-bearer.md](002-04-implementar-google-sign-in-e-firebase-bearer.md)
+- [ ] [002-13-bootstrap-http-config-openapi-go.md](002-13-bootstrap-http-config-openapi-go.md)
+- [ ] [002-14-autenticacao-firebase-go.md](002-14-autenticacao-firebase-go.md)
+- [ ] [002-15-persistencia-cutover-remocao-dotnet.md](002-15-persistencia-cutover-remocao-dotnet.md)
 - [ ] [002-05-implementar-port-e-adapter-de-lookup.md](002-05-implementar-port-e-adapter-de-lookup.md)
 - [ ] [002-06-modelar-persistencia-repositories-e-rls.md](002-06-modelar-persistencia-repositories-e-rls.md)
 - [ ] [002-07-implementar-casos-de-uso-e-api-v1.md](002-07-implementar-casos-de-uso-e-api-v1.md)
@@ -30,14 +33,20 @@ inicial portátil, testes e observabilidade.
 
 ## Observações
 
+- ADR 005 está `proposed`. `002-13`, `002-14` e `002-15` são migração planejada
+  para Go, em sequência e com gate verde ao fim de cada task; não iniciar
+  `002-05` a `002-12` antes da aprovação da ADR, fechamento das perguntas
+  pendentes e cutover definido em `002-15`, independentemente de runtime antigo.
+- `002-01` a `002-04` permanecem concluídas como histórico do baseline .NET; não
+  desmarcar retroativamente.
 - Fase 001 liberou somente bootstrap, identidade e vínculo privado read-only.
-- `API → Application → Domain`; `Infrastructure → Application` e `Infrastructure →
-  Domain`. `Domain` não conhece Firebase, Supabase, EF Core, Npgsql, HTTP, ASP.NET
-  Core ou Vercel; `Application` usa abstrações; `Infrastructure` implementa
-  adapters. `Identity` e `PlayerLink` são módulos funcionais; providers ficam em
-  `Infrastructure`.
-- Supabase é provedor do PostgreSQL, não backend da aplicação. EF Core é dono do
-  schema; SQL separado cobre somente RLS/grants/objetos de plataforma.
+- Baseline histórico usou `API → Application → Domain` e `Infrastructure →
+  Application/Domain`; na migração Go, `identity` e `playerlink` são módulos
+  funcionais, `playerlink` pode importar `identity`, e `identity` não importa
+  `playerlink`.
+- Supabase é provedor do PostgreSQL, não backend da aplicação. Durante o baseline
+  EF Core foi dono do schema; `002-15` transfere ownership para migrations SQL Go,
+  mantendo SQL separado somente para RLS/grants/objetos de plataforma.
 - RLS usa role sem `BYPASSRLS` e contexto transacional de `CrownPilotUserId`; a
   bridge com pooler é gate explícito, não suposição.
 - Replace usa `expectedVersion` e `409` em conflito; não há ETag paralelo;
@@ -45,8 +54,9 @@ inicial portátil, testes e observabilidade.
   `ownership_status` são invariantes `NOT NULL`.
 - Frontend envia Firebase ID Token bearer à API; authentication e authorization
   permanecem responsabilidades distintas do backend.
-- OpenAPI code-first via `Microsoft.AspNetCore.OpenApi` será contrato único;
-  UI navegável não cria especificação concorrente.
+- O baseline usou OpenAPI code-first via `Microsoft.AspNetCore.OpenApi`; `002-13`
+  migra para spec-first `api/openapi/v1.json`, `oapi-codegen` e
+  `openapi-typescript`, sem especificação concorrente.
 - Swagger UI foi adicionada em `/docs` para Development/Staging, consumindo
   `/openapi/v1.json`; permanece apenas camada de visualização, sem alterar
   contrato OpenAPI.
@@ -71,11 +81,10 @@ inicial portátil, testes e observabilidade.
   login real; Staging possui hostname fixo, Firebase e banco separados.
 - Não persistir snapshot, coleção, Arena, battle history, cache ou payload raw.
 - Não alegar ownership; usar `public_profile` + `unverified`.
-- `002-04-implementar-google-sign-in-e-firebase-bearer.md` e
-  `002-05-implementar-port-e-adapter-de-lookup.md` podem avançar em paralelo
-  depois de `002-01-bootstrap-toolchain.md` e
-  `002-02-estabelecer-boundaries-contrato-base-e-ambientes.md`;
-  `002-06-modelar-persistencia-repositories-e-rls.md` depende do banco e dos
+- `002-01` a `002-04` permanecem histórico concluído do baseline. As tasks de
+  migração `002-13` -> `002-14` -> `002-15` devem completar seus gates antes de
+  `002-05` iniciar no backend Go; `002-06-modelar-persistencia-repositories-e-rls.md`
+  depende do banco e dos
   contratos; `002-07-implementar-casos-de-uso-e-api-v1.md` integra auth, lookup e
   persistência; `002-08-entregar-frontend-de-identidade-e-vinculo.md` entrega UI
   antes da revisão arquitetural/visual em
@@ -95,9 +104,17 @@ inicial portátil, testes e observabilidade.
   mobile/desktop; não é uma task genérica de “melhorar frontend”.
 - Preview consome somente build/smoke sem login real; Staging e Production
   promovem o mesmo digest OCI, sem rebuild divergente.
-- Decisões pendentes de implementação: versão exata de packages, runner .NET,
-  controller versus Minimal API, transporte final do pooler, provider/egress live
-  e região/backups antes de dados reais.
+- A ADR 005 registra Go `1.27.2`, `goose`, porta `5080`, Swagger UI,
+  `openapi-check.mjs`, Session pooler no projeto Supabase dev e em hosting,
+  conexão direta somente no PostgreSQL Docker local descartável e ausência de
+  transaction pooler neste corte. API Render fica em Virgínia (`us-east`) e
+  Supabase em `us-east-1` (Northern Virginia); dados pessoais ficam fora do Brasil
+  e a transferência internacional precisa constar na política de privacidade antes
+  de dados reais. Implementação dessas decisões permanece bloqueada até aprovação
+  da ADR 005. Pendências operacionais restantes:
+  provider/egress live e backups do PostgreSQL/Supabase antes de dados reais.
+  Controller versus Minimal API e runner .NET são decisões históricas do
+  baseline.
 - Fase 003 permanece bloqueada até reabertura dos gates de API data, retenção,
   ownership, egress, meta e compliance definidos no veredito da Fase 001.
 - `002-01` concluiu implementação e validações locais; smoke OCI passou após

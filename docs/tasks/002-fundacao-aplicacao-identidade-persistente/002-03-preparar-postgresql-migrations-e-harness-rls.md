@@ -6,14 +6,16 @@
 
 ## Objetivo e resultado esperado
 
-Configurar PostgreSQL local via Supabase CLI/Docker e o pipeline de migrations EF
-Core + SQL de segurança. Preparar referências de banco separadas por ambiente,
-roles e harness RLS, sem tratar Supabase como backend ou implementar o fluxo de
-login.
+Configurar PostgreSQL descartável via Docker Compose para testes/reset e registrar
+projeto Supabase exclusivo de desenvolvimento via Session pooler. Preparar o
+pipeline de migrations EF Core e SQL de segurança, referências de banco separadas
+por ambiente, roles e harness RLS, sem tratar Supabase como backend ou implementar
+o fluxo de login.
 
 ## Requisitos cobertos
 
-- PostgreSQL/Supabase local descartável;
+- PostgreSQL Docker local descartável; projeto Supabase dev separado e persistente,
+  usado via Session pooler após aprovação da ADR 005;
 - referências de banco separadas para Staging e Production;
 - EF Core como dono do schema da aplicação;
 - Npgsql e migrations reproduzíveis;
@@ -24,13 +26,17 @@ login.
 
 ## Escopo incluído
 
-- fixar versão/uso de Supabase CLI e Docker;
+- fixar PostgreSQL/Docker Compose como runner local descartável; projeto Supabase
+  dev é referência persistente de desenvolvimento e usa Session pooler;
 - iniciar PostgreSQL local e documentar connection string sem secrets reais;
 - definir projetos/refs de banco separados, sem commitar credenciais;
 - criar harness para aplicar migrations EF Core e depois SQL RLS/grants;
 - preparar comando e contrato para gerar artefato de migration revisável/bundle
   one-shot depois do schema final; não migrar no startup das réplicas da API;
-- documentar `sa-east-1` como preferência condicionada para Staging/Production;
+- documentar Render em Virgínia (`us-east`) e Supabase em `us-east-1` (Northern
+  Virginia) para Staging/Production; dados pessoais ficam fora do Brasil e a
+  transferência internacional deve constar na política de privacidade antes de
+  dados reais;
 - documentar criação manual/provisionamento controlado sem executar Production;
 - definir seed/fixtures sanitizados e reset local.
 
@@ -62,7 +68,7 @@ login.
 
 ## Passos de implementação
 
-1. Fixar Supabase CLI/Docker e definir o contrato cross-platform dos scripts npm
+1. Fixar Docker Compose/PostgreSQL e definir o contrato cross-platform dos scripts npm
    de banco que o bootstrap fornecerá.
 2. Configurar pipeline local: banco limpo, migrations EF Core, SQL RLS/grants,
    fixtures quando schema existir; nenhum SQL de segurança pode criar tabela do
@@ -71,20 +77,21 @@ login.
 4. Preparar role de runtime sem `BYPASSRLS`, schema dedicado, runner de segurança
    e mecanismo transacional de contexto; não criar policies de tabelas ainda
    inexistentes. A Task `002-06-modelar-persistencia-repositories-e-rls.md` prova
-   conexão direta/session pooler com schema concreto e registra transaction pooler
-   como gate separado se for adotado.
-5. Registrar referências de banco separadas para Local, Staging e Production; não
-   commitar secrets.
-6. Registrar critérios para `sa-east-1`, DPA, backups, subprocessadores e
-   residência antes de dados reais.
+    conexão direta no PostgreSQL local e Session pooler no Supabase dev/hospedado com schema
+    concreto; registra transaction pooler como gate separado se for adotado.
+5. Registrar referências de banco separadas para Docker Local, Supabase dev,
+   Staging e Production; não commitar secrets.
+6. Registrar critérios para `us-east-1`, DPA, backups, subprocessadores,
+   transferência internacional, residência e egress antes de dados reais.
 7. Manter provisionamento Production como etapa controlada posterior.
 
 ## Pré-requisitos Mac/Linux
 
-O setup local exige Git, .NET SDK e Node.js LTS/npm nas versões pinadas pela Task
-`002-01-bootstrap-toolchain.md`, `dotnet-ef` como ferramenta local do repositório,
-Docker (Docker Desktop no Mac ou Docker Engine/Compose no Linux) e Supabase CLI na
-versão registrada.
+O runner descartável local exige Git, .NET SDK e Node.js LTS/npm nas versões pinadas pela Task
+`002-01-bootstrap-toolchain.md`, `dotnet-ef` como ferramenta local do repositório e
+Docker (Docker Desktop no Mac ou Docker Engine/Compose no Linux). Supabase CLI não
+é dependência do runner local. Desenvolvimento integrado também pode usar o projeto
+Supabase dev, com referência e secret de runtime fora do Git e Session pooler.
 Não é necessário instalar PostgreSQL no host. Os comandos usam somente banco local
 descartável e não exigem credenciais de Staging ou Production.
 
@@ -97,7 +104,7 @@ dependência apenas para encadear comandos:
 
 | Comando oficial | Contrato |
 |---|---|
-| `npm run db:start` | inicia PostgreSQL local descartável via Supabase CLI/Docker; falha se dependências locais não estiverem disponíveis |
+| `npm run db:start` | inicia PostgreSQL local descartável via Docker Compose; falha se dependências locais não estiverem disponíveis |
 | `npm run db:stop` | para o ambiente local; não toca Staging/Production |
 | `npm run db:migrate` | aplica somente migrations EF Core no banco local configurado |
 | `npm run db:security` | aplica somente SQL versionado de roles, grants e RLS/segurança, depois de `db:migrate` |
@@ -121,6 +128,10 @@ startup da API nem em múltiplas réplicas.
 O `package.json` e os scripts foram fornecidos por `002-01`; o runner Node agora
 encapsula Docker, `dotnet ef` e `psql`. Desenvolvedores e CI usam somente a
 interface `npm run`; nenhum runner interno vira contrato público.
+
+Os comandos `db:start`, `db:reset` e `db:stop` operam somente PostgreSQL Docker
+descartável. O projeto Supabase dev não é resetado por esses comandos; seu acesso
+usa configuração separada e Session pooler.
 
 ## Testes e comandos de validação
 
@@ -148,12 +159,15 @@ EF Core -> SQL RLS/grants -> fixtures quando o schema existir.
 - reset local é reproduzível e não usa produção;
 - roles, grants, contexto transacional e cleanup em pool estão documentados para a
   prova concreta da Task `002-06-modelar-persistencia-repositories-e-rls.md`;
-- referências Staging/Production são distintas e sem secrets versionados;
+- referências Supabase dev, Staging e Production são distintas e sem secrets
+  versionados;
 - schema CrownPilot não depende da Supabase Data API;
 - pipeline de bundle/job está definido, mas o artefato final pertence à Task
   `002-11-automatizar-ci-oci-e-gates-de-release.md` e será gerado após as
   migrations da Task `002-06-modelar-persistencia-repositories-e-rls.md`;
-- região, backups e residência são gates antes de dados reais;
+- região está decidida como Render `us-east` + Supabase `us-east-1`; backups,
+  subprocessadores, transferência internacional, residência e egress são gates
+  antes de dados reais;
 - nenhuma tabela futura ou payload de jogador é criada por conveniência.
 
 ## Riscos e cuidados
