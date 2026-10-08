@@ -68,7 +68,8 @@ detalhe de infraestrutura.
 | precondition/version conflict | `409` | `version_conflict` |
 | validação semântica necessária | `422` | `semantic_validation_failed` |
 | provider limitado | `429` | `provider_rate_limited`, `Retry-After` quando aplicável |
-| provider indisponível/mal configurado | `503` | `provider_unavailable` ou `provider_misconfigured` |
+| lookup Clash Royale indisponível/mal configurado | `503` | `provider_unavailable` ou `provider_misconfigured` |
+| Firebase indisponível durante revogação sensível | `503` | `authentication_unavailable` em ProblemDetails genérico, sem detalhe do provider |
 | falha inesperada | `500` | `internal_error` e `traceId` |
 
 Exclusão de dados CrownPilot exigirá `auth_time` presente, janela de cinco

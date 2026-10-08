@@ -33,10 +33,10 @@ observabilidade.
 
 ## Observações
 
-- ADR 005 está `proposed`. `002-13`, `002-14` e `002-15` são migração planejada
-  para Go, em sequência e com gate verde ao fim de cada task; não iniciar
-  `002-05` a `002-12` antes da aprovação da ADR, fechamento das perguntas
-  pendentes e cutover definido em `002-15`, independentemente de runtime antigo.
+- ADR 005 está `accepted` em 2026-10-08. `002-13` é a próxima task liberada;
+  `002-14` e `002-15` seguem em sequência, cada uma com gate verde próprio. Não
+  iniciar `002-05` a `002-12` antes da conclusão de `002-13` a `002-15` e do
+  cutover definido em `002-15`, independentemente de runtime antigo.
 - `002-01` a `002-04` permanecem concluídas como histórico do baseline .NET; não
   desmarcar retroativamente.
 - Fase 001 liberou somente bootstrap, identidade e vínculo privado read-only.
@@ -104,15 +104,16 @@ observabilidade.
   mobile/desktop; não é uma task genérica de “melhorar frontend”.
 - Preview consome somente build/smoke sem login real; Staging e Production
   promovem o mesmo digest OCI, sem rebuild divergente.
-- A ADR 005 registra Go `1.27.2`, `goose`, porta `5080`, Swagger UI,
+- A ADR 005, agora aceita, registra Go `1.27.2`, `goose`, porta `5080`, Swagger UI,
   `openapi-check.mjs`, Session pooler no projeto Supabase dev e em hosting,
   conexão direta somente no PostgreSQL Docker local descartável e ausência de
   transaction pooler neste corte. API Render fica em Virgínia (`us-east`) e
   Supabase em `us-east-1` (Northern Virginia); dados pessoais ficam fora do Brasil
   e a transferência internacional precisa constar na política de privacidade antes
-  de dados reais. Implementação dessas decisões permanece bloqueada até aprovação
-  da ADR 005. Pendências operacionais restantes:
-  provider/egress live e backups do PostgreSQL/Supabase antes de dados reais.
+  de dados reais. A implementação Go está liberada pela aprovação da ADR 005.
+  Pendências operacionais restantes — provider/egress live e backups do
+  PostgreSQL/Supabase — continuam gates obrigatórios de `002-12` antes de dados
+  reais.
   Controller versus Minimal API e runner .NET são decisões históricas do
   baseline.
 - Fase 003 permanece bloqueada até reabertura dos gates de API data, retenção,

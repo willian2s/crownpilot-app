@@ -24,7 +24,11 @@ de authorization.
 - Local com Emulator permitindo as três variáveis vazias;
 - ausência de qualquer variável fora de Local encerrando o processo;
 - nenhum valor secreto em logs, bundle, imagem ou Git;
-- bearer Firebase, `AuthenticatedSubject` e boundary de autorização.
+- bearer Firebase, `AuthenticatedSubject` e boundary de autorização;
+- revogação seletiva em operação sensível: `DELETE /api/v1/me` usa
+  `VerifyIDTokenAndCheckRevoked`; falha de comunicação com Firebase falha fechada
+  com `503` e `authentication_unavailable` em ProblemDetails genérico, sem detalhe
+  do provider;
 
 ## Escopo incluído
 
@@ -40,6 +44,8 @@ de authorization.
 - atualizar mapa de equivalência de authentication e configuração;
 - preservar comportamento funcional de authentication/authorization definido na
   spec 002, sem colocar requisitos de domínio no middleware.
+- não reutilizar `provider_unavailable`, reservado ao estado do lookup do Clash
+  Royale, no erro de comunicação da revogação sensível.
 
 ## Escopo excluído
 
@@ -78,9 +84,12 @@ de authorization.
    `AuthenticatedSubject`.
 5. Manter authentication distinta de authorization e não resolver/persistir
    usuário no middleware.
-6. Cobrir ausência, parcialidade, newline, projeto errado, issuer, expiração,
+6. Para a rota sensível, mapear timeout/indisponibilidade de comunicação do
+   Firebase para `503`/`authentication_unavailable`, sem detalhe do provider e
+   sem confundir o code com `provider_unavailable` do lookup.
+7. Cobrir ausência, parcialidade, newline, projeto errado, issuer, expiração,
    assinatura, `kid`, `sub` e UID arbitrário.
-7. Executar gate verde e registrar evidências antes de `002-15`.
+8. Executar gate verde e registrar evidências antes de `002-15`.
 
 ## Gate verde obrigatório
 
@@ -111,6 +120,10 @@ pré-condição operacional posterior, mas não pode ser simulado como gate verd
 - nenhum segredo aparece em logs, erros, frontend, imagem ou arquivo versionado;
 - `401` permanece indistinguível para token ausente, inválido, expirado, issuer,
   audience, projeto, assinatura ou `kid` incorretos;
+- `DELETE /api/v1/me` falha fechado com `503` e `authentication_unavailable`
+  quando a comunicação com Firebase falha durante a checagem de revogação;
+- o contrato OpenAPI usa `authentication_unavailable` para essa falha e mantém
+  `provider_unavailable` exclusivo do lookup do Clash Royale;
 - UID verificado não é identidade de domínio nem entrada confiável do request;
 - fixtures ficam somente em testes/Local e não são compiladas no binário de
   produção;
@@ -124,3 +137,19 @@ pré-condição operacional posterior, mas não pode ser simulado como gate verd
 - Não conceder autorização a partir de claims arbitrárias do provider.
 - Conta administrativa ampla é risco aceito na ADR 005; least privilege fica como
   melhoria futura sem mudança de código.
+
+## Atualização documental — 2026-10-08
+
+- **Status:** `pending`; planejamento atualizado, implementação não iniciada.
+- **Arquivos alterados:** ADR 005, spec 002, task `002-13`, task `002-14`,
+  overview `002-00` e contrato operacional `002-02`.
+- **Decisões e desvios:** Decisão 6 foi aceita. Revogação sensível falha fechada
+  com `503`/`authentication_unavailable`; `provider_unavailable` continua
+  reservado ao lookup do Clash Royale. Sem desvio de escopo e sem código.
+- **Comandos executados:** `git diff --check`.
+- **Resultados e evidências:** `git diff --check` passou e revisão independente
+  confirmou consistência SDD; gates de implementação desta task permanecem não
+  executados.
+- **Riscos residuais:** comportamento e contrato ainda precisam ser implementados
+  e testados em `002-13`/`002-14`; backups e egress continuam gates obrigatórios
+  de `002-12` antes de dados reais.

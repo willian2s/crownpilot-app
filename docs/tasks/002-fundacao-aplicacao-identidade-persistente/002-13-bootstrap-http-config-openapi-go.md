@@ -24,6 +24,9 @@ task inicia migração, não reabre essas tarefas.
   fail-closed antes do listener;
 - `/health/live`, bootstrap, ProblemDetails, CORS e porta de runtime;
 - `api/openapi/v1.json` como fonte única spec-first;
+- contrato planejado para `DELETE /api/v1/me` documentando `503` com
+  `code: authentication_unavailable` em ProblemDetails genérico, sem detalhe do
+  provider;
 - `oapi-codegen` para Go e `openapi-typescript` para frontend;
 - artefatos gerados versionados e CI bloqueando drift;
 - `/openapi/v1.json` servido diretamente da fonte embutida, sem
@@ -123,6 +126,9 @@ bloqueio real, nunca convertidos em sucesso falso.
 - configuração inválida encerra antes do listener e secrets não entram em logs;
 - liveness é process-only e `/docs`/OpenAPI respeitam ambiente da spec 002;
 - fonte JSON gera código Go e tipos frontend determinísticos;
+- `DELETE /api/v1/me` documenta `authentication_unavailable` para falha fechada
+  de comunicação com Firebase durante revogação sensível, sem reutilizar
+  `provider_unavailable`;
 - artefatos gerados estão no Git e CI falha em drift;
 - `cmd/crownpilot-openapi` não existe;
 - frontend, smoke, contrato e imagem usam backend Go sem alterar contrato

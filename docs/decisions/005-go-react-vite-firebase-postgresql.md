@@ -1,6 +1,6 @@
 # ADR 005 — Go, React/Vite, Firebase Auth e PostgreSQL/Supabase
 
-- **Status:** `proposed`
+- **Status:** `accepted`
 - **Data:** 2026-10-08
 - **Substitui:** ADR 004 somente nas decisões de linguagem, runtime, organização
   do backend, autenticação server-side, persistência, OpenAPI e verificação
@@ -22,8 +22,8 @@ tasks, cada uma com gate próprio:
 - `002-14` — autenticação Firebase;
 - `002-15` — persistência, cutover e remoção do .NET.
 
-Até esta ADR ser aprovada e as perguntas pendentes serem respondidas, as três
-tasks permanecem `pending` e nenhum código Go é autorizado por esta decisão.
+Com esta ADR aceita, `002-13` está liberada para execução. `002-14` e `002-15`
+permanecem `pending` até suas dependências e gates próprios serem concluídos.
 
 ## Decisões
 
@@ -174,11 +174,13 @@ Registro das perguntas numeradas da versão anterior:
    sensível, separado do wrapper padrão. Token revogado retorna `401` indistinguível
    das demais falhas de autenticação.
 
-   O desenho abaixo é proposta ainda não confirmada: timeout ou indisponibilidade
-   do Firebase durante a checagem sensível falha fechado com `503` e o code
-   existente `provider_unavailable`, usando ProblemDetails genérico sem
-   detalhe do provider. A exigência de `auth_time` presente e recente para
-   `DELETE /api/v1/me` permanece como proteção adicional conforme a spec 002.
+   Timeout ou indisponibilidade de comunicação com o Firebase durante a checagem
+   sensível falha fechado com `503` e o novo code `authentication_unavailable`,
+   usando ProblemDetails genérico sem detalhe do provider. `provider_unavailable`
+   não é reutilizado: na spec 002, ele representa estado do lookup do Clash
+   Royale. O contrato OpenAPI planejado para `DELETE /api/v1/me` documentará
+   `503` com `code: authentication_unavailable`. A exigência de `auth_time`
+   presente e recente permanece como proteção adicional conforme a spec 002.
 7. **Nome e ordem SDD:** decidida; migração é `002-13` a `002-15`, e `002-01` a
    `002-04` permanecem histórico concluído.
 8. **Porta local canônica:** decidida; usar `5080`, igual ao .NET. `5089` fica
@@ -212,9 +214,9 @@ Registro das perguntas numeradas da versão anterior:
     qualquer tabela do schema `crownpilot` estiver sem RLS ativo. O teste roda no
     CI contra PostgreSQL local e é gate obrigatório antes de Staging.
 
-### Pendências remanescentes e classificação proposta
+### Pendências remanescentes e classificação
 
-Estas classificações não alteram o status `proposed` da ADR:
+Estas classificações não alteram o status `accepted` da ADR:
 
 | Pendência | Classificação | Gate obrigatório e justificativa |
 |---|---|---|
@@ -297,7 +299,7 @@ correspondentes, não liberar dados reais nem tratar a Fase 003 como liberada.
 | Conta Firebase com permissões administrativas amplas | Risco aceito nesta ADR. Trocar por conta sem papéis IAM amplos é melhoria futura sem mudança de código. |
 | Hosting não fornecer secrets corretamente | três secrets separados por ambiente; startup fail-closed fora de Local. ADC/workload identity não é dependência. |
 | Rota sensível omitir revogação | política declarada por rota, wrapper específico para auth sensível, lista inicial registrada e testes de composição. |
-| Firebase indisponível durante revogação sensível | falha fechada; proposta de `503` com `provider_unavailable`, sem detalhe do provider. |
+| Firebase indisponível durante revogação sensível | falha fechada; `503` com `authentication_unavailable` em ProblemDetails genérico, sem detalhe do provider; `provider_unavailable` permanece exclusivo do lookup do Clash Royale. |
 | Drift entre OpenAPI, handlers e frontend | fonte JSON única, geradores versionados e CI falhando em `git diff`. |
 | `identity` e `playerlink` criarem dependência circular | `depguard` bloqueia `identity -> playerlink`; `playerlink -> identity` é a única direção permitida entre os dois. |
 | RLS perder contexto no pool | transação com `SET LOCAL`, rollback/commit e testes de isolamento. |

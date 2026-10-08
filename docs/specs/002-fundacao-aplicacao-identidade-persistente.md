@@ -3,13 +3,12 @@
 - **Ticker:** `002`
 - **Status:** `planned`
 - **Roadmap:** [Fase 002](../roadmap/crownpilot-roadmap.md#002--funda%C3%A7%C3%A3o-da-aplica%C3%A7%C3%A3o-e-identidade-persistente-)
-- **ADR canônica:** [ADR 004](../decisions/004-aspnet-core-react-vite-firebase-postgresql.md)
+- **ADR canônica:** [ADR 005](../decisions/005-go-react-vite-firebase-postgresql.md)
 - **Dependência:** Fase 001 — `GO WITH CONSTRAINTS / APPROVAL DEPENDENCY`
 
-ADR 005 está `proposed`; portanto, esta spec ainda registra o baseline .NET como
-stack vigente até aprovação. Seus requisitos funcionais permanecem autoridade
-durante a migração planejada por `002-13`, `002-14` e `002-15`; essas tasks não
-autorizam implementação antes da decisão da ADR.
+ADR 005 está `accepted` em 2026-10-08. Esta spec mantém o baseline .NET como
+referência histórica e seus requisitos funcionais permanecem autoridade durante a
+migração por `002-13`, `002-14` e `002-15`; essas tasks seguem seus gates próprios.
 
 ## Contexto e baseline
 
@@ -21,9 +20,9 @@ prova que o usuário possui a conta consultada.
 O baseline documental da `main`, verificado em 2026-10-02, continha somente
 documentação e arquivos de configuração. As tasks `002-01` a `002-04` depois
 criaram o baseline executável .NET, sem dados de produção. Esse baseline é
-histórico e será substituído somente após aprovação da ADR 005 e gates
-`002-13` a `002-15`. A [ADR 004](../decisions/004-aspnet-core-react-vite-firebase-postgresql.md)
-continua referência do baseline até essa aprovação.
+histórico e será substituído durante a migração, após os gates `002-13` a
+`002-15`. A [ADR 004](../decisions/004-aspnet-core-react-vite-firebase-postgresql.md)
+continua referência histórica do baseline.
 
 ## Problema
 
@@ -52,8 +51,8 @@ demonstrada.
 
 No baseline .NET, o backend expõe REST versionada em `/api/v1/...`, com
 `Microsoft.AspNetCore.OpenApi` code-first e Swagger UI consumindo
-`/openapi/v1.json`. Após aprovação da ADR 005, `002-13` migra o contrato para
-spec-first `api/openapi/v1.json`, com geradores pinados e a mesma Swagger UI como
+`/openapi/v1.json`. Com ADR 005 aceita, `002-13` migra o contrato para spec-first
+`api/openapi/v1.json`, com geradores pinados e a mesma Swagger UI como
 visualização. O contrato funcional não muda.
 
 Ao fim da fase, um usuário deve conseguir:
@@ -393,8 +392,11 @@ Core, sem stack trace, secrets, URL externa ou payload bruto. O contrato mínimo
 
 `ProblemDetails` pode carregar códigos estáveis como `invalid_player_tag`,
 `player_not_found`, `provider_rate_limited`, `provider_unavailable`,
-`version_conflict` e `reauthentication_required`; o código não pode carregar tag,
-UID, token ou detalhe de infraestrutura.
+`authentication_unavailable`, `version_conflict` e `reauthentication_required`;
+o código não pode carregar tag, UID, token ou detalhe de infraestrutura.
+`authentication_unavailable` é reservado à falha de comunicação com Firebase
+durante revogação sensível; `provider_unavailable` continua reservado ao lookup do
+Clash Royale.
 
 | Situação | Status | Regra |
 |---|---:|---|
@@ -405,7 +407,7 @@ UID, token ou detalhe de infraestrutura.
 | conflito/precondition/version | `409` | nunca sobrescrever silenciosamente |
 | validação semântica não representável por `400` | `422` | usar somente quando necessário |
 | limite do provider/API | `429` | `Retry-After` quando aplicável |
-| falha externa transitória/misconfiguration | `503` | contrato de provider, sem detalhes internos |
+| falha externa transitória/misconfiguration | `503` | contrato de provider, sem detalhes internos; em revogação sensível do Firebase, usar `authentication_unavailable` |
 | erro inesperado | `500` | mensagem genérica e correlation ID |
 
 `ProblemDetails` será documentado em OpenAPI para cada endpoint aplicável. A API
@@ -421,8 +423,9 @@ usa REST inicialmente; GraphQL e gRPC estão fora desta fase.
 Mapeamento mínimo: `401` token ausente/inválido, `403` token válido sem
 autorização para a operação, `400` input inválido, `404` perfil inexistente ou
 ausência do vínculo próprio, `409` precondition/concurrency, `429` rate limit e
-`503` provider indisponível ou mal configurado. Usuário A nunca recebe dados de
-B. Não vazar token, URL, rota externa, IAM, payload bruto ou detalhes internos.
+`503` provider indisponível ou mal configurado; na checagem de revogação sensível
+do Firebase, `authentication_unavailable`. Usuário A nunca recebe dados de B. Não
+vazar token, URL, rota externa, IAM, payload bruto ou detalhes internos.
 
 Exclusão exige `auth_time` presente e dentro de 5 minutos do relógio do servidor,
 com tolerância máxima de 60 segundos. Claim ausente, malformada ou fora da janela
@@ -454,8 +457,8 @@ controllers/endpoints de vínculo e `ProblemDetails` mapping.
 ## Alternativas descartadas
 
 As alternativas abaixo registram decisões do baseline .NET. A mudança para Go,
-spec-first e `goose` somente vigora quando ADR 005 for aprovada e as tasks de
-migração concluírem seus gates.
+spec-first e `goose` vigora pela ADR 005 aceita, com execução condicionada aos
+gates das tasks de migração.
 
 | Alternativa | Motivo |
 |---|---|
@@ -476,7 +479,7 @@ migração concluírem seus gates.
 
 Os critérios abaixo preservam aceite funcional da spec. Menções a solution,
 ASP.NET, EF Core, Npgsql, `WebApplicationFactory` e OpenAPI code-first são
-critérios históricos do baseline `002-01` a `002-04`; após aprovação da ADR 005,
+critérios históricos do baseline `002-01` a `002-04`; com ADR 005 aceita,
 `002-13` a `002-15` e tasks posteriores usam equivalentes Go registrados nas
 tasks de migração.
 
@@ -685,13 +688,13 @@ automação antes da validação em `002-12-validar-staging-e2e-smoke-e-handoff.
 ## Premissas explícitas
 
 - ticker `002` e slug existentes permanecem; `002-13` a `002-15` são tasks de
-  migração propostas;
+  migração liberadas em sequência, com gates próprios;
 - React + TypeScript + Vite continuam oficiais;
 - Firebase Authentication com Google é o único provider de login desta fase;
 - Supabase hospeda PostgreSQL, mas não é backend da aplicação nem provider de
   identidade;
 - EF Core + Npgsql são o baseline histórico; `pgx`/`sqlc` + `goose` são o destino
-  condicionado à aprovação da ADR 005;
+  decidido pela ADR 005;
 - bearer Firebase é o único mecanismo de autenticação API nesta fase;
 - uma Player Tag primária basta para o MVP;
 - usuário fornece a tag; não há credential exchange com Supercell;
