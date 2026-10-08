@@ -32,6 +32,11 @@ public sealed class RuntimeOptions
         string.Equals(Authentication.Mode, AuthenticationBoundaryOptions.ContractFixtureMode,
             StringComparison.OrdinalIgnoreCase);
 
+    public bool UseFirebaseAuthentication =>
+        string.Equals(Authentication.Mode, AuthenticationBoundaryOptions.FirebaseMode,
+            StringComparison.OrdinalIgnoreCase) &&
+        Authentication.Firebase.IsConfigured;
+
     public void ResolveForHost(string hostEnvironment)
     {
         if (!RuntimeEnvironmentNames.TryParseHost(hostEnvironment, out var hostRuntimeEnvironment))
@@ -54,6 +59,7 @@ public sealed class RuntimeOptions
         Cors ??= new CorsOptions();
         Documentation ??= new DocumentationOptions();
         Authentication ??= new AuthenticationBoundaryOptions();
+        Authentication.Firebase ??= new FirebaseAuthenticationBoundaryOptions();
 
         Cors.AllowedOrigins ??= hostRuntimeEnvironment is RuntimeEnvironment.Local
             ? ["http://localhost:5173", "http://127.0.0.1:5173"]
@@ -110,9 +116,39 @@ public sealed class DocumentationOptions
 public sealed class AuthenticationBoundaryOptions
 {
     public const string ContractFixtureMode = "ContractFixture";
+    public const string FirebaseMode = "Firebase";
     public const string UnconfiguredMode = "Unconfigured";
 
     public string? Mode { get; set; }
 
     public bool? ContractFixturesEnabled { get; set; }
+
+    public FirebaseAuthenticationBoundaryOptions Firebase { get; set; } = new();
+}
+
+public sealed class FirebaseAuthenticationBoundaryOptions
+{
+    public string? ProjectId { get; set; }
+
+    public string? Issuer { get; set; }
+
+    // Server-only runtime secret sources. ADC remains preferred when both are empty.
+    public string? ServiceAccountJson { get; set; }
+
+    public string? ServiceAccountFile { get; set; }
+
+    public bool IsConfigured =>
+        !string.IsNullOrWhiteSpace(ProjectId) &&
+        string.Equals(Issuer, ExpectedIssuer, StringComparison.Ordinal);
+
+    public bool HasAnyConfiguration =>
+        !string.IsNullOrWhiteSpace(ProjectId) ||
+        !string.IsNullOrWhiteSpace(Issuer) ||
+        !string.IsNullOrWhiteSpace(ServiceAccountJson) ||
+        !string.IsNullOrWhiteSpace(ServiceAccountFile);
+
+    public string ExpectedIssuer =>
+        string.IsNullOrWhiteSpace(ProjectId)
+            ? string.Empty
+            : $"https://securetoken.google.com/{ProjectId}";
 }

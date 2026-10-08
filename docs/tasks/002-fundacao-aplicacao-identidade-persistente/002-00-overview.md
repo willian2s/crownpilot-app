@@ -2,7 +2,7 @@
 
 - **Status geral:** pending
 - **Spec:** [002-fundacao-aplicacao-identidade-persistente.md](../../specs/002-fundacao-aplicacao-identidade-persistente.md)
-- **Progresso:** 3/12 subtarefas concluídas
+- **Progresso:** 4/12 subtarefas concluídas
 
 ## Objetivo
 
@@ -18,7 +18,7 @@ inicial portátil, testes e observabilidade.
 - [x] [002-01-bootstrap-toolchain.md](002-01-bootstrap-toolchain.md)
 - [x] [002-02-estabelecer-boundaries-contrato-base-e-ambientes.md](002-02-estabelecer-boundaries-contrato-base-e-ambientes.md)
 - [x] [002-03-preparar-postgresql-migrations-e-harness-rls.md](002-03-preparar-postgresql-migrations-e-harness-rls.md)
-- [ ] [002-04-implementar-google-sign-in-e-firebase-bearer.md](002-04-implementar-google-sign-in-e-firebase-bearer.md)
+- [x] [002-04-implementar-google-sign-in-e-firebase-bearer.md](002-04-implementar-google-sign-in-e-firebase-bearer.md)
 - [ ] [002-05-implementar-port-e-adapter-de-lookup.md](002-05-implementar-port-e-adapter-de-lookup.md)
 - [ ] [002-06-modelar-persistencia-repositories-e-rls.md](002-06-modelar-persistencia-repositories-e-rls.md)
 - [ ] [002-07-implementar-casos-de-uso-e-api-v1.md](002-07-implementar-casos-de-uso-e-api-v1.md)
@@ -110,3 +110,7 @@ inicial portátil, testes e observabilidade.
 - `002-03` concluiu runner Docker local, migration EF Core inicial, SQL de
   roles/grants/schema e fail-closed por ambiente. Fixtures de domínio e policies
   concretas permanecem responsabilidades de `002-06`.
+- `002-04` concluiu Firebase Web/Google Sign-In, bearer server-side via Firebase
+  Admin SDK, contrato Application de resolução de identidade e fixtures locais.
+  Emulator/Google real e configuração de credenciais de Staging permanecem
+  validação operacional de `002-12`.

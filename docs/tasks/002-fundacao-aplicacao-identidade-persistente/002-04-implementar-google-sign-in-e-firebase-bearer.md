@@ -2,7 +2,7 @@
 
 - **Ticker:** `002`
 - **Número:** `04`
-- **Status:** `pending`
+- **Status:** `completed`
 
 ## Objetivo e resultado esperado
 
@@ -107,3 +107,63 @@ bundle sem service account, database password, token externo ou código server-o
 - Não enviar Google token, refresh token ou Firebase token ao provider Clash Royale.
 - Não usar variáveis públicas para service account ou senha de banco.
 - Não persistir e-mail/nome sem requisito de domínio.
+
+## Implementação e evidências
+
+- **Status:** `completed`
+- **Arquivos alterados:** `.env.example`, `frontend/.env.example`, `frontend/package.json`,
+  `frontend/package-lock.json`, `frontend/src/App.css`, `frontend/src/App.tsx`,
+  `frontend/src/main.tsx`, `frontend/src/api/client.ts`,
+  `frontend/src/api/client.test.ts`, `frontend/src/auth/firebase.ts`,
+  `frontend/src/auth/AuthContext.ts`, `frontend/src/auth/AuthProvider.tsx`,
+  `frontend/src/auth/AuthProvider.test.tsx`, `frontend/src/auth/useAuth.ts`,
+  `src/Api/Authentication/ContractAuthentication.cs`, `src/Api/Program.cs`,
+  `src/Api/Configuration/RuntimeOptions.cs`,
+  `src/Api/Configuration/RuntimeOptionsValidator.cs`, `src/Api/Api.csproj`,
+  `src/Application/Identity/AuthContracts.cs`,
+  `src/Application/Identity/FirebaseTokenContracts.cs`,
+  `src/Infrastructure/Authentication/FirebaseAuthenticationOptions.cs`,
+  `src/Infrastructure/Authentication/FirebaseTokenVerifier.cs`,
+  `src/Infrastructure/DependencyInjection.cs`,
+  `src/Infrastructure/Infrastructure.csproj`, `tests/Api/FirebaseAuthenticationTests.cs`,
+  `tests/Api/RuntimeOptionsTests.cs`, `tests/Application/BoundaryTests.cs`.
+- **Decisões:** Firebase Admin SDK concentra assinatura, issuer, audience,
+  expiração, `sub`, `kid` e rotação; adapter aplica allowlist de project/issuer.
+  Render pode fornecer `FIREBASE_ADMIN_PROJECT_ID`,
+  `FIREBASE_ADMIN_CLIENT_EMAIL` e `FIREBASE_ADMIN_PRIVATE_KEY` como secrets;
+  chave privada aceita newline literal ou escapado e nunca é exposta ao frontend.
+  Desenvolvimento local usa .NET User Secrets com mesmo naming do Render; não
+  exige export manual a cada execução.
+  Fixtures contratuais permanecem somente em Local. Application recebeu somente
+  ports/fake de `EnsureCrownPilotUser` e contrato do verifier; handler não resolve
+  nem persiste identidade. Claims do provider não viram permissões da aplicação.
+  Frontend usa SDK para lifecycle/refresh/logout e envia apenas ID Token bearer,
+  com `credentials: omit`, URL explícita em builds de produção e HTTPS fora de
+  hosts locais em desenvolvimento.
+- **Desvios:** testes de API usam `IFirebaseTokenVerifier` fake para não chamar
+  Firebase real; execução de Emulator/Google real fica para staging/handoff em
+  `002-12`, conforme escopo.
+- **Comandos executados e resultados:**
+  - `dotnet build CrownPilot.sln --configuration Release` — passou, 0 warnings,
+    0 errors.
+  - `dotnet test CrownPilot.sln --configuration Release` — passou, 50 testes.
+  - `dotnet test CrownPilot.sln --configuration Release --filter Category=Authentication` —
+    passou, 16 testes de API.
+  - `dotnet test CrownPilot.sln --configuration Release --filter Category=Authorization` —
+    passou, 1 teste de autorização de API.
+  - `npm ci --prefix frontend` — instalação reproduzível concluída; npm reportou
+    4 vulnerabilidades high transientes, sem aplicar `audit fix --force`.
+  - `npm run lint --prefix frontend` — passou com `--max-warnings=0`.
+  - `npm run typecheck --prefix frontend` — passou.
+  - `npm run test:unit --prefix frontend` — passou, 3 arquivos/8 testes.
+  - `npm run build --prefix frontend` — passou; bundle gerado sem credenciais
+    server-side, refresh token ou service account.
+  - `npm run openapi:check --prefix frontend` — passou; contrato gerado validado.
+  - `npm audit --prefix frontend --omit=dev --audit-level=high` — bloqueado por
+    4 vulnerabilidades high transitivas em `@grpc/grpc-js`; correção automática
+    exige downgrade breaking do Firebase e não foi aplicada.
+  - `rg -n -i 'service.?account|private.?key|refresh.?token|database.?password|firebase-admin|GoogleCredential' frontend/dist` —
+    nenhuma ocorrência.
+- **Riscos residuais:** rotação de chaves e login Google real dependem de
+  Emulator/Staging, fora da execução local desta task. Vulnerabilidades high
+  transientes do grafo npm precisam triagem antes dos gates de release.

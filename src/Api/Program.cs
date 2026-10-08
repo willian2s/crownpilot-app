@@ -62,10 +62,7 @@ builder.Services.AddAuthorization(options =>
                 return false;
             }
 
-            var runtime = httpContext.RequestServices
-                .GetRequiredService<IOptions<RuntimeOptions>>().Value;
-
-            return !runtime.UseContractAuthentication || context.User.HasClaim(
+            return context.User.HasClaim(
                 ContractAuthenticationDefaults.PermissionClaim,
                 ContractAuthenticationDefaults.BootstrapReadPermission);
         });

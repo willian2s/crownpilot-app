@@ -63,6 +63,31 @@ public sealed class RuntimeOptionsValidator : IValidateOptions<RuntimeOptions>
             errors.Add("Contract authentication fixtures are allowed only in Local.");
         }
 
+        var firebase = authentication.Firebase ?? new FirebaseAuthenticationBoundaryOptions();
+        if (string.Equals(authentication.Mode, AuthenticationBoundaryOptions.FirebaseMode,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            var missingProject = string.IsNullOrWhiteSpace(firebase.ProjectId);
+            var missingIssuer = string.IsNullOrWhiteSpace(firebase.Issuer);
+            if (missingProject || missingIssuer)
+            {
+                errors.Add(missingProject && missingIssuer
+                    ? "Firebase project ID and issuer are required when Firebase authentication is enabled."
+                    : "Firebase project ID and issuer must be configured together.");
+            }
+            else if (!string.Equals(firebase.Issuer, firebase.ExpectedIssuer,
+                         StringComparison.Ordinal))
+            {
+                errors.Add("Firebase issuer must match the configured project ID.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(firebase.ServiceAccountJson) &&
+                !string.IsNullOrWhiteSpace(firebase.ServiceAccountFile))
+            {
+                errors.Add("Firebase service account JSON and file cannot both be configured.");
+            }
+        }
+
         return errors;
     }
 

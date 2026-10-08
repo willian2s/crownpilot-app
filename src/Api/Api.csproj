@@ -3,6 +3,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>CrownPilot.Api</RootNamespace>
     <AssemblyName>CrownPilot.Api</AssemblyName>
+    <UserSecretsId>CrownPilot.Api.Local</UserSecretsId>
     <InvariantGlobalization>true</InvariantGlobalization>
     <OpenApiGenerateDocumentsOnBuild>true</OpenApiGenerateDocumentsOnBuild>
   </PropertyGroup>

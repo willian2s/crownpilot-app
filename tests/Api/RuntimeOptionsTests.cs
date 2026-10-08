@@ -85,7 +85,7 @@ public sealed class RuntimeOptionsTests
     }
 
     [Fact]
-    public void FutureProviderModesRemainConfigurationCompatible()
+    public void FirebaseModeRequiresProjectAndIssuer()
     {
         var options = new RuntimeOptions
         {
@@ -99,6 +99,56 @@ public sealed class RuntimeOptionsTests
 
         var errors = RuntimeOptionsValidator.GetValidationErrors(options);
 
+        Assert.Contains(errors, error => error.Contains("required when Firebase authentication is enabled",
+            StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void FirebaseModeUsesConfiguredProjectAndIssuer()
+    {
+        var options = new RuntimeOptions
+        {
+            Environment = "Staging",
+            Authentication = new AuthenticationBoundaryOptions
+            {
+                Mode = AuthenticationBoundaryOptions.FirebaseMode,
+                ContractFixturesEnabled = false,
+                Firebase = new FirebaseAuthenticationBoundaryOptions
+                {
+                    ProjectId = "staging-project",
+                    Issuer = "https://securetoken.google.com/staging-project"
+                }
+            }
+        };
+
+        var errors = RuntimeOptionsValidator.GetValidationErrors(options);
+
         Assert.Empty(errors);
+        options.ResolveForHost("Staging");
+        Assert.True(options.UseFirebaseAuthentication);
+        Assert.False(options.UseContractAuthentication);
+    }
+
+    [Fact]
+    public void FirebaseModeWithPartialConfigurationFailsClosedAtValidation()
+    {
+        var options = new RuntimeOptions
+        {
+            Environment = "Production",
+            Authentication = new AuthenticationBoundaryOptions
+            {
+                Mode = AuthenticationBoundaryOptions.FirebaseMode,
+                ContractFixturesEnabled = false,
+                Firebase = new FirebaseAuthenticationBoundaryOptions
+                {
+                    ProjectId = "production-project"
+                }
+            }
+        };
+
+        var errors = RuntimeOptionsValidator.GetValidationErrors(options);
+
+        Assert.Contains(errors, error => error.Contains("project ID and issuer",
+            StringComparison.Ordinal));
     }
 }

@@ -57,3 +57,38 @@ h1 {
   color: #dce7ff;
   font-size: 0.9rem;
 }
+
+.identity-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  border: 1px solid #526eaf;
+  border-radius: 1rem;
+  background: rgb(17 24 39 / 55%);
+}
+
+.identity-card h2,
+.identity-card p {
+  margin: 0;
+}
+
+button {
+  width: fit-content;
+  padding: 0.7rem 1rem;
+  border: 0;
+  border-radius: 0.6rem;
+  color: #101827;
+  background: #bcd0ff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.error {
+  color: #ffb4b4;
+}
