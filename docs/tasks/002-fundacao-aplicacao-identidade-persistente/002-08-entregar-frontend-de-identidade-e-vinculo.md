@@ -4,6 +4,10 @@
 - **Número:** `08`
 - **Status:** `pending`
 
+Esta task permanece bloqueada até ADR 005 ser aprovada e `002-13` -> `002-14` ->
+`002-15` concluírem gates verdes. O frontend permanece React/Vite, mas consome o
+contrato/tipos Go definidos no ajuste de `002-15`.
+
 ## Objetivo e resultado esperado
 
 Entregar experiência React/Vite para login, vínculo, consulta, troca,
@@ -43,9 +47,10 @@ comunicando honestamente `public_profile`/`unverified`.
 
 ## Dependências
 
-- `002-04-implementar-google-sign-in-e-firebase-bearer.md`,
-  `002-07-implementar-casos-de-uso-e-api-v1.md` e frontend do
-  `002-01-bootstrap-toolchain.md`;
+- ADR 005 aprovada, `002-13-bootstrap-http-config-openapi-go.md`,
+  `002-14-autenticacao-firebase-go.md`, `002-15-persistencia-cutover-remocao-dotnet.md`,
+  `002-04-implementar-google-sign-in-e-firebase-bearer.md` como histórico,
+  `002-07-implementar-casos-de-uso-e-api-v1.md` e frontend do `002-01`;
 - contrato OpenAPI e ProblemDetails da Task
   `002-07-implementar-casos-de-uso-e-api-v1.md`;
 - hostname fixo de Staging para validação posterior.
@@ -72,10 +77,10 @@ comunicando honestamente `public_profile`/`unverified`.
 ## Testes e comandos de validação
 
 ```text
-npm run test:unit
-npm run lint
-npm run typecheck
-npm run build
+npm run test:unit --prefix frontend
+npm run lint --prefix frontend
+npm run typecheck --prefix frontend
+npm run build --prefix frontend
 ```
 
 Testar componentes importantes, auth state, API client, loading/empty/error/

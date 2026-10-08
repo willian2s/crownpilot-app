@@ -4,6 +4,10 @@
 - **Número:** `11`
 - **Status:** `pending`
 
+Esta task permanece bloqueada até ADR 005 ser aprovada e `002-13` -> `002-14` ->
+`002-15` concluírem gates verdes. Referências .NET abaixo descrevem baseline
+histórico; implementação deve seguir Go, `depguard` e o ajuste de `002-15`.
+
 ## Objetivo e resultado esperado
 
 Automatizar gates de Pull Request/main e preparar candidate Staging com imagem
@@ -12,11 +16,11 @@ OCI imutável, sem secrets, mantendo observabilidade já definida na Task
 
 ## Requisitos cobertos
 
-- CI .NET com restore, build, analyzers e `dotnet test`;
+- CI Go com `go mod download`, build, `golangci-lint`, `go test` e `go test -race`;
 - CI frontend com npm ci, lint, type-check, testes e build;
-- testes de persistência PostgreSQL, EF migrations e RLS;
+- testes de persistência PostgreSQL, migrations `goose` e RLS;
 - contract tests do lookup sem chamadas live;
-- build/smoke da imagem ASP.NET Core sem secrets;
+- build/smoke da imagem Go sem secrets;
 - E2E/smoke com comandos e pré-condições claros;
 - validação do documento OpenAPI gerado e drift de contrato;
 - checks de observabilidade, health e redaction da Task
@@ -27,9 +31,12 @@ OCI imutável, sem secrets, mantendo observabilidade já definida na Task
 
 - workflow `.github/workflows/ci.yml` para `pull_request`, staging candidate e
   promoção em `main`;
+- `container-smoke.mjs` deve consumir `CROWNPILOT_CONTAINER_IMAGE` quando
+  fornecida, sem reconstruir outra imagem, e validar `/health/live` e
+  `/health/ready`;
 - geração do bundle/job final de migrations a partir do schema atual, separado do
   container de runtime;
-- jobs .NET, frontend, persistence/RLS, contract, image e health;
+- jobs Go, frontend, persistence/RLS, contract, image e health;
 - PostgreSQL local/descartável e Firebase Emulator/fixtures sem produção;
 - scripts de E2E e smoke staging-only;
 - validação de logger/métricas, health e redaction já instrumentados;
@@ -48,8 +55,7 @@ OCI imutável, sem secrets, mantendo observabilidade já definida na Task
 
 ## Dependências
 
-- `002-01-bootstrap-toolchain.md` a
-  `002-10-instrumentar-observabilidade-health-e-redaction.md` para fechamento;
+- `002-05` a `002-10` e `002-13` a `002-15` para fechamento;
   gates mínimos começam em `002-01-bootstrap-toolchain.md`;
 - Docker/PostgreSQL e fixtures disponíveis em CI;
 - secrets reais somente em ambientes controlados de Staging.
@@ -57,19 +63,19 @@ OCI imutável, sem secrets, mantendo observabilidade já definida na Task
 ## Arquivos e símbolos prováveis
 
 - `.github/workflows/ci.yml`;
-- `tests/Unit`, `Application`, `Integration`, `Persistence`, `Contract`, `Api`;
-- `src/Infrastructure/Observability/Redaction.cs` e métricas;
-- scripts `dotnet`, `npm`, `database` e documentação de release.
+- packages `internal/`, contract tests, persistence/RLS e métricas;
+- `internal/observability/` e scripts `go`, `npm`, `database` e documentação de release.
 
 ## Passos de implementação
 
 1. Definir jobs e falhas para PR e push em `main`.
-2. Executar restore/build/test .NET e frontend sem secrets reais.
-3. Subir PostgreSQL descartável, aplicar EF migrations, RLS e fixtures; executar
+2. Executar restore/build/test Go e frontend sem secrets reais.
+3. Subir PostgreSQL descartável, aplicar migrations `goose`, RLS e fixtures; executar
    checks de pool/reset e isolamento A/B.
 4. Executar testes de token Firebase com Emulator/fixtures assinadas.
-5. Executar architecture tests para provar `API → Application → Domain` e
-   `Infrastructure → Application/Domain`, sem providers em Domain/Application.
+5. Executar `depguard` para provar que `cmd` compõe, `httpapi` traduz transporte,
+   módulos não importam providers/HTTP e `identity` não importa `playerlink`;
+   usar `go list` somente para lacunas de composição/transitividade.
 6. Construir imagem Docker e testar `/health/live`/`ready` sem secret na imagem.
 7. Gerar e versionar como artefato de candidate o bundle/job final de migrations;
    não reutilizar bundle produzido antes da Task
@@ -81,21 +87,22 @@ OCI imutável, sem secrets, mantendo observabilidade já definida na Task
 ## Testes e comandos de validação
 
 ```text
-dotnet restore
-dotnet build --configuration Release
-dotnet test --configuration Release
-npm ci
-npm run lint
-npm run typecheck
-npm run test:unit
-npm run test:contract
-npm run build
-dotnet test --filter Category=Persistence
-dotnet test --filter Category=Rls
-dotnet test --filter Category=Api
-npm run openapi:check
+go mod download
+go build ./cmd/crownpilot-api
+go test ./...
+go test -race ./...
+golangci-lint run
+npm ci --prefix frontend
+npm run lint --prefix frontend
+npm run typecheck --prefix frontend
+npm run test:unit --prefix frontend
+npm run test:contract --prefix frontend
+npm run build --prefix frontend
+go test ./internal/platform/postgres/...
+npm run test:rls --prefix frontend
+npm run openapi:check --prefix frontend
 docker build -t crownpilot-api:ci .
-npm run smoke:container -- --image crownpilot-api:ci
+CROWNPILOT_CONTAINER_IMAGE=crownpilot-api:ci npm run smoke:container --prefix frontend
 ```
 
 `smoke:container` deve iniciar a imagem, aguardar readiness/liveness, falhar
@@ -107,14 +114,14 @@ secret de Production ocorre em PR/Preview.
 
 ## Definição de pronto
 
-- CI executa gates .NET/frontend em PR; staging candidate publica digest OCI e
+- CI executa gates Go/frontend em PR; staging candidate publica digest OCI e
   `main` promove o mesmo digest sem rebuild;
 - persistence/RLS/contract tests usam ambientes descartáveis/fixtures;
-- imagem ASP.NET Core constrói e health smoke passa sem secrets;
+- imagem Go constrói e health smoke passa sem secrets;
 - testes de authentication/authorization e redaction são obrigatórios;
 - checks de observabilidade e redaction da Task
   `002-10-instrumentar-observabilidade-health-e-redaction.md` são obrigatórios;
-- architecture tests impedem dependências invertidas e SDKs em Domain/Application;
+- `depguard` impede dependências invertidas e SDKs em módulos de domínio;
 - métricas distinguem resultado, latência e ambiente sem dados sensíveis;
 - E2E/smoke possuem owner e pré-condição de Staging documentados.
 

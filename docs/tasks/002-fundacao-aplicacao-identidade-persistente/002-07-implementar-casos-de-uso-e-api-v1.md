@@ -4,6 +4,10 @@
 - **Número:** `07`
 - **Status:** `pending`
 
+Esta task permanece bloqueada até ADR 005 ser aprovada e `002-13` -> `002-14` ->
+`002-15` concluírem gates verdes. O baseline ASP.NET/.NET permanece histórico;
+implementação deve seguir `net/http`/`ServeMux` e o ajuste Go de `002-15`.
+
 ## Objetivo e resultado esperado
 
 Orquestrar casos de uso de identidade e vínculo e expor API REST `/api/v1`, com
@@ -14,7 +18,7 @@ perfil público não verificado. A UI fica na Task
 ## Requisitos cobertos
 
 - uma Player Tag primária;
-- API ASP.NET Core consumível pelo frontend Vite;
+- API Go com `net/http`/`ServeMux`, consumível pelo frontend Vite;
 - recuperação em outro dispositivo;
 - troca/desvinculação explícitas;
 - erros de input/provider compreensíveis via ProblemDetails;
@@ -24,7 +28,7 @@ perfil público não verificado. A UI fica na Task
 
 ## Escopo incluído
 
-- controllers/minimal endpoints finos para read/link/replace/unlink/delete;
+- handlers finos `net/http` para read/link/replace/unlink/delete;
 - casos de uso para read/link/replace/unlink/delete usando ports;
 - paths `/api/v1/me/player-link` e `/api/v1/me` conforme contrato da spec;
 - DTOs JSON sem entidades de persistência expostas;
@@ -47,8 +51,10 @@ perfil público não verificado. A UI fica na Task
 
 ## Dependências
 
-- `002-04-implementar-google-sign-in-e-firebase-bearer.md`,
-  `002-05-implementar-port-e-adapter-de-lookup.md` e
+- ADR 005 aprovada, `002-13-bootstrap-http-config-openapi-go.md`,
+  `002-14-autenticacao-firebase-go.md`, `002-15-persistencia-cutover-remocao-dotnet.md`,
+  `002-04-implementar-google-sign-in-e-firebase-bearer.md` como histórico e
+  `002-05-implementar-port-e-adapter-de-lookup.md`;
   `002-06-modelar-persistencia-repositories-e-rls.md`;
 - contrato HTTP/ProblemDetails e política de observabilidade da spec;
 - frontend/API de `002-01-bootstrap-toolchain.md`;
@@ -56,10 +62,10 @@ perfil público não verificado. A UI fica na Task
 
 ## Arquivos e símbolos prováveis
 
-- `src/Api/Endpoints/PlayerLinkEndpoints.cs` ou controllers equivalentes;
-- `src/Application/PlayerLinks/`;
-- `PlayerLinkRequest`, `PlayerLinkResponse`, `MapLinkError`;
-- `DeleteOwnData` use case;
+- `internal/httpapi/`;
+- `internal/identity/` e `internal/playerlink/`;
+- DTOs Go de request/response e mapeamento de erros;
+- caso de uso `DeleteOwnData`;
 - disclaimer em layout/footer acessível.
 
 ## Passos de implementação
@@ -69,17 +75,18 @@ perfil público não verificado. A UI fica na Task
 3. Preservar vínculo anterior em falha externa e proteger replace por
    `expectedVersion`, retornando `409` sem last-write-wins.
 4. Exigir `auth_time` recente para exclusão e mapear reautenticação necessária.
-5. Expor endpoints finos e DTOs sem entidades EF ou payload externo.
-6. Gerar OpenAPI code-first único e documentar todos os status aplicáveis.
+5. Expor endpoints finos e DTOs sem entidades de persistência ou payload externo.
+6. Gerar tipos Go com `oapi-codegen` a partir de `api/openapi/v1.json`, manter
+   `openapi-typescript` no frontend e documentar todos os status aplicáveis.
 7. Adicionar autorização e API tests para A/B, UID arbitrário e todos os estados
    do provider, incluindo `Retry-After`, `traceId` e redaction.
 
 ## Testes e comandos de validação
 
 ```text
-dotnet test --filter Category=Application
-dotnet test --filter Category=Api
-npm run openapi:check
+go test ./internal/identity/... ./internal/playerlink/...
+go test ./internal/httpapi/...
+npm run openapi:check --prefix frontend
 ```
 
 Cobrir ausência inicial, sucesso, input inválido/malformado, perfil inexistente,

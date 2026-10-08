@@ -4,6 +4,10 @@
 - **Número:** `05`
 - **Status:** `pending`
 
+Esta task permanece bloqueada até ADR 005 ser aprovada e `002-13` -> `002-14` ->
+`002-15` concluírem gates verdes. Referências .NET abaixo descrevem baseline
+histórico; implementação deve seguir o ajuste Go de `002-15`.
+
 ## Objetivo e resultado esperado
 
 Criar boundary server-side substituível para validar existência de perfil público
@@ -11,8 +15,8 @@ por Player Tag, sem acoplar Domain/Application ao host, proxy ou payload da API.
 
 ## Requisitos cobertos
 
-- port `IClashRoyaleClient` na Application, sem host ou provider no Domain;
-- adapter HTTP na Infrastructure usando `HttpClientFactory`;
+- port de lookup em `internal/playerlink`, sem host ou provider no módulo;
+- adapter HTTP em `internal/platform/clashroyale` usando `http.Client`;
 - token nunca exposto ao browser;
 - normalização e encoding determinísticos;
 - estados externos distintos e ProblemDetails posterior;
@@ -42,17 +46,16 @@ por Player Tag, sem acoplar Domain/Application ao host, proxy ou payload da API.
 - `002-01-bootstrap-toolchain.md` e
   `002-02-estabelecer-boundaries-contrato-base-e-ambientes.md`;
 - evidências e constraints da Fase 001;
-- pode executar em paralelo a `002-04-implementar-google-sign-in-e-firebase-bearer.md`
-  após boundaries definidos;
-- não depende de banco ou identidade persistente.
+- gates verdes de `002-13`, `002-14` e `002-15`, que substituem o baseline .NET
+  antes da implementação no backend Go;
+- não depende de authentication, mas não inicia antes do cutover Go.
 
 ## Arquivos e símbolos prováveis
 
-- `src/Application/Ports/IClashRoyaleClient.cs`;
-- `src/Application/Players/ResolvePublicProfileResult.cs`;
-- `src/Domain/Players/NormalizedPlayerTag.cs`;
-- `src/Infrastructure/ClashRoyale/ClashRoyaleHttpClient.cs`;
-- `tests/Contract/fixtures/` e opções server-only de provider.
+- `internal/playerlink/` e resultado de `ResolvePublicProfile`;
+- `internal/platform/clashroyale/`;
+- `internal/httpapi/` para mapeamento posterior;
+- fixtures de contract test e opções server-only de provider.
 
 ## Passos de implementação
 
@@ -67,9 +70,9 @@ por Player Tag, sem acoplar Domain/Application ao host, proxy ou payload da API.
 ## Testes e comandos de validação
 
 ```text
-dotnet test --filter Category=Contract
-npm run typecheck
-npm run lint
+go test ./internal/playerlink/... ./internal/platform/clashroyale/...
+npm run typecheck --prefix frontend
+npm run lint --prefix frontend
 ```
 
 Confirmar que CI não faz request live e que bundle client não contém adapter,

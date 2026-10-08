@@ -4,6 +4,10 @@
 - **Número:** `10`
 - **Status:** `pending`
 
+Esta task permanece bloqueada até ADR 005 ser aprovada e `002-13` -> `002-14` ->
+`002-15` concluírem gates verdes. Referências .NET abaixo descrevem baseline
+histórico; implementação deve seguir `slog` e o ajuste Go de `002-15`.
+
 ## Objetivo e resultado esperado
 
 Instrumentar diagnóstico mínimo da API, autenticação, vínculo e provider sem
@@ -12,10 +16,10 @@ correlation/request ID e métricas de baixa cardinalidade.
 
 ## Requisitos cobertos
 
-- structured logging;
+- structured logging com `log/slog`;
 - liveness sem dependências externas;
 - readiness com configuração e PostgreSQL conforme ambiente;
-- correlation/request ID via `Activity`/primitives .NET;
+- correlation/request ID via `context` e primitives Go;
 - métricas básicas de request, latência, status e provider;
 - redaction testável;
 - ausência de payload externo completo em logs.
@@ -39,9 +43,9 @@ correlation/request ID e métricas de baixa cardinalidade.
 
 ## Dependências
 
-- `002-01-bootstrap-toolchain.md`,
-  `002-02-estabelecer-boundaries-contrato-base-e-ambientes.md`,
-  `002-04-implementar-google-sign-in-e-firebase-bearer.md`,
+- `002-13-bootstrap-http-config-openapi-go.md`,
+  `002-14-autenticacao-firebase-go.md`,
+  `002-15-persistencia-cutover-remocao-dotnet.md`,
   `002-05-implementar-port-e-adapter-de-lookup.md`,
   `002-07-implementar-casos-de-uso-e-api-v1.md` e frontend
   `002-08-entregar-frontend-de-identidade-e-vinculo.md`;
@@ -58,9 +62,8 @@ correlation/request ID e métricas de baixa cardinalidade.
 ## Testes e comandos de validação
 
 ```text
-dotnet test --filter Category=Observability
-dotnet test --filter Category=Api
-npm run build
+go test ./internal/observability/... ./internal/httpapi/...
+npm run build --prefix frontend
 ```
 
 Verificar liveness sem banco/provider, readiness conforme configuração, IDs

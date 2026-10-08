@@ -4,6 +4,9 @@
 - **Número:** `09`
 - **Status:** `pending`
 
+Esta task permanece bloqueada até ADR 005 ser aprovada e `002-13` -> `002-14` ->
+`002-15` concluírem gates verdes; a revisão deve considerar o client/API Go.
+
 ## Objetivo e resultado esperado
 
 Revisar o frontend React existente após a entrega dos fluxos de identidade e
@@ -42,7 +45,9 @@ registro de decisões; não é um placeholder genérico para “melhorar fronten
 
 ## Dependências
 
-- `002-08-entregar-frontend-de-identidade-e-vinculo.md` concluída;
+- ADR 005 aprovada, `002-13-bootstrap-http-config-openapi-go.md`,
+  `002-14-autenticacao-firebase-go.md`, `002-15-persistencia-cutover-remocao-dotnet.md`,
+  `002-08-entregar-frontend-de-identidade-e-vinculo.md` concluídas;
 - contrato `/api/v1` da `002-07-implementar-casos-de-uso-e-api-v1.md`;
 - frontend React/Vite executável do `002-01-bootstrap-toolchain.md`.
 
@@ -69,11 +74,11 @@ registro de decisões; não é um placeholder genérico para “melhorar fronten
 ## Testes e comandos de validação
 
 ```text
-npm run test:unit
-npm run lint
-npm run typecheck
-npm run build
-npm run test:e2e
+npm run test:unit --prefix frontend
+npm run lint --prefix frontend
+npm run typecheck --prefix frontend
+npm run build --prefix frontend
+npm run test:e2e --prefix frontend
 ```
 
 Quando browser automation não estiver disponível, registrar evidência equivalente
