@@ -10,3 +10,6 @@ frontend/dist/
 *.user
 *.suo
 .DS_Store
+
+# Go build output (go build ./cmd/crownpilot-api)
+/crownpilot-api

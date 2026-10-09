@@ -1,0 +1,12 @@
+# Configuração do oapi-codegen para os tipos Go do contrato.
+# Regerar com: go generate ./...
+package: httpapi
+output: ../../internal/httpapi/api.gen.go
+generate:
+  # Só tipos: as rotas são registradas à mão no ServeMux (ADR 005), e o
+  # contrato entre rotas e spec é verificado por TestRoutesMatchContract.
+  models: true
+# Constantes de enum com prefixo do tipo (ProblemCodeInternalError), sem
+# risco de colisão com outros nomes do pacote.
+compatibility:
+  always-prefix-enum-values: true
