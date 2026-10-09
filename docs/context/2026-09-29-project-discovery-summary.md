@@ -5,13 +5,10 @@
 
 Este documento registra o contexto que levou ao desenho atual do CrownPilot.
 
-Ele é um **resumo histórico de produto**. Quando houver divergência, os documentos normativos do repositório têm precedência:
-
-1. `docs/decisions/`
-2. `docs/specs/`
-3. `docs/roadmap/`
-4. `docs/tasks/`
-5. implementação na `main`
+Ele é um **resumo histórico de produto**. Para intenção futura, precedem:
+`docs/decisions/`, `docs/specs/`, `docs/roadmap/` e `docs/tasks/`. Para estado já
+existente, a implementação em `main` é a fonte de verdade. Divergências exigem
+investigação; planejamento não deve fingir que entrega foi implementada.
 
 ---
 
@@ -309,7 +306,11 @@ A Player Tag é um vínculo público do domínio.
 
 ---
 
-# 9. Infraestrutura definida
+# 9. Infraestrutura definida no planejamento original
+
+> **Nota histórica:** esta seção registra decisões anteriores à ADR 004. Ela não
+> é fonte de verdade para implementação da Fase 002. A stack vigente está em
+> `docs/decisions/004-aspnet-core-react-vite-firebase-postgresql.md`.
 
 Foi escolhida a seguinte infraestrutura-base:
 
@@ -319,7 +320,7 @@ Foi escolhida a seguinte infraestrutura-base:
 - identidade da conta CrownPilot;
 - independente da identidade Supercell.
 
-## Cloud Firestore
+## Cloud Firestore (substituído na Fase 002)
 
 Banco principal da aplicação.
 
@@ -334,13 +335,17 @@ Deverá armazenar progressivamente, conforme as specs:
 - recomendações;
 - metadados de sync.
 
-Firestore é um vendor lock-in **aceito**.
+Firestore foi um vendor lock-in aceito no planejamento original, mas foi
+substituído por PostgreSQL via EF Core + Npgsql, hospedado inicialmente no
+Supabase. Não criar Firestore na Fase 002.
 
 A modelagem de collections ainda não foi definida porque deve nascer dos contratos reais descobertos na Fase 001.
 
-## Vercel
+## Vercel (alternativa estática; hosting original substituído)
 
-Plataforma inicial de deploy/runtime.
+Era plataforma inicial de deploy/runtime. Na Fase 002, Render é o hosting inicial
+da API Docker e do frontend estático preferencial; Vercel permanece alternativa
+de frontend estático, nunca backend obrigatório.
 
 A decisão é operacional, não um boundary arquitetural.
 
@@ -721,7 +726,8 @@ Resumo de responsabilidades:
 - **Task:** unidade executável;
 - **Decision/ADR:** decisão arquitetural duradoura;
 - **Context:** histórico e motivação;
-- **main:** fonte final de verdade do que realmente existe.
+- **main:** fonte final de verdade do que realmente existe; não substitui decisões
+  normativas sobre intenção futura.
 
 ---
 
@@ -739,4 +745,6 @@ Antes de implementar a aplicação, precisamos responder com evidência:
 4. quais limites técnicos e comerciais existem;
 5. se esses dados sustentam de fato **Best Decks for You**.
 
-Somente depois disso a arquitetura de domínio e a modelagem do Firestore devem começar a ser congeladas.
+Somente depois disso a arquitetura de domínio e a modelagem persistente deveriam
+começar a ser congeladas. A referência histórica a Firestore foi substituída por
+PostgreSQL via EF Core + Npgsql na Fase 002; não orienta a implementação atual.

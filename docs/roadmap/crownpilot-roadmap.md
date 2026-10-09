@@ -2,7 +2,7 @@
 
 > **Play the right deck. Upgrade the right cards.**
 
-**Atualizado em:** 5 de outubro de 2026
+**Atualizado em:** 8 de outubro de 2026
 
 Este documento define **o que construir**, **em qual ordem**, as principais dependências, os boundaries do produto e os grandes marcos do CrownPilot.
 
@@ -131,17 +131,20 @@ Toda estatística competitiva deve carregar:
 
 ## 2.7 Infraestrutura-base e portabilidade
 
-Decisões iniciais do projeto:
+Decisões iniciais do projeto, atualizadas pela ADR 005 proposta:
 
 - Firebase Authentication com Google para a conta CrownPilot;
-- ASP.NET Core + C# como API da aplicação;
+- Go `1.27.2` com `net/http`/`ServeMux` como API da aplicação;
 - React + TypeScript + Vite como frontend independente;
 - PostgreSQL como banco principal, hospedado inicialmente no Supabase;
-- EF Core + Npgsql como acesso oficial ao PostgreSQL;
-- região Supabase `sa-east-1` (São Paulo), condicionada à disponibilidade no
-  plano/organização;
+- `pgx`/`sqlc` como acesso oficial ao PostgreSQL e `goose` para migrations;
+- API Render em Virgínia (`us-east`) e região Supabase `us-east-1` (Northern
+  Virginia); dados pessoais ficam fora do Brasil e transferência internacional,
+  DPA, backups, subprocessadores, residência e egress são gates antes de dados
+  reais;
 - Docker/OCI como runtime portátil da API;
-- Vercel como alvo opcional para frontend estático.
+- Render como hosting inicial da API Docker e alvo preferido do frontend estático;
+- Vercel como alternativa de frontend estático, nunca backend obrigatório.
 
 Vercel não deve se tornar um boundary do domínio.
 
@@ -149,6 +152,11 @@ O core da aplicação e integrações devem permanecer portáveis para outro run
 sem reescrita do domínio. Serviços exclusivos da Vercel podem ser usados apenas
 quando isolados atrás de adapters ou quando existir estratégia clara de
 substituição. A API não depende da Vercel para executar.
+
+Render é escolha inicial por simplicidade, custo e suporte a containers, não
+dependência arquitetural. A imagem OCI deve poder executar futuramente em Azure
+App Service, Azure Container Apps, AWS, GCP ou outro runtime. Azure não é hosting
+obrigatório nesta fase; Kubernetes só entra mediante necessidade real.
 
 A integração com a Clash Royale API deve permanecer separada do runtime,
 especialmente por possíveis requisitos de egress/IP allowlist.
@@ -159,17 +167,23 @@ A fundação deve nascer segura por padrão:
 
 - segredos de integração permanecem somente no servidor;
 - browser não acessa PostgreSQL ou Data API para dados CrownPilot;
-- EF Core migrations e SQL de RLS/grants são versionados/testados, sem duplicar schema;
-- acesso server-side usa EF Core + Npgsql com secrets mínimos;
+- API REST versionada em `/api/v1`, com OpenAPI gerado e ProblemDetails;
+- health checks liveness/readiness, structured logging, correlation IDs, métricas
+  básicas e redaction desde a fundação;
+- testes unit, Application, integration, persistence/RLS, authn/authz, contract,
+  API/OpenAPI, frontend, E2E e smoke como gates progressivos;
+- migrations SQL e SQL de RLS/grants são versionados/testados, sem duplicar schema;
+- acesso server-side usa `pgx` com secrets mínimos;
 - local, preview e produção não devem compartilhar dados/segredos de forma
   acidental;
-- Supabase CLI/Docker deve ser usado para isolamento e testes reproduzíveis;
+- Docker Compose/PostgreSQL pinado deve ser usado para isolamento e testes locais
+  reproduzíveis; projeto Supabase dev separado atende desenvolvimento persistente;
 - decisões difíceis de reverter, como região Supabase, precisam ser tomadas e
   registradas antes de provisionar produção.
 
 A estratégia de client vs. server access fica definida na Fase 002: Firebase
-cuida de authentication, enquanto ASP.NET Core aplica authorization. Não é
-permitido tratar authentication como authorization.
+cuida de authentication, enquanto API Go aplica authorization. Não é permitido
+tratar authentication como authorization.
 
 ## 2.9 Estratégia de ambientes e release
 
@@ -179,16 +193,17 @@ O CrownPilot usa ambientes com responsabilidades diferentes.
 
 Desenvolvimento local usa:
 
-- Supabase CLI/Docker para PostgreSQL local;
+- Docker Compose/PostgreSQL pinado para testes/reset locais; projeto Supabase dev
+  separado para desenvolvimento persistente, via Session pooler;
 - Firebase Emulator ou fixtures para authentication;
-- API ASP.NET Core e frontend Vite executados separadamente;
+- API Go e frontend Vite executados separadamente;
 - dados locais/descartáveis;
 - nenhum secret de produção.
 
 ### Pull Request / Preview
 
 Branches de feature e Pull Requests podem gerar Preview Deployments efêmeros em
-Vercel ou outro host estático.
+Render Static Site, Vercel ou outro host estático.
 
 Preview serve para:
 
@@ -221,7 +236,8 @@ Deve possuir:
 - Supabase project/database separado de produção;
 - redirect/authorized domains configurados no Firebase;
 - Google Sign-In real;
-- PostgreSQL Supabase de staging em `sa-east-1`, se disponível;
+- PostgreSQL Supabase de staging em `us-east-1` (Northern Virginia), com API
+  Render em Virgínia (`us-east`) e Session pooler após aprovação da ADR 005;
 - dados de teste;
 - execução de testes E2E e smoke.
 
@@ -270,8 +286,8 @@ Camadas previstas:
 
 - **unit** — funções puras, domínio, normalização, scoring e canonicalização;
 - **integration** — adapters, Firebase/API/PostgreSQL e boundaries;
-- **persistence/RLS** — EF Core migrations, policies PostgreSQL e grants testados
-  contra Supabase CLI/Docker;
+- **persistence/RLS** — migrations `goose`, policies PostgreSQL e grants testados
+  contra PostgreSQL local via Docker Compose;
 - **contract** — contratos de integrações como `ClashRoyaleClient` usando
   fixtures sanitizadas;
 - **E2E** — fluxos críticos completos executados em staging;
@@ -283,11 +299,14 @@ motivo técnico.
 
 Gates mínimos esperados:
 
-- **PR:** restore/build/test .NET + lint + type-check + unit + integration +
-  persistence + contract + RLS + build;
-- **main push:** mesmos gates + build Docker/OCI + smoke da API;
-- **staging:** gates de PR + E2E + smoke;
-- **production:** gates aprovados + deploy + smoke.
+- **PR:** Go restore/build/test + lint + type-check + unit + integration +
+  persistence + contract + RLS + build Docker descartável;
+- **staging candidate:** gates de PR + publica um digest OCI imutável e executa
+  migration job, E2E e smoke;
+- **main:** promove o mesmo digest aprovado, sem rebuild divergente, e executa
+  health smoke;
+- **production:** somente após aprovação dos gates, deploy do digest promovido e
+  smoke não destrutivo.
 
 A ferramenta específica de testes é escolhida no bootstrap da Fase 002.
 
@@ -408,6 +427,10 @@ A arquitetura deve continuar funcional sem depender de monetização ainda não 
 
 ### Critérios de aceite
 
+Os critérios abaixo preservam comportamento funcional. Menções a EF Core,
+ASP.NET Core e code-first são baseline histórico; o destino após ADR 005 usa
+`goose`, Go, `depguard` e OpenAPI spec-first conforme `002-13` a `002-15`.
+
 - [ ] Player Tag válida pode ser resolvida de forma reproduzível;
 - [ ] campos do MVP estão classificados como disponíveis, derivados, opcionais ou indisponíveis;
 - [ ] estratégia de meta possui uma fonte inicial viável para candidatos
@@ -432,8 +455,8 @@ Arena por este handoff.
 
 ## 002 — Fundação da aplicação e identidade persistente ⬜
 
-**Handoff status:** `released with constraints` — implementação ainda não
-iniciada; limites acima são obrigatórios para seu bootstrap.
+**Handoff status:** `released with constraints` — `002-01` a `002-04` concluídas
+como baseline .NET; migração Go `002-13` a `002-15` permanece pendente de ADR 005.
 
 ### Objetivo
 
@@ -445,7 +468,7 @@ Player Tag em cada dispositivo.
 
 #### Bootstrap da aplicação
 
-- inicializar API ASP.NET Core e frontend React/Vite;
+- inicializar API Go e frontend React/Vite após aprovação da ADR 005;
 - definir package manager e lockfile autoritativo;
 - TypeScript strict e configuração de build;
 - lint/format e convenções de código;
@@ -453,25 +476,31 @@ Player Tag em cada dispositivo.
 - `AGENTS.md` e comandos operacionais do repositório;
 - toolchain de testes unitários, integração, contract e E2E;
 - CI com gates de lint, type-check, testes e build;
+- OpenAPI/ProblemDetails como contrato de API e health checks como contrato
+  operacional;
 - `.env.example` sem secrets;
 - estratégia local / preview / staging / production;
 - Preview Deployments efêmeros para PRs sem dependência de Firebase real;
 - branch `staging` com hostname fixo para validação completa;
 - deploy de produção somente a partir da `main`;
-- frontend estático hospedável em Vercel sem dependência obrigatória do backend.
+- frontend estático hospedável no Render Static Site, Vercel ou alternativa
+  compatível, sem dependência obrigatória do backend.
 
 #### Identidade e persistência
 
 - Firebase Authentication com Google;
 - PostgreSQL como banco principal, hospedado inicialmente no Supabase;
-- EF Core + Npgsql para acesso e migrations do schema;
+- `pgx`/`sqlc` e `goose` para acesso e migrations do schema após o cutover;
 - SQL separado somente para RLS, grants e objetos de plataforma;
-- confirmar disponibilidade de `sa-east-1` e registrar decisão antes de produção;
-- Supabase CLI/Docker para desenvolvimento/testes;
+- usar Supabase `us-east-1` com API Render em Virgínia (`us-east`) e validar DPA,
+  backups, subprocessadores, transferência internacional, residência e egress
+  antes de produção;
+- Docker Compose/PostgreSQL pinado para testes e projeto Supabase dev via Session
+  pooler para desenvolvimento;
 - Firebase projects e Supabase databases separados para staging e production;
 - authorized domains fixos de staging no Firebase;
-- validar Firebase ID Token no ASP.NET Core e usar bearer;
-- RLS/grants versionados, sem duplicar schema EF Core, e testados;
+- validar Firebase ID Token no adapter Firebase Admin Go e usar bearer;
+- RLS/grants versionados, sem duplicar schema das migrations SQL Go, e testados;
 - browser sem acesso ao PostgreSQL/Data API para dados CrownPilot;
 - garantir que local/preview/staging não usem produção por acidente.
 
@@ -487,6 +516,49 @@ Player Tag em cada dispositivo.
 - recuperação do vínculo em outro dispositivo;
 - estratégia inicial para exclusão dos dados da conta;
 - observabilidade inicial.
+
+#### Arquitetura e aprendizado
+
+- Clean Architecture pragmática dentro de um Modular Monolith;
+- um processo/backend e uma imagem OCI, com módulos internos e boundaries claros;
+- Domain sem dependência de ASP.NET Core, Firebase, Supabase, EF Core, Npgsql ou
+  providers externos;
+- Application dependente de ports/interfaces, Infrastructure implementando
+  adapters e API compondo transporte;
+- código didático sem artificialidade, com comentários de intenção na primeira
+  ocorrência de DI, middleware, authn/authz, EF Core, migrations, Npgsql,
+  `async/await`, `CancellationToken`, options e lifecycle;
+- documentação incremental em `docs/learning/`, somente para conceitos usados.
+
+### Plano executável da Fase 002
+
+As subtarefas são implementáveis e verificáveis nesta ordem:
+
+1. [002-01-bootstrap-toolchain.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-01-bootstrap-toolchain.md);
+2. [002-02-estabelecer-boundaries-contrato-base-e-ambientes.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-02-estabelecer-boundaries-contrato-base-e-ambientes.md);
+3. [002-03-preparar-postgresql-migrations-e-harness-rls.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-03-preparar-postgresql-migrations-e-harness-rls.md);
+4. [002-04-implementar-google-sign-in-e-firebase-bearer.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-04-implementar-google-sign-in-e-firebase-bearer.md);
+5. [002-13-bootstrap-http-config-openapi-go.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-13-bootstrap-http-config-openapi-go.md);
+6. [002-14-autenticacao-firebase-go.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-14-autenticacao-firebase-go.md);
+7. [002-15-persistencia-cutover-remocao-dotnet.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-15-persistencia-cutover-remocao-dotnet.md);
+8. [002-05-implementar-port-e-adapter-de-lookup.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-05-implementar-port-e-adapter-de-lookup.md);
+9. [002-06-modelar-persistencia-repositories-e-rls.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-06-modelar-persistencia-repositories-e-rls.md);
+10. [002-07-implementar-casos-de-uso-e-api-v1.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-07-implementar-casos-de-uso-e-api-v1.md);
+11. [002-08-entregar-frontend-de-identidade-e-vinculo.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-08-entregar-frontend-de-identidade-e-vinculo.md);
+12. [002-09-revisar-arquitetura-frontend-e-ux-visual.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-09-revisar-arquitetura-frontend-e-ux-visual.md);
+13. [002-10-instrumentar-observabilidade-health-e-redaction.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-10-instrumentar-observabilidade-health-e-redaction.md);
+14. [002-11-automatizar-ci-oci-e-gates-de-release.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-11-automatizar-ci-oci-e-gates-de-release.md);
+15. [002-12-validar-staging-e2e-smoke-e-handoff.md](../tasks/002-fundacao-aplicacao-identidade-persistente/002-12-validar-staging-e2e-smoke-e-handoff.md).
+
+`002-01` a `002-04` permanecem histórico concluído do baseline. A migração
+`002-13` -> `002-14` -> `002-15` deve completar seus gates, com ADR 005 aprovada,
+antes de qualquer task `002-05` a `002-12` iniciar, inclusive contra o baseline.
+`002-09-revisar-arquitetura-frontend-e-ux-visual.md` não é uma task genérica de
+melhoria: analisa o código React entregue,
+seus boundaries, auth/API client, estado, configuração, testes, acessibilidade,
+responsividade e estados visuais em mobile/desktop, registrando achados e
+correções. `002-12-validar-staging-e2e-smoke-e-handoff.md` promove exatamente o
+digest OCI validado em Staging; não há rebuild divergente.
 
 ### Boundary da fase
 
@@ -507,6 +579,8 @@ O token da Clash Royale API nunca é exposto ao browser.
 - autenticação não é tratada como autorização;
 - falhas da API externa não invalidam a identidade local;
 - runtime/domain não dependem de API proprietária da Vercel;
+- mesma imagem Docker/OCI deve ser promovível por digest entre Staging e
+  Production, sem acoplamento ao Render;
 - authentication não é authorization; regras críticas ficam no backend.
 
 ### Critérios de aceite
@@ -514,17 +588,23 @@ O token da Clash Royale API nunca é exposto ao browser.
 - [ ] bootstrap pode ser reproduzido a partir do repositório limpo;
 - [ ] lint, type-check, unit, integration, contract, E2E e build possuem comandos definidos;
 - [ ] CI executa lint, type-check, unit, integration, contract, RLS e build nos PRs;
-- [ ] CI repete gates, build Docker e smoke de container em push para `main`;
-- [ ] EF Core migrations e testes RLS executam contra PostgreSQL/Supabase CLI/Docker;
+- [ ] staging candidate publica digest OCI e executa smoke; `main` promove o
+      mesmo digest sem rebuild divergente e executa health smoke;
+- [ ] migrations `goose` e testes RLS executam contra PostgreSQL local via Docker
+      Compose;
 - [ ] PRs geram Preview Deployments sem depender de Firebase/Google Sign-In real;
 - [ ] branch `staging` possui hostname fixo e ambiente de pré-produção;
 - [ ] staging possui Firebase project e Supabase database separados, com Google Sign-In funcional;
+- [ ] após aprovação da ADR 005, Staging/Production usam Session pooler e conexão
+      direta permanece restrita ao PostgreSQL Docker local descartável;
 - [ ] E2E do fluxo crítico roda em staging;
 - [ ] `main` é a única fonte de deploy de produção;
 - [ ] ambientes local/preview/staging/production estão separados e documentados;
-- [ ] `sa-east-1` está disponível e decidida antes do banco de produção;
+- [ ] Supabase `us-east-1` e Render Virgínia estão provisionados; DPA, backups,
+      subprocessadores, transferência internacional, residência e egress estão
+      validados antes do banco de produção;
 - [ ] PostgreSQL/Data API não possui acesso público irrestrito;
-- [ ] RLS/grants e autorização ASP.NET Core refletem o boundary escolhido e possuem
+- [ ] RLS/grants e autorização backend Go refletem o boundary escolhido e possuem
       validação;
 - [ ] usuário consegue criar sessão com Google;
 - [ ] usuário vincula uma Player Tag uma vez;
@@ -532,8 +612,12 @@ O token da Clash Royale API nunca é exposto ao browser.
 - [ ] usuário consegue trocar/desvincular a tag;
 - [ ] erros de integração não causam perda do vínculo;
 - [ ] nenhum token da Supercell, Firebase service account ou secret de banco chega ao client;
-- [ ] frontend estático e API Docker funcionam sem tornar Vercel parte do domínio;
-- [ ] smoke tests passam em staging e production.
+- [ ] frontend estático e API Docker funcionam sem tornar Render ou Vercel parte
+      do domínio;
+- [ ] OpenAPI spec-first gerado documenta endpoints, authn/authz, ProblemDetails e status;
+- [ ] health liveness/readiness e observabilidade redacted possuem checks;
+- [ ] smoke de Staging passa; smoke de Production é executado quando o ambiente
+      for provisionado e houver go/no-go explícito.
 
 ### Dependências
 
@@ -838,7 +922,7 @@ Priorizar:
 - privacidade;
 - fluxo de exclusão de conta/dados;
 - revisão de autorização e RLS/grants;
-- avaliar controles Supabase equivalentes se houver acesso client-side direto à Data API;
+  - manter dados CrownPilot fora do acesso client-side à Supabase Data API;
 - disclaimer de conteúdo não oficial.
 
 ### Métricas iniciais
@@ -1130,7 +1214,8 @@ A partir dela:
 **002 Fundação + Identidade**
 
 Depois da fundação, 003 e 004 permanecem bloqueadas até reabertura explícita dos
-gates de API data, retenção, operação e aquisição de meta. Quando liberadas,
+gates de API data, retenção, ownership, egress, meta e compliance definidos no
+veredito da Fase 001. Quando liberadas,
 podem avançar em paralelo:
 
 - **003 Player Sync**
@@ -1238,11 +1323,15 @@ Modelo operacional e comercial está validado técnica e legalmente.
 
 # 9. Boundaries do MVP
 
+Este mapa preserva escopo funcional. A integração EF Core/Npgsql abaixo é
+baseline histórico; destino aprovado pela ADR 005 usa `pgx`/`sqlc`/`goose` após
+cutover.
+
 O MVP inclui:
 
 - bootstrap reproduzível e quality gates;
 - Firebase Authentication com Google;
-- PostgreSQL/RLS seguro via EF Core + Npgsql e ambientes separados;
+- PostgreSQL/RLS seguro via `pgx`/`sqlc`/`goose` e ambientes separados;
 - frontend estático e API Docker com hosting portátil;
 - identidade CrownPilot;
 - Player Tag persistente;

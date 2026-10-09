@@ -1,0 +1,68 @@
+version: "2"
+
+run:
+  # Analisa os mesmos pacotes de `go test ./...`; tools/ é um módulo separado.
+  tests: true
+
+linters:
+  # "standard" = errcheck, govet, ineffassign, staticcheck, unused.
+  default: standard
+  enable:
+    - bodyclose
+    - depguard
+    - errorlint
+    # misspell fica de fora: só conhece inglês e acusa os comentários em
+    # português como erro de ortografia.
+    - noctx
+    - usestdlibvars
+  settings:
+    depguard:
+      rules:
+        # ADR 005: net/http + ServeMux é o único router.
+        no-router-framework:
+          files:
+            - $all
+          deny:
+            - pkg: github.com/go-chi/chi
+              desc: ADR 005 uses net/http ServeMux only.
+            - pkg: github.com/gin-gonic/gin
+              desc: ADR 005 rejects HTTP frameworks.
+            - pkg: github.com/labstack/echo
+              desc: ADR 005 rejects HTTP frameworks.
+        # Módulos funcionais ficam livres de transporte, providers e storage.
+        # Os pacotes chegam em tasks posteriores; a regra já fica pronta antes.
+        functional-modules:
+          files:
+            - "**/internal/identity/**"
+            - "**/internal/playerlink/**"
+          deny:
+            - pkg: net/http
+              desc: HTTP belongs to internal/httpapi.
+            - pkg: github.com/willian2s/crownpilot-app/internal/httpapi
+              desc: modules must not depend on the HTTP adapter.
+            - pkg: github.com/willian2s/crownpilot-app/internal/config
+              desc: configuration is resolved in cmd and passed in.
+            - pkg: github.com/willian2s/crownpilot-app/internal/platform
+              desc: concrete adapters are wired only in cmd.
+            - pkg: firebase.google.com/go
+              desc: Firebase lives in internal/platform/firebase.
+            - pkg: github.com/jackc/pgx
+              desc: PostgreSQL lives in internal/platform/postgres.
+        # playerlink -> identity é permitido; o inverso seria um ciclo.
+        identity-independent:
+          files:
+            - "**/internal/identity/**"
+          deny:
+            - pkg: github.com/willian2s/crownpilot-app/internal/playerlink
+              desc: identity must not import playerlink.
+  exclusions:
+    generated: strict
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/willian2s/crownpilot-app

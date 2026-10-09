@@ -1,0 +1,181 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CrownPilot API",
+    "version": "v1",
+    "description": "REST contract of the CrownPilot backend. This file is the single source of truth (spec-first): Go and TypeScript types are generated from it and the API serves it unchanged at /openapi/v1.json."
+  },
+  "tags": [
+    {
+      "name": "Bootstrap",
+      "description": "Application foundation status."
+    },
+    {
+      "name": "Identity",
+      "description": "CrownPilot identity and own-data operations."
+    }
+  ],
+  "paths": {
+    "/api/v1/bootstrap": {
+      "get": {
+        "operationId": "getBootstrapStatus",
+        "tags": ["Bootstrap"],
+        "summary": "Reports that the authenticated application foundation is running.",
+        "security": [{ "Bearer": [] }],
+        "responses": {
+          "200": {
+            "description": "The foundation is running.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BootstrapStatus" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/v1/me": {
+      "delete": {
+        "operationId": "deleteMe",
+        "tags": ["Identity"],
+        "summary": "Deletes the caller's CrownPilot data (planned).",
+        "description": "Planned contract; the route is not implemented yet and currently answers 404. Removes only CrownPilot data, never the Firebase/Google account. Requires an `auth_time` within 5 minutes (60 seconds tolerance) and a Firebase revocation check; if Firebase cannot be reached during that check the request fails closed with 503 `authentication_unavailable`.",
+        "x-crownpilot-planned": true,
+        "security": [{ "Bearer": [] }],
+        "responses": {
+          "204": { "description": "CrownPilot data removed, or nothing to remove (idempotent)." },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": {
+            "description": "The authenticated subject is not authorized, or must sign in again (`reauthentication_required`).",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" },
+                "examples": {
+                  "reauthenticationRequired": {
+                    "value": {
+                      "type": "https://www.rfc-editor.org/rfc/rfc9457",
+                      "title": "The authenticated subject is not authorized.",
+                      "status": 403,
+                      "code": "reauthentication_required",
+                      "traceId": "6VQ2ZJH4M7XK3T5WB2N8RC4PLA"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": {
+            "description": "Firebase could not be reached during the sensitive revocation check. Generic problem without provider detail; distinct from `provider_unavailable`, which is reserved for the Clash Royale lookup.",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" },
+                "examples": {
+                  "authenticationUnavailable": {
+                    "value": {
+                      "type": "https://www.rfc-editor.org/rfc/rfc9457",
+                      "title": "A required dependency is unavailable.",
+                      "status": 503,
+                      "code": "authentication_unavailable",
+                      "traceId": "6VQ2ZJH4M7XK3T5WB2N8RC4PLA"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Firebase ID Token",
+        "description": "Send only a server-verified Firebase ID Token as a bearer token."
+      }
+    },
+    "schemas": {
+      "BootstrapStatus": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "stage"],
+        "properties": {
+          "status": { "type": "string", "example": "ready" },
+          "stage": { "type": "string", "example": "bootstrap" }
+        }
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "description": "RFC 9457 problem. Never contains tokens, Firebase UIDs, Player Tags, external URLs, raw payloads, stack traces or infrastructure detail.",
+        "additionalProperties": false,
+        "required": ["type", "title", "status", "code", "traceId"],
+        "properties": {
+          "type": { "type": "string", "example": "https://www.rfc-editor.org/rfc/rfc9457" },
+          "title": { "type": "string" },
+          "status": { "type": "integer" },
+          "code": { "$ref": "#/components/schemas/ProblemCode" },
+          "traceId": {
+            "type": "string",
+            "description": "Correlation identifier for support; never a secret."
+          }
+        }
+      },
+      "ProblemCode": {
+        "type": "string",
+        "description": "Stable non-sensitive application error code.",
+        "enum": [
+          "invalid_request",
+          "authentication_required",
+          "authorization_forbidden",
+          "resource_not_found",
+          "method_not_allowed",
+          "invalid_player_tag",
+          "player_not_found",
+          "version_conflict",
+          "semantic_validation_failed",
+          "provider_rate_limited",
+          "provider_unavailable",
+          "provider_misconfigured",
+          "authentication_unavailable",
+          "reauthentication_required",
+          "internal_error"
+        ]
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Bearer token is absent or invalid.",
+        "headers": {
+          "WWW-Authenticate": { "schema": { "type": "string", "example": "Bearer" } }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Authenticated subject is not authorized.",
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "Unexpected failure; generic message with traceId.",
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+          }
+        }
+      }
+    }
+  }
+}

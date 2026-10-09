@@ -270,8 +270,9 @@ completa.
 > produto, dados e compliance continuam normativas.
 
 - Firebase Authentication com Google, Cloud Firestore e Vercel como decisões-base
-  da [ADR 001](../../../decisions/001-firebase-firestore-vercel-portable.md),
-  mantendo domínio e integração portáveis;
+  históricas da [ADR 001](../../../decisions/001-firebase-firestore-vercel-portable.md).
+  Esse item foi substituído para implementação da Fase 002 pela ADR 004; somente
+  constraints de produto, dados e compliance permanecem normativas;
 - um usuário CrownPilot e uma Player Tag primária, com associação privada
   server-side a `crownpilotUserId`;
 - semântica `public_profile` + `ownershipStatus: unverified`, com texto de UI
@@ -309,9 +310,9 @@ ser server-side, sem credencial Supercell, sem sync completo e sem persistência
 de resposta além do mínimo de vínculo autorizado.
 
 Não iniciar Fase 003/004, billing ou AI Coach como consequência deste fechamento.
-Depois de Fase 002, reabrir os gates de API data, retenção, operação, meta e
-compliance antes de transformar o perfil em snapshot persistente ou promessa de
-meta.
+Depois de Fase 002, reabrir os gates de API data, retenção, ownership, egress,
+meta e compliance antes de transformar o perfil em snapshot persistente ou
+promessa de meta.
 
 ## Atualização posterior de infraestrutura
 
