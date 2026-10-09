@@ -2,7 +2,7 @@
 
 - **Status geral:** pending
 - **Spec:** [002-fundacao-aplicacao-identidade-persistente.md](../../specs/002-fundacao-aplicacao-identidade-persistente.md)
-- **Progresso:** 4/15 subtarefas concluídas
+- **Progresso:** 5/15 subtarefas concluídas
 
 ## Objetivo
 
@@ -19,7 +19,7 @@ observabilidade.
 - [x] [002-02-estabelecer-boundaries-contrato-base-e-ambientes.md](002-02-estabelecer-boundaries-contrato-base-e-ambientes.md)
 - [x] [002-03-preparar-postgresql-migrations-e-harness-rls.md](002-03-preparar-postgresql-migrations-e-harness-rls.md)
 - [x] [002-04-implementar-google-sign-in-e-firebase-bearer.md](002-04-implementar-google-sign-in-e-firebase-bearer.md)
-- [ ] [002-13-bootstrap-http-config-openapi-go.md](002-13-bootstrap-http-config-openapi-go.md)
+- [x] [002-13-bootstrap-http-config-openapi-go.md](002-13-bootstrap-http-config-openapi-go.md)
 - [ ] [002-14-autenticacao-firebase-go.md](002-14-autenticacao-firebase-go.md)
 - [ ] [002-15-persistencia-cutover-remocao-dotnet.md](002-15-persistencia-cutover-remocao-dotnet.md)
 - [ ] [002-05-implementar-port-e-adapter-de-lookup.md](002-05-implementar-port-e-adapter-de-lookup.md)
@@ -33,8 +33,9 @@ observabilidade.
 
 ## Observações
 
-- ADR 005 está `accepted` em 2026-10-08. `002-13` é a próxima task liberada;
-  `002-14` e `002-15` seguem em sequência, cada uma com gate verde próprio. Não
+- ADR 005 está `accepted` em 2026-10-08. `002-13` foi concluída em 2026-10-09;
+  `002-14` é a próxima task liberada e `002-15` segue em sequência, cada uma
+  com gate verde próprio. Não
   iniciar `002-05` a `002-12` antes da conclusão de `002-13` a `002-15` e do
   cutover definido em `002-15`, independentemente de runtime antigo.
 - `002-01` a `002-04` permanecem concluídas como histórico do baseline .NET; não
@@ -132,3 +133,10 @@ observabilidade.
   Admin SDK, contrato Application de resolução de identidade e fixtures locais.
   Emulator/Google real e configuração de credenciais de Staging permanecem
   validação operacional de `002-12`.
+- `002-13` concluiu o bootstrap Go: `net/http` + `ServeMux`, configuração
+  fail-closed, ProblemDetails, CORS, fixture bearer Local, OpenAPI spec-first
+  em `api/openapi/v1.json` embutido e servido sem alteração, tipos Go/frontend
+  gerados com CI contra drift, Dockerfile Go distroless e scripts de smoke
+  apontando para o processo Go. O baseline .NET permanece até a `002-15`; seus
+  testes de host falham localmente por configuração Firebase da máquina, falha
+  preexistente registrada na task.

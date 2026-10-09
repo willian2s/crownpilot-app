@@ -1,27 +1,32 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0.401 AS build
+# Estágio 1: compila um binário estático. Só o código de produção entra no
+# contexto (veja .dockerignore); testes, tools/ e frontend ficam de fora.
+FROM golang:1.27.2-trixie AS build
 WORKDIR /src
 
-COPY global.json ./
-COPY CrownPilot.sln ./
-COPY Directory.Build.props ./
-COPY src/Api/Api.csproj src/Api/
-COPY src/Application/Application.csproj src/Application/
-COPY src/Domain/Domain.csproj src/Domain/
-COPY src/Infrastructure/Infrastructure.csproj src/Infrastructure/
+# Usa exatamente o toolchain da imagem, sem baixar outro em tempo de build.
+ENV GOTOOLCHAIN=local
 
-RUN dotnet restore src/Api/Api.csproj
+# go.mod antes do código: a camada de dependências fica em cache enquanto
+# go.mod/go.sum não mudam.
+COPY go.mod go.sum* ./
+RUN go mod download
 
-COPY src ./src
-RUN dotnet publish src/Api/Api.csproj \
-    --configuration Release \
-    --no-restore \
-    --output /app/publish \
-    /p:UseAppHost=false
+COPY api ./api
+COPY cmd ./cmd
+COPY internal ./internal
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0.12 AS final
-WORKDIR /app
-ENV ASPNETCORE_HTTP_PORTS=8080
+# CGO desligado gera binário estático, que roda numa imagem sem libc.
+# -trimpath remove caminhos da máquina de build do binário.
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/crownpilot-api ./cmd/crownpilot-api
+
+# Estágio 2: imagem final mínima, sem shell nem gerenciador de pacotes, rodando
+# como usuário sem privilégios.
+FROM gcr.io/distroless/static-debian13:nonroot AS final
+COPY --from=build /out/crownpilot-api /crownpilot-api
+
+# Porta padrão do container; hosting sobrescreve com PORT. Não há default para
+# CROWNPILOT_ENVIRONMENT: sem ele o processo encerra antes do listener.
+ENV PORT=8080
 EXPOSE 8080
-COPY --from=build /app/publish .
-USER $APP_UID
-ENTRYPOINT ["dotnet", "CrownPilot.Api.dll"]
+USER nonroot:nonroot
+ENTRYPOINT ["/crownpilot-api"]

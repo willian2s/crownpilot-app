@@ -4,8 +4,9 @@
 
 - Work is organized as SDD tasks under
   `docs/tasks/002-fundacao-aplicacao-identidade-persistente/`; check
-  `002-00-overview.md` and the assigned task before changing code. ADR 004
-  describes the target architecture, not permission to implement later tasks.
+  `002-00-overview.md` and the assigned task before changing code. ADR 005
+  (Go) supersedes ADR 004 for stack decisions; neither is permission to
+  implement later tasks. The .NET baseline stays until the `002-15` cutover.
 - Repository state is authoritative when planning docs lag. Update task status
   and implementation evidence when completing an SDD task.
 - Never read, copy, or embed ignored `.env.local`; it may contain secrets.
@@ -14,19 +15,29 @@
 
 ## Toolchain and commands
 
-- Required versions are pinned: .NET SDK `10.0.401` (`global.json`), Node
-  `>=24.20.0 <25`, npm `>=11.19.0 <12` (`frontend/package.json`).
+- Required versions are pinned: Go `1.27.2` (`go` line in `go.mod`), .NET SDK
+  `10.0.401` (`global.json`), Node `>=24.20.0 <25`, npm `>=11.19.0 <12`
+  (`frontend/package.json`).
+- Go tools (`golangci-lint`, `oapi-codegen`) are pinned in the separate
+  `tools/go.mod` and run with `go tool -modfile=tools/go.mod <tool>`; do not
+  add them to the main `go.mod` or install them globally.
 - Initial setup from repository root:
 
 ```text
+go mod download
 dotnet tool restore
 dotnet restore CrownPilot.sln
 npm ci --prefix frontend
 ```
 
-- Main verification:
+- Main verification (Go API first; .NET until the `002-15` cutover):
 
 ```text
+go vet ./...
+go test ./...
+go test -race ./...
+go tool -modfile=tools/go.mod golangci-lint run
+go build ./cmd/crownpilot-api
 dotnet build CrownPilot.sln --configuration Release
 dotnet test CrownPilot.sln --configuration Release
 npm run typecheck --prefix frontend
@@ -37,22 +48,43 @@ npm run smoke --prefix frontend
 npm run openapi:check --prefix frontend
 ```
 
-- `smoke` and `openapi:check` start the Release API with `--no-build
-  --no-restore`; run restore/build first. Override their port with
-  `CROWNPILOT_SMOKE_PORT` if `5089` is occupied.
-- Focus one .NET test with `dotnet test <test-project> --filter
+- Run the Go API locally with
+  `CROWNPILOT_ENVIRONMENT=Local go run ./cmd/crownpilot-api` (port `5080`).
+- `smoke` and `openapi:check` build the Go API into a temporary directory and
+  start it as Local. Override their port with `CROWNPILOT_SMOKE_PORT` if `5089`
+  is occupied.
+- After editing `api/openapi/v1.json`, regenerate and commit both artifacts;
+  CI fails on drift:
+
+```text
+go generate ./...
+npm run openapi:generate --prefix frontend
+```
+
+- Focus one Go test with `go test ./internal/httpapi/ -run 'TestCORS/allowed'`;
+  focus one .NET test with `dotnet test <test-project> --filter
   "FullyQualifiedName~ClassName.TestName"`; focus frontend with
   `npm run test:unit --prefix frontend -- src/App.test.tsx`.
-- `npm run smoke:container --prefix frontend` builds/runs Docker and requires a
-  live daemon. `test:rls`, `test:e2e`, `db:*`, and unavailable container
+- Write Go code comments in Brazilian Portuguese; identifiers, error messages
+  and logs stay in English.
+- `npm run smoke:container --prefix frontend` builds/runs the Go Docker image
+  and requires a live daemon. `test:rls`, `test:e2e`, `db:*`, and unavailable container
   prerequisites intentionally exit `2` as blocked gates; do not replace them
   with no-op passes.
 
 ## Architecture
 
-- Backend is one ASP.NET Core modular monolith. `src/Api/Program.cs` is HTTP and
-  composition root; frontend is an independent static Vite artifact.
-- Dependency direction is enforced by architecture tests: `Domain` has no
+- Backend is one modular monolith process. The Go API (`cmd/crownpilot-api`
+  composition root, `internal/config`, `internal/httpapi`,
+  `internal/observability`, `api/openapi`) is the executable bootstrap; the
+  ASP.NET Core baseline (`src/`, `tests/`) remains until `002-15`. Frontend is
+  an independent static Vite artifact.
+- Go routing uses only `net/http` `ServeMux` with method/path patterns;
+  middlewares are `func(http.Handler) http.Handler`. `depguard` in
+  `.golangci.yml` forbids router frameworks and keeps `internal/identity` and
+  `internal/playerlink` free of HTTP, config, platform adapters, and the
+  `identity -> playerlink` import.
+- .NET dependency direction is enforced by architecture tests: `Domain` has no
   outward dependency; `Application -> Domain`; `Infrastructure -> Application
   + Domain`; `Api -> Application + Infrastructure` only for composition.
 - Keep HTTP, DTOs, ProblemDetails, authentication, CORS, health, and OpenAPI in
@@ -68,14 +100,21 @@ npm run openapi:check --prefix frontend
 
 ## HTTP and environments
 
-- REST contract lives under `/api/v1`; generate OpenAPI code-first through
-  `Microsoft.AspNetCore.OpenApi`. `/docs` must consume `/openapi/v1.json`; do not
-  add handwritten YAML or a second schema generator.
+- REST contract lives under `/api/v1`. OpenAPI is spec-first:
+  `api/openapi/v1.json` is the single source, embedded with `go:embed` and
+  served unchanged at `/openapi/v1.json`. Go models (`oapi-codegen`) and
+  frontend types (`openapi-typescript`) are generated from it and versioned.
+  `/docs` (Swagger UI) must consume `/openapi/v1.json`; do not add YAML, a
+  second schema generator, or `cmd/crownpilot-openapi`. Mark documented but
+  unimplemented operations with `x-crownpilot-planned: true`.
 - `/health/live` is process-only and must not contact providers. OpenAPI JSON/UI
   are enabled only in Local and Staging; Preview and Production return `404`.
-- ASP.NET Core `Development` maps to runtime `Local`; `Preview`, `Staging`, and
-  `Production` are explicit. If `CrownPilot:Environment` is supplied, it must
-  match `ASPNETCORE_ENVIRONMENT` or startup fails.
+- The Go API requires `CROWNPILOT_ENVIRONMENT` with an exact name (`Local`,
+  `Preview`, `Staging`, `Production`); missing or invalid configuration stops
+  the process before it listens. Local port is `5080`; hosting sets `PORT`.
+- In the .NET baseline, ASP.NET Core `Development` maps to runtime `Local`; if
+  `CrownPilot:Environment` is supplied, it must match `ASPNETCORE_ENVIRONMENT`
+  or startup fails.
 - CORS is an exact allowlist: no wildcard; non-Local origins require HTTPS.
   Local contract bearer tokens prove `401`/`403`/`200` pipeline behavior only;
   they are not Firebase token validation and must never be enabled elsewhere.

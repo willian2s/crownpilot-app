@@ -26,7 +26,9 @@ const (
 	swaggerUIBase    = "https://cdn.jsdelivr.net/npm/swagger-ui-dist@" + swaggerUIVersion
 )
 
-const docsInitScript = `SwaggerUIBundle({ url: "/openapi/v1.json", dom_id: "#swagger-ui" });`
+// validatorUrl "none" desliga o validador externo padrão do Swagger UI, que
+// enviaria a URL da spec (por exemplo, a de Staging) para validator.swagger.io.
+const docsInitScript = `SwaggerUIBundle({ url: "/openapi/v1.json", dom_id: "#swagger-ui", validatorUrl: "none" });`
 
 const docsPage = `<!doctype html>
 <html lang="en">

@@ -2,7 +2,7 @@
 
 - **Ticker:** `002`
 - **Número:** `13`
-- **Status:** `pending`
+- **Status:** `completed`
 
 ## Objetivo e resultado esperado
 
@@ -69,17 +69,18 @@ task inicia migração, não reabre essas tarefas.
 
 ## Mapa de equivalência desta task
 
-| Baseline .NET | Destino Go da migração |
+| Baseline .NET | Destino Go implementado |
 |---|---|
-| `global.json`, `CrownPilot.sln`, `Directory.Build.props`, `dotnet-tools.json` | `go.mod`, manifesto de ferramentas Go, `.go-version`/equivalente e CI. |
-| `src/Api/Program.cs` | `cmd/crownpilot-api/main.go` + `internal/httpapi` + `internal/config`. |
-| `BootstrapStatus.cs` | DTO e handler Go de bootstrap. |
-| `RuntimeEnvironment.cs`, `RuntimeOptions*.cs` | tipos e `Load`/`Validate` em `internal/config`. |
-| `ProblemDetailsContract.cs`, CORS e health | handlers/middlewares `net/http` em `internal/httpapi`. |
-| `src/Api/OpenApi/*` e documento code-first | `api/openapi/v1.json`, `oapi-codegen`, `openapi-typescript` e pacote de embed. |
-| `cmd/crownpilot-openapi` planejado | não criar; a fonte JSON será embutida e servida diretamente. |
-| `frontend/scripts/process.mjs`, `smoke.mjs`, `openapi-check.mjs` | mesmos comandos e contratos, iniciando/validando Go. |
-| `Dockerfile` e workflow mínimo | build multi-stage Go, sem `.env`, secrets ou testes na imagem. |
+| `global.json`, `CrownPilot.sln`, `Directory.Build.props`, `dotnet-tools.json` | `go.mod` (`go 1.27.2`, sem `.go-version`), `tools/go.mod` com `golangci-lint` e `oapi-codegen` via diretiva `tool`, `.golangci.yml` e CI. |
+| `src/Api/Program.cs` | `cmd/crownpilot-api/main.go` (`run`, bind antes do `Serve`, shutdown gracioso) + `internal/httpapi/server.go` (`NewHandler`) + `internal/config`. |
+| `BootstrapStatus.cs` | `BootstrapStatus` gerado em `internal/httpapi/api.gen.go`; handler em `server.go`. |
+| `RuntimeEnvironment.cs`, `RuntimeOptions*.cs` | `internal/config/config.go` (`Environment`, `Config`, `Load`, `Validate`). |
+| `ProblemDetailsContract.cs`, CORS e health | `internal/httpapi/problem.go`, `middleware.go`, `cors.go`, `auth.go` e `/health/live`; `internal/observability` para slog e request ID. |
+| `ContractAuthentication.cs` (fixture Local) | `internal/httpapi/auth.go`, somente fixture Local protegida por config; Firebase real fica na `002-14`. |
+| `src/Api/OpenApi/*` e documento code-first | `api/openapi/v1.json`, `api/openapi/openapi.go` (`go:embed`), `oapi-codegen` (models) e `openapi-typescript` (`frontend/src/api/schema.gen.ts`). |
+| `cmd/crownpilot-openapi` planejado | não criado; a fonte JSON embutida é servida diretamente. |
+| `frontend/scripts/process.mjs`, `smoke.mjs`, `openapi-check.mjs` | mesmos comandos; compilam o binário Go em diretório temporário e validam o contrato servido contra a fonte. |
+| `Dockerfile` e workflow mínimo | `Dockerfile` multi-stage `golang:1.27.2-trixie` → `distroless/static-debian13:nonroot`; CI com Go, lint, race e drift, mantendo o .NET até a `002-15`. |
 
 ## Passos de implementação
 
@@ -140,3 +141,91 @@ bloqueio real, nunca convertidos em sucesso falso.
 - Não manter JSON servido separado da fonte canônica.
 - Não abrir listener antes de validar ambiente e configuração não secreta.
 - Não adicionar abstração de router ou framework sem necessidade concreta.
+
+## Implementação e evidências
+
+- **Status:** `completed` em 2026-10-09.
+- **Arquivos criados:** `go.mod`, `tools/go.mod`, `tools/go.sum`,
+  `.golangci.yml`, `cmd/crownpilot-api/main.go`,
+  `cmd/crownpilot-api/main_test.go`, `internal/config/config.go`,
+  `internal/config/load_test.go`, `internal/config/validate_test.go`,
+  `internal/httpapi/{server,auth,cors,docs,middleware,problem,generate}.go`,
+  `internal/httpapi/api.gen.go`, `internal/httpapi/{server,cors,openapi}_test.go`,
+  `internal/observability/observability.go`, `api/openapi/v1.json`,
+  `api/openapi/openapi.go`, `api/openapi/oapi-codegen.yaml`,
+  `frontend/src/api/schema.gen.ts`.
+- **Arquivos alterados:** `Dockerfile`, `.dockerignore`, `.gitignore`,
+  `.env.example`, `.github/workflows/ci.yml`, `AGENTS.md`,
+  `docs/operations/local-development.md`, `frontend/package.json`,
+  `frontend/package-lock.json`, `frontend/scripts/process.mjs`,
+  `frontend/scripts/openapi-check.mjs`, `frontend/scripts/container-smoke.mjs`.
+- **Decisões:**
+  - ferramentas Go em módulo separado (`tools/`) para não incluir as
+    dependências do `golangci-lint` no grafo da aplicação; `go list -m all`
+    lista somente o módulo principal e `chi` não aparece;
+  - `depguard` bloqueia frameworks de router e mantém `identity`/`playerlink`
+    livres de HTTP, config, adapters e da importação `identity -> playerlink`;
+    regra provada com arquivo temporário importando `net/http`;
+  - `CROWNPILOT_ENVIRONMENT` obrigatório, com nomes exatos e sem alias
+    `Development`; `Load` aplica defaults por ambiente e sempre termina em
+    `Validate`, que acumula todas as violações com `errors.Join`;
+  - origens CORS aceitas somente na forma serializada exata do header `Origin`
+    (minúsculas, sem barra final), comparadas por igualdade;
+  - `traceId` gerado pelo servidor (`crypto/rand.Text`), nunca lido do cliente;
+  - `oapi-codegen` gera somente models; `ProblemCode` gerado tipa
+    `writeProblem`; `TestRoutesMatchContract` liga spec e `ServeMux`, e
+    `x-crownpilot-planned` marca `DELETE /api/v1/me` até a implementação;
+  - `/openapi/v1.json` serve `api/openapi/v1.json` byte a byte; `/docs` usa
+    Swagger UI `5.33.0` do jsDelivr com SRI, CSP com hash do script inline e
+    `validatorUrl: "none"`, para não enviar a URL da spec a
+    `validator.swagger.io`; validação manual no navegador feita em Local;
+  - imagem final distroless `nonroot`, binário estático, sem `.env`, testes ou
+    tools; sem default de ambiente na imagem, que falha fechado sem ele;
+  - comentários de código Go em português.
+- **Desvios:**
+  - `method_not_allowed` adicionado ao enum para `405` (o .NET devolvia
+    `internal_error`); `defaultCode` cobre só status do transporte, então `503`
+    nunca vira `provider_unavailable` implicitamente;
+  - `/health/live` fora da spec, como no baseline .NET;
+  - fixtures de contrato compiladas no binário e bloqueadas por
+    `config.Validate` fora de Local; removê-las do binário de produção é
+    critério da `002-14`;
+  - `misspell` removido do lint por acusar os comentários em português.
+- **Comandos executados e resultados (2026-10-09):**
+  - `go mod verify` — passou.
+  - `go test ./...` — passou; 101 casos incluindo subtestes.
+  - `go test -race ./...` — passou.
+  - `go vet ./...` — passou.
+  - `go tool -modfile=tools/go.mod golangci-lint run` — 0 issues.
+  - `go build ./cmd/crownpilot-api` — passou.
+  - `go generate ./...`, `npm run openapi:generate --prefix frontend` e
+    `git diff --exit-code` dos gerados — sem drift; geração repetida produz os
+    mesmos hashes; alteração proposital da spec fez o diff falhar (exit 1).
+  - `npm run typecheck --prefix frontend` — passou.
+  - `npm run lint --prefix frontend` — passou.
+  - `npm run test:unit --prefix frontend` — passou, 3 arquivos/8 testes.
+  - `npm run build --prefix frontend` — passou.
+  - `npm run openapi:check --prefix frontend` — passou; documento servido
+    idêntico à fonte e `503 authentication_unavailable` documentado.
+  - `npm run smoke --prefix frontend` — passou; processo filho encerrado e
+    porta `5089` liberada.
+  - `npm run smoke:container --prefix frontend` — passou com Docker `29.8.2`;
+    container sem ambiente falha fechado, `/health/live` responde e
+    `/openapi/v1.json` retorna `404` em Production; imagem com 15,5 MB.
+  - `dotnet build CrownPilot.sln --configuration Release` — passou.
+  - `node scripts/check-boundaries.mjs` — passou.
+  - `dotnet test CrownPilot.sln --configuration Release` — Unit, Architecture,
+    Persistence e Application passaram; Contract (1) e Api (20) falharam com
+    `Firebase authentication configuration is invalid`. A mesma falha ocorre no
+    commit `4141097`, anterior a esta task, então não é regressão: decorre da
+    configuração Firebase local carregada pelo baseline .NET em `Development`.
+    Os User Secrets não foram lidos por conterem credenciais. Erro conhecido
+    pelo responsável e desconsiderado: o baseline .NET será removido na `002-15`.
+- **Riscos residuais:**
+  - os testes .NET dependentes de host falham nesta máquina por configuração
+    Firebase local até a correção dos User Secrets ou a remoção do .NET na
+    `002-15`; o CI não possui esses secrets;
+  - `/docs` depende do jsDelivr em Local/Staging; alternativa offline é embutir
+    `swagger-ui-dist` com `embed.FS`;
+  - o primeiro job de CI compila `golangci-lint` a partir do código-fonte
+    (cache por `tools/go.sum`).

@@ -16,6 +16,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Go é o backend executável desde a 002-13. A versão vem da linha `go` do
+      # go.mod; o cache usa tools/go.sum porque o módulo principal não tem deps.
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: tools/go.sum
+
+      # O baseline .NET continua compilando e testando até o cutover da 002-15.
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -31,8 +40,23 @@ jobs:
       - name: Pin npm
         run: npm install --global npm@11.19.0
 
-      - name: Verify Node and npm
-        run: node --version && npm --version
+      - name: Verify toolchain versions
+        run: go version && node --version && npm --version
+
+      - name: Verify Go modules
+        run: go mod verify && go mod verify -modfile=tools/go.mod
+
+      - name: Vet Go
+        run: go vet ./...
+
+      - name: Test Go with race detector
+        run: go test -race ./...
+
+      - name: Lint Go
+        run: go tool -modfile=tools/go.mod golangci-lint run
+
+      - name: Build Go API
+        run: go build ./cmd/crownpilot-api
 
       - name: Restore local .NET tools
         run: dotnet tool restore
@@ -52,6 +76,14 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci --prefix frontend
 
+      # Regenera os artefatos a partir de api/openapi/v1.json e falha se o
+      # resultado divergir do que está versionado.
+      - name: Check generated OpenAPI artifacts for drift
+        run: |
+          go generate ./...
+          npm run openapi:generate --prefix frontend
+          git diff --exit-code -- internal/httpapi/api.gen.go frontend/src/api/schema.gen.ts
+
       - name: Type-check frontend
         run: npm run typecheck --prefix frontend
 
@@ -63,6 +95,12 @@ jobs:
 
       - name: Build frontend
         run: npm run build --prefix frontend
+
+      - name: Check OpenAPI contract
+        run: npm run openapi:check --prefix frontend
+
+      - name: Smoke local API
+        run: npm run smoke --prefix frontend
 
       - name: Smoke OCI image
         run: npm run smoke:container --prefix frontend
