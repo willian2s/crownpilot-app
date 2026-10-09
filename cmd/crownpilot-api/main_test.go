@@ -50,8 +50,11 @@ func TestRunServesAndShutsDownGracefully(t *testing.T) {
 	done := make(chan error, 1)
 	go func() {
 		done <- run(ctx, lookup(map[string]string{
-			"CROWNPILOT_ENVIRONMENT": "Production",
-			"PORT":                   strconv.Itoa(port),
+			"CROWNPILOT_ENVIRONMENT":      "Production",
+			"PORT":                        strconv.Itoa(port),
+			"FIREBASE_ADMIN_PROJECT_ID":   "crownpilot-test",
+			"FIREBASE_ADMIN_CLIENT_EMAIL": "firebase-adminsdk@crownpilot-test.iam.gserviceaccount.com",
+			"FIREBASE_ADMIN_PRIVATE_KEY":  "fake-key",
 		}), &bytes.Buffer{})
 	}()
 

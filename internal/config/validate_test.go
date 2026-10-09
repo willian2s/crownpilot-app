@@ -15,9 +15,16 @@ func validConfig(env Environment) Config {
 		origins = []string{"http://localhost:5173", "http://127.0.0.1:5173"}
 	}
 
+	// Fora de Local as três variáveis do Firebase são obrigatórias.
+	var firebase Firebase
+	if env != Local {
+		firebase = testFirebase()
+	}
+
 	return Config{
 		Environment: env,
 		Port:        DefaultPort,
+		Firebase:    firebase,
 		CORS: CORS{
 			AllowedOrigins: origins,
 		},

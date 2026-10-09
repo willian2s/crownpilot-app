@@ -49,13 +49,15 @@ const (
 	EnvContractFixtures = "CROWNPILOT_AUTH_CONTRACT_FIXTURES"
 )
 
-// Config é a configuração de runtime validada. Não contém secrets.
+// Config é a configuração de runtime validada. O único valor sensível é
+// Firebase.PrivateKey, um Secret que nunca é impresso.
 type Config struct {
 	Environment Environment
 	Port        int
 	CORS        CORS
 	OpenAPI     OpenAPI
 	Auth        Auth
+	Firebase    Firebase
 }
 
 // CORS lista as origens exatas que podem chamar a API a partir de um browser.
@@ -99,6 +101,7 @@ func Load(lookup LookupFunc) (Config, error) {
 		CORS:        CORS{AllowedOrigins: defaultOrigins(env)},
 		OpenAPI:     OpenAPI{ExposeJSON: docsDefault, ExposeUI: docsDefault},
 		Auth:        Auth{ContractFixtures: env == Local},
+		Firebase:    loadFirebase(lookup),
 	}
 
 	// Acumula todos os erros de parse em vez de parar no primeiro, para que um
@@ -162,6 +165,10 @@ func (c Config) Validate() error {
 
 	if c.Auth.ContractFixtures && c.Environment != Local {
 		errs = append(errs, errors.New("contract authentication fixtures are allowed only in Local"))
+	}
+
+	if err := validateFirebase(c.Firebase, c.Environment); err != nil {
+		errs = append(errs, err)
 	}
 
 	return errors.Join(errs...)
